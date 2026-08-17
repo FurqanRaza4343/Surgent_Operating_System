@@ -1,0 +1,309 @@
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"surface-container-high":"#e6e8ea","success":"#10B981","on-surface":"#191c1e","on-tertiary-fixed":"#001e2c","tertiary-container":"#00759f","surface-variant":"#e0e3e5","outline":"#737686","primary-fixed":"#dbe1ff","on-primary":"#ffffff","surface-dim":"#d8dadc","on-surface-variant":"#434655","outline-variant":"#c3c6d7","error":"#ba1a1a","on-background":"#191c1e","primary-fixed-dim":"#b4c5ff","on-tertiary-container":"#e1f2ff","on-tertiary":"#ffffff","surface-container-highest":"#e0e3e5","surface-container-low":"#f2f4f6","secondary":"#00687a","border-subtle":"#E2E8F0","surface-container":"#eceef0","on-primary-container":"#eeefff","primary-container":"#2563eb","on-primary-fixed":"#00174b","tertiary-fixed-dim":"#7bd0ff","surface-container-lowest":"#ffffff","error-container":"#ffdad6","background":"#f7f9fb","text-body":"#64748B","on-error":"#ffffff","surface":"#f7f9fb","surface-tint":"#0053db","on-secondary-fixed-variant":"#004e5c","on-primary-fixed-variant":"#003ea8","on-secondary-fixed":"#001f26","inverse-primary":"#b4c5ff","danger":"#EF4444","text-heading":"#0F172A","secondary-fixed-dim":"#4cd7f6","on-secondary":"#ffffff","secondary-fixed":"#acedff","secondary-container":"#57dffe","warning":"#F59E0B","surface-bright":"#f7f9fb","card-surface":"#FFFFFF","inverse-on-surface":"#eff1f3","inverse-surface":"#2d3133","tertiary":"#005b7c","tertiary-fixed":"#c4e7ff","on-tertiary-fixed-variant":"#004c69","on-secondary-container":"#006172","on-error-container":"#93000a","primary":"#004ac6"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"stack-md":"1rem","container-max":"1440px","margin-page":"2rem","stack-sm":"0.5rem","stack-lg":"2rem","gutter-grid":"1.5rem"},"fontFamily":{"body-lg":["Inter"],"body-md":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"display-lg":["Inter"],"label-md":["Inter"],"headline-lg-mobile":["Inter"],"headline-lg":["Inter"]},"fontSize":{"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"1.2","letterSpacing":"0.05em","fontWeight":"600"}],"headline-md":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"display-lg":["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"1.4","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"1.2","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container-low/70 backdrop-blur-xl border-r border-border-subtle z-50 flex flex-col"><div class="p-8 flex items-center gap-3"><img alt="Aiaceone Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK-meVwsx2YrcNYc1YMXGJ9fH6kDmUgx3OdMNrPS51hjJt7xLYxJrbpty_ke2YzBZ7Uh-MbmXWgVdoiS_Lq3XxOnbNEEeKOmTsTagpzMg_hFgU_Hf6JiJfYLn3c8TltxoiRAdbd74tS9YjYUfvn6MCIuqQ2xoCaICuqJ470JYDIO1g7vn65vdFvzssDBcx5dcAnOnUsWKi77O9eaxBvh32WWLLh3D5pNNARfbcTq1EDDcOGUWugDEnLnE9iLU9KEtK8WLfD42p5YM"/><span class="font-headline-md text-headline-md text-on-surface tracking-tight">Aiaceone</span></div><nav class="flex-1 px-4 space-y-1 overflow-y-auto" data-active-classes="bg-primary/10 text-primary font-semibold"><div class="px-4 py-2 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Main</div><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="dashboard" href="#"><span class="material-symbols-outlined mr-3">dashboard</span>Dashboard</a><a aria-current="page" class="flex items-center px-4 py-3 rounded-xl transition-all group bg-primary/10 text-primary font-semibold" data-path="patients" href="#"><span class="material-symbols-outlined mr-3">person</span>Patients</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="appointments" href="#"><span class="material-symbols-outlined mr-3">event</span>Appointments</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="doctors" href="#"><span class="material-symbols-outlined mr-3">medical_services</span>Doctors</a><div class="px-4 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Management</div><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="crm" href="#"><span class="material-symbols-outlined mr-3">groups</span>CRM</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="ai-receptionist" href="#"><span class="material-symbols-outlined mr-3">smart_toy</span>AI Receptionist</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="calendar" href="#"><span class="material-symbols-outlined mr-3">calendar_month</span>Calendar</a><div class="px-4 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Operations</div><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="analytics" href="#"><span class="material-symbols-outlined mr-3">monitoring</span>Analytics</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="payments" href="#"><span class="material-symbols-outlined mr-3">payments</span>Payments</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="settings" href="#"><span class="material-symbols-outlined mr-3">settings</span>Settings</a></nav></aside><div class="pl-[280px] min-h-screen"><header class="fixed top-0 left-[280px] right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-8 border-b border-border-subtle"><div class="flex items-center bg-surface-container px-4 py-1.5 rounded-full border border-border-subtle w-96"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span><input class="bg-transparent border-none focus:ring-0 text-label-md font-label-md w-full ml-2 text-on-surface" placeholder="Command + K to search..." type="text"/></div><div class="flex items-center gap-6"><button class="relative text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span><span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-3 pl-6 border-l border-border-subtle"><div class="text-right hidden sm:block"><p class="text-label-md font-label-md text-on-surface leading-none mb-0.5">Dr. Sarah Chen</p><p class="text-label-sm font-label-sm text-on-surface-variant leading-none">Clinical Director</p></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="pt-16 bg-surface min-h-screen px-margin-page py-stack-lg"><div class="flex flex-col w-full gap-gutter-grid">
+<!-- Top Profile Bar: Minimal & High-Contrast -->
+<section class="relative w-full overflow-hidden rounded-3xl bg-surface-container-lowest p-8 flex flex-col md:flex-row items-end justify-between gap-6 shadow-sm border border-border-subtle">
+<div class="absolute top-0 right-0 w-1/3 h-full opacity-10 pointer-events-none">
+<svg class="w-full h-full" viewbox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<path class="text-primary" d="M44.7,-76.4C58.1,-69.2,69.5,-57.4,77.3,-43.8C85.1,-30.2,89.2,-15.1,88.3,-0.5C87.4,14.1,81.4,28.2,73.1,41C64.8,53.8,54.1,65.3,41.2,72.4C28.2,79.5,14.1,82.2,-0.5,83.1C-15.1,83.9,-30.2,82.9,-44.1,76.5C-58,70.2,-70.7,58.4,-78.6,44.5C-86.4,30.6,-89.4,14.5,-88.1,-1.2C-86.8,-16.9,-81.2,-32.2,-71.8,-45.3C-62.4,-58.4,-49.2,-69.3,-35,-76C-20.7,-82.7,-10.4,-85.2,2.5,-89.5C15.4,-93.8,31.3,-83.6,44.7,-76.4Z" fill="currentColor" transform="translate(100 100)"></path>
+</svg>
+</div>
+<div class="flex items-start gap-8 relative z-10">
+<div class="relative">
+<div class="w-32 h-32 rounded-3xl overflow-hidden ring-4 ring-surface-container-low shadow-xl">
+<img class="w-full h-full object-cover" data-alt="Close-up professional portrait of an elderly woman with kind eyes and silver hair, soft cinematic lighting, high-end medical photography style, clean white background, serene and dignified expression." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAiAr_A5ZmWJWup87RyFstDq3sbKBE93gM3b-SJ5AXhB6jyArmfAt36Lqz3NWId7LheSvJ9iDNh1iWQC34LnDR7FaMk0aTBt8_LKErFSdEiLcL2rpU5QfUoFXd7HxiyLPPCpKBj_dRmRYm2bxq0MU6qCNL2DcT_IwHQgiTlI_zmO_Pr41OKE7W-YYBPusxUGs6eTDtIqb4etokZh9qR42yLBUU_-SKtzcfGCZNgqgvnrzFmijR7VUqkU4vptdSVDRb07mW1rHFIrE"/>
+</div>
+<div class="absolute -bottom-2 -right-2 bg-success w-6 h-6 rounded-full border-4 border-surface-container-lowest shadow-sm"></div>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<h1 class="font-display-lg text-display-lg text-on-surface tracking-tighter">Eleanor Rigby</h1>
+<span class="px-3 py-1 bg-primary/10 text-primary rounded-full font-label-sm text-label-sm flex items-center gap-1.5 border border-primary/20">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>
+            PREMIUM CARE
+          </span>
+</div>
+<div class="flex flex-wrap gap-6 text-on-surface-variant font-label-md text-label-md">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">calendar_today</span>
+            72 Years • 14 May 1952
+          </div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">fingerprint</span>
+            ID: P-992-881
+          </div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">location_on</span>
+            London, UK
+          </div>
+</div>
+</div>
+</div>
+<div class="flex gap-3 relative z-10">
+<button class="px-6 py-3 rounded-2xl bg-surface-container-high text-on-surface font-label-md text-label-md hover:bg-surface-variant transition-all flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">edit</span> Edit Profile
+      </button>
+<button class="px-6 py-3 rounded-2xl bg-primary text-on-primary font-label-md text-label-md hover:opacity-90 transition-all shadow-md flex items-center gap-2">
+<span class="material-symbols-outlined text-[20px]">add</span> New Intake
+      </button>
+</div>
+</section>
+<!-- Main Grid: Split Layout -->
+<div class="grid grid-cols-12 gap-gutter-grid">
+<!-- Left Column: Clinical Timeline & Gallery -->
+<div class="col-span-12 lg:col-span-8 flex flex-col gap-gutter-grid">
+<!-- AI Insight Banner -->
+<div class="bg-gradient-to-r from-primary to-secondary p-6 rounded-3xl text-on-primary flex items-center justify-between relative overflow-hidden shadow-lg">
+<div class="relative z-10 flex items-center gap-4">
+<div class="w-12 h-12 rounded-xl bg-on-primary/20 flex items-center justify-center backdrop-blur-md">
+<span class="material-symbols-outlined animate-pulse">auto_awesome</span>
+</div>
+<div>
+<p class="font-label-md text-label-md opacity-80 uppercase tracking-widest">AI Status Overview</p>
+<p class="font-headline-md text-headline-md leading-none">Recovering optimally from Post-Op Week 4</p>
+</div>
+</div>
+<div class="relative z-10 text-right">
+<div class="text-display-lg font-display-lg leading-none">94%</div>
+<p class="font-label-sm text-label-sm opacity-80">Compliance Score</p>
+</div>
+<div class="absolute top-0 right-0 w-full h-full opacity-20 pointer-events-none bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white/40 via-transparent to-transparent"></div>
+</div>
+<!-- Clinical Timeline -->
+<div class="bg-card-surface rounded-3xl p-8 shadow-sm">
+<div class="flex items-center justify-between mb-10">
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Clinical Timeline</h2>
+<div class="flex bg-surface-container-low p-1 rounded-xl">
+<button class="px-4 py-1.5 rounded-lg bg-white shadow-sm font-label-md text-label-md text-primary">All</button>
+<button class="px-4 py-1.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">Labs</button>
+<button class="px-4 py-1.5 rounded-lg font-label-md text-label-md text-on-surface-variant hover:text-on-surface transition-colors">Treatments</button>
+</div>
+</div>
+<div class="relative ml-4 pl-10 border-l-2 border-surface-container-high space-y-12 pb-4">
+<!-- Timeline Item 1 -->
+<div class="relative">
+<div class="absolute -left-[51px] top-0 w-5 h-5 rounded-full bg-success ring-8 ring-white"></div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Today, 09:42 AM</span>
+<span class="px-3 py-1 bg-success/10 text-success rounded-full text-[10px] font-bold">COMPLETED</span>
+</div>
+<div class="bg-surface-container-low/50 p-6 rounded-2xl group hover:bg-surface-container-low transition-all">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Physiotherapy: Session 12</h3>
+<p class="text-body-md text-text-body mb-4">Focus on range of motion for left hip mobility. Patient reported 2/10 pain level, significantly reduced from previous session.</p>
+<div class="flex gap-4">
+<div class="bg-white p-3 rounded-xl border border-border-subtle flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">analytics</span>
+<div>
+<p class="text-[10px] text-on-surface-variant font-bold uppercase">Mobility Index</p>
+<p class="text-label-md font-label-md text-on-surface">+12.5% Gain</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Item 2 -->
+<div class="relative">
+<div class="absolute -left-[51px] top-0 w-5 h-5 rounded-full bg-primary ring-8 ring-white"></div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Oct 24, 2023</span>
+<span class="px-3 py-1 bg-primary/10 text-primary rounded-full text-[10px] font-bold">REPORT READY</span>
+</div>
+<div class="bg-surface-container-low/50 p-6 rounded-2xl group hover:bg-surface-container-low transition-all">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Comprehensive Hematology Panel</h3>
+<div class="grid grid-cols-3 gap-4 mt-4">
+<div class="text-center p-3 bg-white rounded-xl border border-border-subtle">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase">Hemoglobin</p>
+<p class="text-headline-md font-headline-md text-on-surface">14.2</p>
+<p class="text-[10px] text-success font-bold">NORMAL</p>
+</div>
+<div class="text-center p-3 bg-white rounded-xl border border-border-subtle">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase">WBC Count</p>
+<p class="text-headline-md font-headline-md text-on-surface">7.8</p>
+<p class="text-[10px] text-success font-bold">NORMAL</p>
+</div>
+<div class="text-center p-3 bg-white rounded-xl border border-border-subtle">
+<p class="text-[10px] text-on-surface-variant font-bold uppercase">Platelets</p>
+<p class="text-headline-md font-headline-md text-on-surface">210k</p>
+<p class="text-[10px] text-warning font-bold">LOW-AVG</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Timeline Item 3 -->
+<div class="relative">
+<div class="absolute -left-[51px] top-0 w-5 h-5 rounded-full bg-on-surface-variant ring-8 ring-white"></div>
+<div class="flex flex-col gap-3">
+<div class="flex items-center justify-between">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Oct 12, 2023</span>
+<span class="px-3 py-1 bg-surface-container-high text-on-surface-variant rounded-full text-[10px] font-bold">PROCEDURE</span>
+</div>
+<div class="bg-surface-container-low/50 p-6 rounded-2xl border-l-4 border-primary">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-2">Left Total Hip Arthroplasty</h3>
+<p class="text-body-md text-text-body">Dr. Julian Marsh performed successful replacement. No intraoperative complications noted. Discharge date: Oct 15.</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Before/After Progress Gallery -->
+<div class="bg-card-surface rounded-3xl p-8 shadow-sm">
+<div class="flex items-center justify-between mb-8">
+<h2 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Recovery Visualization</h2>
+<button class="text-primary font-label-md text-label-md flex items-center gap-2 hover:underline">
+            View All Media <span class="material-symbols-outlined">arrow_right_alt</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="relative group overflow-hidden rounded-2xl">
+<img class="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-700" data-alt="High-resolution medical X-ray of a human hip before surgery, showing severe osteoarthritis and joint degradation. Clean, clinical aesthetics with medical annotations and white border." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCkHkocBPBEaEQ1RYnLkPM7mrDwi47c40j7gn83qlJrZOIDVzBwHlKnuJPBJ9GUaOWFGi5lpRzyWBfjHtOjhceraHvLKfDzPzdfMhfQd2dIUrRdP6DIi_I3zKfCB65QUQNlqRO6X-hZ01vzqtEA8xYM7h__1U4kAhAkC3UMLv63SEKzKzYkpunp2AfhxHd8sSO0jcZTE7eQFfffCKOMv_qgR6Ya5SUshLaIHn9Rfx6mftwFk02f-ZfudTIJKHDhzVspKp0L9W7cAc8"/>
+<div class="absolute top-4 left-4 px-3 py-1 bg-black/50 backdrop-blur-md text-white font-label-sm text-label-sm rounded-full">PRE-OPERATIVE</div>
+<div class="absolute bottom-4 left-4 right-4 p-4 bg-white/90 backdrop-blur-xl rounded-xl">
+<p class="font-label-md text-label-md text-on-surface">Sept 15, 2023</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Severe joint space narrowing</p>
+</div>
+</div>
+<div class="relative group overflow-hidden rounded-2xl">
+<img class="w-full aspect-video object-cover group-hover:scale-105 transition-transform duration-700" data-alt="High-resolution medical X-ray of a human hip post-surgery, showing a perfectly aligned prosthetic implant. Clinical lighting, modern orthopedics visualization style." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP06nO1xMKThqhfboasohazoeqECRToNV1oHZpzoXcNYOZ6U4Jt2wH2x8KpRIGk_kAHPpjcMJX6gWgCXPGD9Qi4I7FD3uB3wZrSYHydGuG9oCtHbj4c1meY6XgzT5kudzFt-PvrKRjxyZZFKzecVnoCNtZLXp0cEPsEF4X8gshxCaLzmMkQ0wgZISthJdFJLXIRaz1o5z742IO_hE1nlsUf4bK73BZOEL7Dn8wIpmmW5CGDYZxe0G7nvIi3KGDjKi9HIIAzZ2vxIM"/>
+<div class="absolute top-4 left-4 px-3 py-1 bg-success/80 backdrop-blur-md text-white font-label-sm text-label-sm rounded-full">POST-OPERATIVE (W4)</div>
+<div class="absolute bottom-4 left-4 right-4 p-4 bg-white/90 backdrop-blur-xl rounded-xl">
+<p class="font-label-md text-label-md text-on-surface">Nov 02, 2023</p>
+<p class="text-label-sm font-label-sm text-on-surface-variant">Optimal implant integration</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Right Column: AI Analysis & Documents -->
+<div class="col-span-12 lg:col-span-4 flex flex-col gap-gutter-grid">
+<!-- Glassmorphic AI Health Summary -->
+<div class="bg-surface-container-lowest/80 backdrop-blur-2xl rounded-3xl p-8 border border-white/50 shadow-xl sticky top-24">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">psychology</span>
+</div>
+<h2 class="font-headline-md text-headline-md text-on-surface tracking-tight">AI Health Summary</h2>
+</div>
+<!-- Metric Rings -->
+<div class="flex justify-around mb-10">
+<div class="flex flex-col items-center gap-2">
+<div class="relative w-20 h-20">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-high" cx="40" cy="40" fill="transparent" r="34" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-primary transition-all duration-1000" cx="40" cy="40" fill="transparent" r="34" stroke="currentColor" stroke-dasharray="213" stroke-dashoffset="30" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-md text-label-md text-on-surface">85%</span>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Adherence</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div class="relative w-20 h-20">
+<svg class="w-full h-full transform -rotate-90">
+<circle class="text-surface-container-high" cx="40" cy="40" fill="transparent" r="34" stroke="currentColor" stroke-width="6"></circle>
+<circle class="text-success transition-all duration-1000" cx="40" cy="40" fill="transparent" r="34" stroke="currentColor" stroke-dasharray="213" stroke-dashoffset="150" stroke-linecap="round" stroke-width="6"></circle>
+</svg>
+<span class="absolute inset-0 flex items-center justify-center font-label-md text-label-md text-on-surface">28%</span>
+</div>
+<span class="text-[10px] font-bold text-on-surface-variant uppercase">Pain Delta</span>
+</div>
+</div>
+<div class="space-y-6">
+<div class="flex flex-col gap-2">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Active Alerts</p>
+<div class="bg-error/5 p-4 rounded-2xl border border-error/10 flex gap-4">
+<span class="material-symbols-outlined text-error">pill</span>
+<div>
+<p class="font-label-md text-label-md text-on-surface">Medication Conflict</p>
+<p class="text-[12px] text-on-surface-variant">Warfarin dosage may interact with newly prescribed supplements.</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-4">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Recommended Next Steps</p>
+<ul class="space-y-4">
+<li class="flex items-start gap-3 group">
+<div class="w-6 h-6 rounded-full border-2 border-primary/30 flex items-center justify-center mt-0.5 group-hover:bg-primary/10 transition-colors">
+<div class="w-2 h-2 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-label-md font-label-md text-on-surface">Schedule Dexa Bone Scan for Week 8</span>
+</li>
+<li class="flex items-start gap-3 group">
+<div class="w-6 h-6 rounded-full border-2 border-primary/30 flex items-center justify-center mt-0.5 group-hover:bg-primary/10 transition-colors">
+<div class="w-2 h-2 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-label-md font-label-md text-on-surface">Review Vitamin D3 intake levels</span>
+</li>
+<li class="flex items-start gap-3 group">
+<div class="w-6 h-6 rounded-full border-2 border-primary/30 flex items-center justify-center mt-0.5 group-hover:bg-primary/10 transition-colors">
+<div class="w-2 h-2 rounded-full bg-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
+</div>
+<span class="text-label-md font-label-md text-on-surface">Update Physiotherapy routine to Level 2</span>
+</li>
+</ul>
+</div>
+<hr class="border-surface-container-high"/>
+<div class="flex flex-col gap-4">
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-widest">Documents &amp; Reports</p>
+<div class="space-y-2">
+<div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">picture_as_pdf</span>
+<span class="text-label-md font-label-md text-on-surface">Insurance_Auth_02.pdf</span>
+</div>
+<span class="material-symbols-outlined text-[20px] opacity-0 group-hover:opacity-100 transition-opacity">download</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">description</span>
+<span class="text-label-md font-label-md text-on-surface">PostOp_Instructions.docx</span>
+</div>
+<span class="material-symbols-outlined text-[20px] opacity-0 group-hover:opacity-100 transition-opacity">download</span>
+</div>
+<div class="flex items-center justify-between p-3 rounded-xl hover:bg-surface-container-low transition-colors group cursor-pointer">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">analytics</span>
+<span class="text-label-md font-label-md text-on-surface">Genetic_Markers_Report.pdf</span>
+</div>
+<span class="material-symbols-outlined text-[20px] opacity-0 group-hover:opacity-100 transition-opacity">download</span>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-8 py-4 bg-on-surface text-surface rounded-2xl font-label-md text-label-md hover:bg-on-surface-variant transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined">print</span> Print Summary Portfolio
+        </button>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Simple micro-interaction for timeline items
+  document.querySelectorAll('.group').forEach(item => {
+    item.addEventListener('mouseenter', () => {
+      item.style.transform = 'translateY(-2px)';
+    });
+    item.addEventListener('mouseleave', () => {
+      item.style.transform = 'translateY(0px)';
+    });
+  });
+
+  // Animated numbers counter effect
+  const counters = document.querySelectorAll('.text-display-lg');
+  counters.forEach(counter => {
+    const target = +counter.innerText.replace('%', '');
+    let count = 0;
+    const updateCount = () => {
+      const increment = target / 50;
+      if (count < target) {
+        count += increment;
+        counter.innerText = Math.ceil(count) + (counter.innerText.includes('%') ? '%' : '');
+        setTimeout(updateCount, 20);
+      } else {
+        counter.innerText = target + (counter.innerText.includes('%') ? '%' : '');
+      }
+    };
+    updateCount();
+  });
+</script></main></div></body></html>

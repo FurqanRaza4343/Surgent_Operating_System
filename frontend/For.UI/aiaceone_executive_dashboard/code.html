@@ -1,0 +1,417 @@
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={theme:{extend:{"colors":{"surface-container-high":"#e6e8ea","success":"#10B981","on-surface":"#191c1e","on-tertiary-fixed":"#001e2c","tertiary-container":"#00759f","surface-variant":"#e0e3e5","outline":"#737686","primary-fixed":"#dbe1ff","on-primary":"#ffffff","surface-dim":"#d8dadc","on-surface-variant":"#434655","outline-variant":"#c3c6d7","error":"#ba1a1a","on-background":"#191c1e","primary-fixed-dim":"#b4c5ff","on-tertiary-container":"#e1f2ff","on-tertiary":"#ffffff","surface-container-highest":"#e0e3e5","surface-container-low":"#f2f4f6","secondary":"#00687a","border-subtle":"#E2E8F0","surface-container":"#eceef0","on-primary-container":"#eeefff","primary-container":"#2563eb","on-primary-fixed":"#00174b","tertiary-fixed-dim":"#7bd0ff","surface-container-lowest":"#ffffff","error-container":"#ffdad6","background":"#f7f9fb","text-body":"#64748B","on-error":"#ffffff","surface":"#f7f9fb","surface-tint":"#0053db","on-secondary-fixed-variant":"#004e5c","on-primary-fixed-variant":"#003ea8","on-secondary-fixed":"#001f26","inverse-primary":"#b4c5ff","danger":"#EF4444","text-heading":"#0F172A","secondary-fixed-dim":"#4cd7f6","on-secondary":"#ffffff","secondary-fixed":"#acedff","secondary-container":"#57dffe","warning":"#F59E0B","surface-bright":"#f7f9fb","card-surface":"#FFFFFF","inverse-on-surface":"#eff1f3","inverse-surface":"#2d3133","tertiary":"#005b7c","tertiary-fixed":"#c4e7ff","on-tertiary-fixed-variant":"#004c69","on-secondary-container":"#006172","on-error-container":"#93000a","primary":"#004ac6"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"stack-md":"1rem","container-max":"1440px","margin-page":"2rem","stack-sm":"0.5rem","stack-lg":"2rem","gutter-grid":"1.5rem"},"fontFamily":{"body-lg":["Inter"],"body-md":["Inter"],"label-sm":["Inter"],"headline-md":["Inter"],"display-lg":["Inter"],"label-md":["Inter"],"headline-lg-mobile":["Inter"],"headline-lg":["Inter"]},"fontSize":{"body-lg":["18px",{"lineHeight":"1.6","fontWeight":"400"}],"body-md":["16px",{"lineHeight":"1.5","fontWeight":"400"}],"label-sm":["12px",{"lineHeight":"1.2","letterSpacing":"0.05em","fontWeight":"600"}],"headline-md":["24px",{"lineHeight":"1.3","fontWeight":"600"}],"display-lg":["48px",{"lineHeight":"1.1","letterSpacing":"-0.02em","fontWeight":"700"}],"label-md":["14px",{"lineHeight":"1.4","letterSpacing":"0.01em","fontWeight":"500"}],"headline-lg-mobile":["24px",{"lineHeight":"1.2","fontWeight":"600"}],"headline-lg":["32px",{"lineHeight":"1.2","letterSpacing":"-0.01em","fontWeight":"600"}]}}}}</script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/></head><body class="bg-background font-body-md text-on-surface"><aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container-low/70 backdrop-blur-xl border-r border-border-subtle z-50 flex flex-col"><div class="p-8 flex items-center gap-3"><img alt="Aiaceone Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK-meVwsx2YrcNYc1YMXGJ9fH6kDmUgx3OdMNrPS51hjJt7xLYxJrbpty_ke2YzBZ7Uh-MbmXWgVdoiS_Lq3XxOnbNEEeKOmTsTagpzMg_hFgU_Hf6JiJfYLn3c8TltxoiRAdbd74tS9YjYUfvn6MCIuqQ2xoCaICuqJ470JYDIO1g7vn65vdFvzssDBcx5dcAnOnUsWKi77O9eaxBvh32WWLLh3D5pNNARfbcTq1EDDcOGUWugDEnLnE9iLU9KEtK8WLfD42p5YM"/><span class="font-headline-md text-headline-md text-on-surface tracking-tight">Aiaceone</span></div><nav class="flex-1 px-4 space-y-1 overflow-y-auto" data-active-classes="bg-primary/10 text-primary font-semibold"><div class="px-4 py-2 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Main</div><a aria-current="page" class="flex items-center px-4 py-3 rounded-xl transition-all group bg-primary/10 text-primary font-semibold" data-path="dashboard" href="#"><span class="material-symbols-outlined mr-3">dashboard</span>Dashboard</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="patients" href="#"><span class="material-symbols-outlined mr-3">person</span>Patients</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="appointments" href="#"><span class="material-symbols-outlined mr-3">event</span>Appointments</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="doctors" href="#"><span class="material-symbols-outlined mr-3">medical_services</span>Doctors</a><div class="px-4 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Management</div><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="crm" href="#"><span class="material-symbols-outlined mr-3">groups</span>CRM</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="ai-receptionist" href="#"><span class="material-symbols-outlined mr-3">smart_toy</span>AI Receptionist</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="calendar" href="#"><span class="material-symbols-outlined mr-3">calendar_month</span>Calendar</a><div class="px-4 py-4 text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest">Operations</div><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="analytics" href="#"><span class="material-symbols-outlined mr-3">monitoring</span>Analytics</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="payments" href="#"><span class="material-symbols-outlined mr-3">payments</span>Payments</a><a class="flex items-center px-4 py-3 rounded-xl text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all group" data-path="settings" href="#"><span class="material-symbols-outlined mr-3">settings</span>Settings</a></nav></aside><div class="pl-[280px] min-h-screen"><header class="fixed top-0 left-[280px] right-0 h-16 bg-surface/80 backdrop-blur-xl z-40 flex items-center justify-between px-8 border-b border-border-subtle"><div class="flex items-center bg-surface-container px-4 py-1.5 rounded-full border border-border-subtle w-96"><span class="material-symbols-outlined text-on-surface-variant text-[20px]">search</span><input class="bg-transparent border-none focus:ring-0 text-label-md font-label-md w-full ml-2 text-on-surface" placeholder="Command + K to search..." type="text"/></div><div class="flex items-center gap-6"><button class="relative text-on-surface-variant hover:text-primary transition-colors"><span class="material-symbols-outlined">notifications</span><span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span></button><div class="flex items-center gap-3 pl-6 border-l border-border-subtle"><div class="text-right hidden sm:block"><p class="text-label-md font-label-md text-on-surface leading-none mb-0.5">Dr. Sarah Chen</p><p class="text-label-sm font-label-sm text-on-surface-variant leading-none">Clinical Director</p></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="pt-16 bg-surface min-h-screen px-margin-page py-stack-lg"><div class="flex flex-col w-full gap-gutter-grid relative">
+<!-- Ethereal Background Shader Layer -->
+<div class="fixed inset-0 pointer-events-none opacity-40 z-0">
+<!-- STITCH_SHADER_START:ANIMATION_3 class="w-full h-full" -->
+<div class="w-full h-full" style="display:block;">
+<canvas id="shader-canvas-ANIMATION_3" style="display:block;width:100%;height:100%"></canvas>
+<script>
+(function() {
+  const canvas = document.getElementById('shader-canvas-ANIMATION_3');
+
+  // Sync the WebGL drawing-buffer size with the CSS-driven layout size.
+  // This fires on initial layout and whenever the element is resized.
+  function syncSize() {
+    const w = canvas.clientWidth  || 1280;
+    const h = canvas.clientHeight || 720;
+    if (canvas.width !== w || canvas.height !== h) {
+      canvas.width  = w;
+      canvas.height = h;
+    }
+  }
+  if (typeof ResizeObserver !== 'undefined') {
+    new ResizeObserver(syncSize).observe(canvas);
+  }
+  syncSize();
+
+  const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+  if (!gl) return;
+  const vs = `attribute vec2 a_position;
+varying vec2 v_texCoord;
+void main() {
+  v_texCoord = a_position * 0.5 + 0.5;
+  gl_Position = vec4(a_position, 0.0, 1.0);
+}`;
+  const fs = `precision highp float;
+varying vec2 v_texCoord;
+uniform float u_time;
+uniform vec2 u_resolution;
+
+void main() {
+    vec2 uv = v_texCoord;
+    float noise = sin(uv.x * 10.0 + u_time * 0.5) * cos(uv.y * 10.0 + u_time * 0.5);
+    vec3 color1 = vec3(0.97, 0.98, 0.98); // surface
+    vec3 color2 = vec3(0.145, 0.388, 0.922); // primary #2563eb
+    vec3 finalColor = mix(color1, color2, noise * 0.05 + 0.02);
+    gl_FragColor = vec4(finalColor, 1.0);
+}`;
+  function cs(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, cs(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, cs(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+  const pos = gl.getAttribLocation(prog, 'a_position');
+  gl.enableVertexAttribArray(pos);
+  gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+  const uTime = gl.getUniformLocation(prog, 'u_time');
+  const uRes = gl.getUniformLocation(prog, 'u_resolution');
+  const uMouse = gl.getUniformLocation(prog, 'u_mouse');
+
+  // u_mouse is in pixel coordinates matching u_resolution (ShaderToy convention).
+  // Shaders that need normalized coords should use: u_mouse / u_resolution.
+  let mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+  window.addEventListener('mousemove', (event) => {
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width && rect.height) {
+      const nx = (event.clientX - rect.left) / rect.width;
+      const ny = 1.0 - (event.clientY - rect.top) / rect.height;
+      mouse.x = nx * canvas.width;
+      mouse.y = ny * canvas.height;
+    }
+  });
+
+  function render(t) {
+    if (typeof ResizeObserver === 'undefined') syncSize();
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    if (uTime) gl.uniform1f(uTime, t * 0.001);
+    if (uRes) gl.uniform2f(uRes, canvas.width, canvas.height);
+    if (uMouse) gl.uniform2f(uMouse, mouse.x, mouse.y);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    requestAnimationFrame(render);
+  }
+  render(0);
+})();
+</script>
+</div>
+<!-- STITCH_SHADER_END:ANIMATION_3 -->
+</div>
+<!-- Hero Greeting & Executive Summary -->
+<header class="relative z-10 flex flex-col md:flex-row justify-between items-end gap-6 mb-stack-lg">
+<div class="max-w-2xl">
+<span class="font-label-sm text-label-sm text-primary uppercase tracking-[0.2em] mb-3 block">Operational Overview</span>
+<h1 class="font-display-lg text-display-lg text-on-surface mb-4 tracking-tight">Good Morning, <br/><span class="text-on-surface-variant/60 font-medium">Dr. Sarah Chen</span></h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant leading-relaxed">
+                The AI Receptionist is currently managing <span class="text-primary font-semibold">12 incoming inquiries</span>. Your surgical schedule is optimized with 4 procedures confirmed for the morning block.
+            </p>
+</div>
+<div class="flex gap-4">
+<button class="bg-card-surface shadow-sm px-6 py-3 rounded-xl flex items-center gap-3 hover:shadow-md transition-all group">
+<span class="material-symbols-outlined text-primary group-hover:scale-110 transition-transform">calendar_today</span>
+<span class="font-label-md text-label-md text-on-surface">View Schedule</span>
+</button>
+<button class="bg-primary text-on-primary px-6 py-3 rounded-xl flex items-center gap-3 hover:bg-primary/90 shadow-lg shadow-primary/20 transition-all">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span class="font-label-md text-label-md">New Consultation</span>
+</button>
+</div>
+</header>
+<!-- Live Metrics Grid -->
+<section class="relative z-10 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-gutter-grid">
+<!-- Revenue Card -->
+<div class="bg-card-surface/80 backdrop-blur-md p-6 rounded-[24px] shadow-sm flex flex-col justify-between h-40 group hover:-translate-y-1 transition-all duration-500">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-success/10 rounded-lg">
+<span class="material-symbols-outlined text-success">payments</span>
+</div>
+<span class="text-success font-label-sm text-label-sm bg-success/5 px-2 py-1 rounded-full">+12.4%</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">Revenue (MTD)</p>
+<p class="text-headline-lg font-headline-lg text-on-surface">$124,582</p>
+</div>
+</div>
+<!-- Patients Card -->
+<div class="bg-card-surface/80 backdrop-blur-md p-6 rounded-[24px] shadow-sm flex flex-col justify-between h-40 group hover:-translate-y-1 transition-all duration-500">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-primary/10 rounded-lg">
+<span class="material-symbols-outlined text-primary">person</span>
+</div>
+<span class="text-primary font-label-sm text-label-sm bg-primary/5 px-2 py-1 rounded-full">Active Now</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">Active Patients</p>
+<p class="text-headline-lg font-headline-lg text-on-surface">1,284</p>
+</div>
+</div>
+<!-- Appointments Card -->
+<div class="bg-card-surface/80 backdrop-blur-md p-6 rounded-[24px] shadow-sm flex flex-col justify-between h-40 group hover:-translate-y-1 transition-all duration-500">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-secondary/10 rounded-lg">
+<span class="material-symbols-outlined text-secondary">event_note</span>
+</div>
+<div class="flex -space-x-2">
+<div class="w-6 h-6 rounded-full border-2 border-card-surface bg-slate-200"></div>
+<div class="w-6 h-6 rounded-full border-2 border-card-surface bg-slate-300"></div>
+<div class="w-6 h-6 rounded-full border-2 border-card-surface bg-slate-400"></div>
+</div>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">Today's Appointments</p>
+<p class="text-headline-lg font-headline-lg text-on-surface">28</p>
+</div>
+</div>
+<!-- Surgeries Card -->
+<div class="bg-card-surface/80 backdrop-blur-md p-6 rounded-[24px] shadow-sm flex flex-col justify-between h-40 group hover:-translate-y-1 transition-all duration-500">
+<div class="flex justify-between items-start">
+<div class="p-2 bg-tertiary/10 rounded-lg">
+<span class="material-symbols-outlined text-tertiary">medical_services</span>
+</div>
+<span class="text-warning font-label-sm text-label-sm">In Progress</span>
+</div>
+<div>
+<p class="text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">Upcoming Surgeries</p>
+<div class="flex items-baseline gap-2">
+<p class="text-headline-lg font-headline-lg text-on-surface">04</p>
+<span class="text-label-sm font-label-sm text-on-surface-variant">Scheduled</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Central Data Visualization & AI Insights -->
+<div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-gutter-grid mt-4">
+<!-- Large Chart Container -->
+<div class="lg:col-span-8 bg-card-surface rounded-[32px] p-8 shadow-sm flex flex-col overflow-hidden relative">
+<div class="flex justify-between items-center mb-12">
+<div>
+<h3 class="text-headline-md font-headline-md text-on-surface tracking-tight">Patient Volume Analysis</h3>
+<p class="text-label-md font-label-md text-on-surface-variant">7-day rolling window • Live synchronization</p>
+</div>
+<div class="flex items-center gap-2 bg-surface-container-low p-1 rounded-full">
+<button class="px-4 py-1.5 rounded-full text-label-sm font-label-sm bg-card-surface shadow-sm text-on-surface">Week</button>
+<button class="px-4 py-1.5 rounded-full text-label-sm font-label-sm text-on-surface-variant hover:text-on-surface">Month</button>
+</div>
+</div>
+<!-- SVG Data Viz -->
+<div class="flex-1 w-full min-h-[350px] flex items-end">
+<svg class="w-full h-full overflow-visible" viewbox="0 0 800 300">
+<defs>
+<lineargradient id="gradient-blue" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="var(--primary)" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="var(--primary)" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<!-- Grid Lines -->
+<line stroke="var(--border-subtle)" stroke-dasharray="4,4" x1="0" x2="800" y1="0" y2="0"></line>
+<line stroke="var(--border-subtle)" stroke-dasharray="4,4" x1="0" x2="800" y1="100" y2="100"></line>
+<line stroke="var(--border-subtle)" stroke-dasharray="4,4" x1="0" x2="800" y1="200" y2="200"></line>
+<!-- Area Chart -->
+<path d="M0,280 Q100,240 200,260 T400,180 T600,100 T800,50 L800,300 L0,300 Z" fill="url(#gradient-blue)"></path>
+<!-- Line Chart -->
+<path d="M0,280 Q100,240 200,260 T400,180 T600,100 T800,50" fill="none" stroke="var(--primary)" stroke-linecap="round" stroke-width="4"></path>
+<!-- Tooltip Point -->
+<circle class="animate-pulse shadow-xl" cx="600" cy="100" fill="var(--primary)" r="8" stroke="white" stroke-width="3"></circle>
+</svg>
+</div>
+<div class="mt-8 pt-8 border-t border-border-subtle flex justify-between items-center">
+<div class="flex gap-12">
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase mb-1">New Admits</p>
+<p class="text-headline-md font-headline-md text-on-surface">428</p>
+</div>
+<div>
+<p class="text-label-sm font-label-sm text-on-surface-variant uppercase mb-1">Avg. Stay</p>
+<p class="text-headline-md font-headline-md text-on-surface">3.2<span class="text-body-md font-normal text-on-surface-variant ml-1">days</span></p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="text-label-md font-label-md text-success flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">trending_up</span>
+                        8% increase
+                    </span>
+<button class="text-primary font-label-md text-label-md hover:underline">Full Report →</button>
+</div>
+</div>
+</div>
+<!-- Side Panels: AI Insights & Activity -->
+<div class="lg:col-span-4 flex flex-col gap-gutter-grid">
+<!-- AI Insights Card -->
+<div class="bg-on-surface text-on-primary rounded-[32px] p-8 shadow-xl relative overflow-hidden group">
+<div class="absolute top-0 right-0 p-8 opacity-20 transform translate-x-4 -translate-y-4">
+<span class="material-symbols-outlined text-[120px]">smart_toy</span>
+</div>
+<h3 class="text-headline-md font-headline-md mb-6 relative z-10 flex items-center gap-2">
+                    AI Insights
+                    <span class="w-2 h-2 bg-success rounded-full animate-ping"></span>
+</h3>
+<div class="space-y-6 relative z-10">
+<div class="flex items-center justify-between p-4 bg-white/10 rounded-2xl hover:bg-white/15 transition-colors">
+<div>
+<p class="text-label-sm font-label-sm opacity-60">Patient Sentiment</p>
+<p class="text-body-lg font-semibold">92% Positive</p>
+</div>
+<span class="material-symbols-outlined text-success">sentiment_very_satisfied</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white/10 rounded-2xl hover:bg-white/15 transition-colors">
+<div>
+<p class="text-label-sm font-label-sm opacity-60">Lead Conversion</p>
+<p class="text-body-lg font-semibold">24% Improvement</p>
+</div>
+<span class="material-symbols-outlined text-primary-fixed">query_stats</span>
+</div>
+<div class="flex items-center justify-between p-4 bg-white/10 rounded-2xl hover:bg-white/15 transition-colors">
+<div>
+<p class="text-label-sm font-label-sm opacity-60">Live AI Calls</p>
+<p class="text-body-lg font-semibold">4 Active Sessions</p>
+</div>
+<div class="flex gap-1">
+<span class="w-1 h-4 bg-primary animate-[bounce_1s_infinite_0ms] rounded-full"></span>
+<span class="w-1 h-4 bg-primary animate-[bounce_1s_infinite_200ms] rounded-full"></span>
+<span class="w-1 h-4 bg-primary animate-[bounce_1s_infinite_400ms] rounded-full"></span>
+</div>
+</div>
+</div>
+<button class="mt-8 w-full py-4 bg-primary text-on-primary rounded-xl font-label-md text-label-md hover:bg-primary/90 transition-all">
+                    Open AI Command Center
+                </button>
+</div>
+<!-- Activity Feed -->
+<div class="bg-card-surface/60 backdrop-blur-md border border-border-subtle rounded-[32px] p-8 flex-1">
+<h3 class="text-label-sm font-label-sm text-on-surface-variant uppercase tracking-widest mb-6">Recent Alerts</h3>
+<div class="space-y-8">
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-error text-[20px]">priority_high</span>
+</div>
+<div>
+<p class="text-label-md font-semibold text-on-surface">Urgent: Post-Op Lab Results</p>
+<p class="text-label-sm text-on-surface-variant">Patient #8210 requires immediate review.</p>
+<span class="text-[10px] text-on-surface-variant uppercase mt-1 block">2 mins ago</span>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-[20px]">smart_toy</span>
+</div>
+<div>
+<p class="text-label-md font-semibold text-on-surface">AI Suggestion</p>
+<p class="text-label-sm text-on-surface-variant">Optimize surgery block for Tuesday based on historical demand.</p>
+<span class="text-[10px] text-on-surface-variant uppercase mt-1 block">15 mins ago</span>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-10 h-10 rounded-full bg-success/10 flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-success text-[20px]">check_circle</span>
+</div>
+<div>
+<p class="text-label-md font-semibold text-on-surface">Onboarding Complete</p>
+<p class="text-label-sm text-on-surface-variant">3 new patients successfully processed by AI agent.</p>
+<span class="text-[10px] text-on-surface-variant uppercase mt-1 block">1 hour ago</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Interactive Bottom Section: Patient Mosaic -->
+<section class="relative z-10 mt-stack-lg">
+<div class="flex justify-between items-center mb-6">
+<h2 class="text-headline-md font-headline-md text-on-surface">Patient Case Spotlight</h2>
+<button class="text-on-surface-variant hover:text-primary flex items-center gap-1 font-label-md text-label-md">
+                Browse All Patients
+                <span class="material-symbols-outlined text-[20px]">arrow_forward</span>
+</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-gutter-grid">
+<!-- Patient Card 1 -->
+<div class="bg-card-surface rounded-[24px] overflow-hidden group shadow-sm hover:shadow-xl transition-all duration-700">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A clean, minimalist portrait of a middle-aged patient in a brightly lit modern medical clinic, soft depth of field, high-end photography, cinematic lighting, corporate professional aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGZLFz6S0DpoVQPyOw1YgX7gZ7fE2KghgVgoBHzOWu2tEBD71P8PhHyN9w1rvjTcW8PltkVQJ4WINrevqfYB_RoIFnKtuvnMmW6Y09GdJkfmg0PzxzfMTe1wFplwSF71YofdwH1G7KE0HbEnFy3BK9xxiyGz5Zw38TiSpmxZgnqs9P9DEy-Ojhjp3Nc7kosGPHsMYU09_4zamRGz-Bj0H8_LxWefcwmMwCMlggUTIBdwnkCuZg3SnP_z06MzpRn20lBwuEcWhC2qM"/>
+<div class="absolute top-4 left-4 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-label-sm font-label-sm text-primary">Pre-Op</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-headline-md text-on-surface">James Wilson</h4>
+<span class="text-on-surface-variant text-label-sm">ID: #W-1290</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-label-md">
+<span class="text-on-surface-variant">Procedure</span>
+<span class="text-on-surface font-medium">Spinal Realignment</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-primary h-full w-[85%]"></div>
+</div>
+<p class="text-label-sm text-on-surface-variant">85% Readiness Score</p>
+</div>
+</div>
+</div>
+<!-- Patient Card 2 -->
+<div class="bg-card-surface rounded-[24px] overflow-hidden group shadow-sm hover:shadow-xl transition-all duration-700">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="A high-quality medical image showing a close-up of a digital medical tablet held by a doctor, displaying clear clinical data and charts, soft morning light hitting the screen, minimalist hospital background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCeh2OOS_JVWwWn9ya8BNHQ7NjZDuwyaosPq1tqjaUHTnsCGImRWcZyqILrq2_CMpeOR2fymFkoVp5qJaHU0ABTwzyp4sUCsXcoHSHmEhPTwQVF0E1xTj_77EshdioLbivG1WSNCOoplchY0XQiyMEJPXs1Q5NuQeNVU7uI9SyEXwYh_SIfl8O48JUtYEYwybE3jWH9GvztWiMLIy6_IXISHJ-cY4wMI4MH54iSW09f5NNoMZZEtxPA5_n6r-MxPJa6KWQswpcCVFI"/>
+<div class="absolute top-4 left-4 bg-success/90 backdrop-blur-md px-3 py-1 rounded-full text-label-sm font-label-sm text-on-primary">Stable</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-headline-md text-on-surface">Elena Rodriguez</h4>
+<span class="text-on-surface-variant text-label-sm">ID: #R-4421</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-label-md">
+<span class="text-on-surface-variant">Last Visit</span>
+<span class="text-on-surface font-medium">Follow-up Consult</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-success h-full w-full"></div>
+</div>
+<p class="text-label-sm text-on-surface-variant">Discharge Ready</p>
+</div>
+</div>
+</div>
+<!-- Patient Card 3 -->
+<div class="bg-card-surface rounded-[24px] overflow-hidden group shadow-sm hover:shadow-xl transition-all duration-700">
+<div class="h-48 overflow-hidden relative">
+<img class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" data-alt="An ethereal, abstract medical visualization representing neural activity or cell growth, glowing blue and soft white filaments, dark sophisticated background, high-end 3D render." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDjUS7uwwMV6uIn-kLSvV0_TbME15Z-rui_hW_096mpGgs6_wA0xaZfuufMWQXpd_eCSNidzVtK8sbd5BdQpG3ZMamKB9KKSe4RAZpUosz2hPWQy9fuIPB2GaaX5JX--9wFT9fdTmEEMnYeqqaDYM8FOkNtOLVN2dHKtm7AyPYI3KJwl9tLStHMdUaFYnOlRZM3sv1InzwLTS0VOyAnZVp6haFGmgMqSlHlLea0j5w_2vZcXn3bicj4DIU-0V_OXd8_CErVRr9hh8E"/>
+<div class="absolute top-4 left-4 bg-warning/90 backdrop-blur-md px-3 py-1 rounded-full text-label-sm font-label-sm text-on-surface">Monitoring</div>
+</div>
+<div class="p-6">
+<div class="flex justify-between items-center mb-4">
+<h4 class="font-headline-md text-on-surface">Arthur Pendragon</h4>
+<span class="text-on-surface-variant text-label-sm">ID: #P-0072</span>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between text-label-md">
+<span class="text-on-surface-variant">Care Level</span>
+<span class="text-on-surface font-medium">Critical Observation</span>
+</div>
+<div class="w-full bg-surface-container rounded-full h-1.5 overflow-hidden">
+<div class="bg-warning h-full w-[45%]"></div>
+</div>
+<p class="text-label-sm text-on-surface-variant">45% Protocol Progress</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script>
+    // Micro-interactions for live counters
+    document.addEventListener('DOMContentLoaded', () => {
+        const animateValue = (id, start, end, duration) => {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                obj.innerHTML = Math.floor(progress * (end - start) + start).toLocaleString();
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        };
+
+        // Note: Adding IDs to the HTML above would be needed for this to trigger.
+        // For this demo, we'll just handle basic hover interactions via CSS.
+    });
+</script></main></div></body></html>
