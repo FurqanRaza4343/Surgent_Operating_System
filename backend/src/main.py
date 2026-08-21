@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from src.config import get_settings
 from src.server.middleware import setup_middleware
 from src.server.exceptions import AppException
-from src.router.v1.agent import register_routes
+from src.router.agents import register_routes
 
 settings = get_settings()
 

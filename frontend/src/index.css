@@ -34,3 +34,44 @@ body {
 ::-webkit-scrollbar-track { background: #F0EDE7; }
 ::-webkit-scrollbar-thumb { background: #C7C0B4; border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: #ABA292; }
+
+/* lets-scroll cinematic hero theme — matches the Tailwind brand kit above */
+.cinematic-hero,
+.cinematic-hero .sw-root {
+  --sw-bg: #0B1D26;
+  --sw-ink: #FAF8F4;
+  --sw-ink-soft: #C7D6D6;
+  --sw-accent: #0B6362;
+  --sw-font-display: 'Fraunces', Georgia, serif;
+  --sw-font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+}
+/* The engine builds its DOM (and the tall scroll track that gives this
+   container its real height) inside a useEffect, which runs a beat after
+   React's first paint. Without a reserved height here, that first paint shows
+   the container collapsed to 0px — so the page briefly jumps straight to the
+   content below the hero before snapping back once the hero mounts. Reserving
+   the height (and the hero's own dark background) up front removes that flash
+   on refresh/first load. */
+.cinematic-hero {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: #0B1D26;
+}
+/* the site's own <Navbar /> already covers brand/nav/CTA — hide the engine's
+   built-in (empty) topbar so it can't sit on top of and block it */
+.cinematic-hero .sw-topbar {
+  display: none;
+}
+/* the engine's fixed background/copy/route layers are meant to hold on screen
+   (by design, "holds CTA at the end") when the hero IS the whole page. This
+   site has content below the hero, so once its own scroll track is fully
+   behind the viewport (.sw-past-end, toggled in CinematicHero.tsx), hide them
+   so they stop floating over every section below. */
+.cinematic-hero.sw-past-end .sw-sky,
+.cinematic-hero.sw-past-end .sw-stage,
+.cinematic-hero.sw-past-end .sw-copylayer,
+.cinematic-hero.sw-past-end .sw-route,
+.cinematic-hero.sw-past-end .sw-scrollbar,
+.cinematic-hero.sw-past-end .sw-hint {
+  display: none;
+}

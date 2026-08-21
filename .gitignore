@@ -1,3 +1,16 @@
 node_modules/
 *.env
 *.local
+
+# Third-party Claude Code skill (tool used to build the cinematic hero) — not
+# part of the product, kept locally only.
+lets-scroll-main/
+
+# Working notes / render prompts / scratch frames from building the cinematic
+# hero and avatar assets — useful during development, not project source.
+lets-scroll-assets/
+
+__pycache__/
+*.pyc
+.venv/
+venv/
