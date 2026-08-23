@@ -2,8 +2,15 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
+import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { ActivityIcon, MenuIcon, XIcon } from "lucide-react";
 import { Button } from "../ui";
+
+// `@clerk/clerk-react`'s components throw if there's no <ClerkProvider> above
+// them, and index.tsx only mounts one when the publishable key is actually
+// set (see the comment there). Checking the same env var here keeps that
+// same graceful "runs without auth if unconfigured" fallback intact.
+const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
 const LINKS = [
 { label: "Platform", href: "#platform" },
@@ -53,9 +60,24 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          {clerkEnabled ?
+          <>
+              <SignedOut>
+                <SignInButton mode="modal">
+                  <button className="text-sm font-semibold text-ink transition-colors hover:text-teal-600">
+                    Sign in
+                  </button>
+                </SignInButton>
+              </SignedOut>
+              <SignedIn>
+                <UserButton afterSignOutUrl="/" />
+              </SignedIn>
+            </> :
+
           <a href="#demo" className="text-sm font-semibold text-ink transition-colors hover:text-teal-600">
-            Sign in
-          </a>
+              Sign in
+            </a>
+          }
           <Button href="#demo" size="sm" arrow className="shadow-soft">
             Book a demo
           </Button>
@@ -89,6 +111,23 @@ export function Navbar() {
                   {l.label}
                 </a>
             )}
+              {clerkEnabled &&
+            <div className="mt-2 flex items-center gap-3 px-3">
+                  <SignedOut>
+                    <SignInButton mode="modal">
+                      <button
+                    onClick={() => setOpen(false)}
+                    className="text-sm font-semibold text-ink transition-colors hover:text-teal-600">
+
+                        Sign in
+                      </button>
+                    </SignInButton>
+                  </SignedOut>
+                  <SignedIn>
+                    <UserButton afterSignOutUrl="/" />
+                  </SignedIn>
+                </div>
+            }
               <Button
                 href="#demo"
                 size="sm"
