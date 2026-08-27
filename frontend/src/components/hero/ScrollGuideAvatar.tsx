@@ -205,6 +205,17 @@ export function ScrollGuideAvatar() {
     return () => window.removeEventListener("resize", recompute);
   }, [activeStop]);
 
+  // On phones there's no empty gutter to anchor the message bubble in without
+  // it sitting on top of real page content (see the mobile guide render below),
+  // so the full bubble only stays up briefly on each new stop, then collapses
+  // to just the badge — tapping it re-expands the current stop's message.
+  const [bubbleCollapsed, setBubbleCollapsed] = useState(false);
+  useEffect(() => {
+    setBubbleCollapsed(false);
+    const timer = setTimeout(() => setBubbleCollapsed(true), 3500);
+    return () => clearTimeout(timer);
+  }, [activeStop]);
+
   // The badge sits at an exact viewport corner; the bubble hangs off whichever
   // side has room (away from the screen edge the badge is anchored to) so it
   // can never get clipped or push the badge off its intended spot.
@@ -283,12 +294,29 @@ export function ScrollGuideAvatar() {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed bottom-5 right-5 z-50 flex max-w-[calc(100vw-2.5rem)] items-center gap-2.5">
+        className="fixed z-50 flex max-w-[calc(100vw-2.5rem)] items-center justify-end gap-2.5"
+        style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 1.25rem)", right: "1.25rem" }}>
 
-          <div className="rounded-2xl border border-sand-200 bg-white px-4 py-2.5 text-sm font-medium text-ink shadow-lift">
-            {STOPS[activeStop].message}
-          </div>
-          <AvatarBadge imageFailed={imageFailed} setImageFailed={setImageFailed} />
+          <AnimatePresence>
+            {!bubbleCollapsed &&
+            <motion.div
+              initial={{ opacity: 0, scale: 0.94 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.94 }}
+              transition={{ duration: 0.18 }}
+              className="rounded-2xl border border-sand-200 bg-white px-4 py-2.5 text-sm font-medium text-ink shadow-lift">
+
+                {STOPS[activeStop].message}
+              </motion.div>
+            }
+          </AnimatePresence>
+          <button
+            onClick={() => setBubbleCollapsed((v) => !v)}
+            aria-label={bubbleCollapsed ? "Show guide message" : "Hide guide message"}
+            className={`shrink-0 rounded-full ${FOCUS_RING}`}>
+
+            <AvatarBadge imageFailed={imageFailed} setImageFailed={setImageFailed} small={bubbleCollapsed} />
+          </button>
         </motion.div>
       }
 
@@ -329,17 +357,19 @@ export function ScrollGuideAvatar() {
 
 function AvatarBadge({
   imageFailed,
-  setImageFailed
+  setImageFailed,
+  small
 
 
-
-}: {imageFailed: boolean;setImageFailed: (v: boolean) => void;}) {
+}: {imageFailed: boolean;setImageFailed: (v: boolean) => void;small?: boolean;}) {
   return (
     <motion.div
       layoutId="sw-avatar"
       layout
       transition={{ type: "spring", stiffness: 160, damping: 24 }}
-      className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-teal-600 shadow-lift">
+      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-teal-600 shadow-lift ${
+      small ? "h-12 w-12" : "h-16 w-16"}`
+      }>
 
       {!imageFailed ?
       <img

@@ -60,9 +60,19 @@ export function Button({
       </Link>);
 
   }
+  if (href) {
+    return (
+      <a href={href} onClick={onClick} className={classes}>
+        {content}
+      </a>);
+
+  }
+  // Neither `to` nor `href` — a real action button (e.g. opens a modal), not
+  // a link. An `<a>` with no href isn't keyboard-focusable and isn't
+  // semantically a link, so this renders a real <button> instead.
   return (
-    <a href={href} onClick={onClick} className={classes}>
+    <button type="button" onClick={onClick} className={classes}>
       {content}
-    </a>);
+    </button>);
 
 }

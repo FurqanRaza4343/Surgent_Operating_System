@@ -7,7 +7,7 @@ settings = get_settings()
 
 class InstagramService:
     def __init__(self):
-        self.api_token = settings.whatsapp_api_token
+        self.api_token = settings.instagram_api_token
 
     async def send_message(self, recipient_id: str, text: str) -> dict:
         async with httpx.AsyncClient() as client:

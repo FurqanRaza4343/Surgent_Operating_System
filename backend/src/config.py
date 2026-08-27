@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     host: str = "0.0.0.0"
     port: int = 8000
+    frontend_url: str = "http://localhost:5183"
 
     database_url: str = "postgresql+asyncpg://user:password@localhost:5432/aesthetixai"
 
@@ -25,12 +26,20 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     openai_model: str = "gpt-4o"
 
+    mistral_api_key: str = ""
+    mistral_model: str = "mistral-small-latest"
+
+    resend_api_key: str = ""
+    resend_from_email: str = "onboarding@resend.dev"
+
     twilio_account_sid: str = ""
     twilio_auth_token: str = ""
     twilio_phone_number: str = ""
 
     whatsapp_api_token: str = ""
     whatsapp_phone_number_id: str = ""
+
+    instagram_api_token: str = ""
 
     sendgrid_api_key: str = ""
     email_from: str = "noreply@aesthetixai.com"

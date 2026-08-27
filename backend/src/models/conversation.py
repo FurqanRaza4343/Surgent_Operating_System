@@ -20,6 +20,12 @@ class ConversationChannel(str, enum.Enum):
     EMAIL = "email"
 
 
+class ConversationStatus(str, enum.Enum):
+    ACTIVE = "active"
+    NEEDS_ATTENTION = "needs_attention"
+    RESOLVED = "resolved"
+
+
 class Conversation(Base):
     __tablename__ = "conversations"
 
@@ -29,9 +35,18 @@ class Conversation(Base):
     agent_type: Mapped[str] = mapped_column(String(100), nullable=False)
     channel: Mapped[ConversationChannel] = mapped_column(Enum(ConversationChannel), nullable=False)
     channel_conversation_id: Mapped[str] = mapped_column(String(255), nullable=True)
-    metadata: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # Drives the dashboard's "Agent Sessions" / "Needs attention" split
+    # (frontend/src/app/dashboard/sessions/) — an agent sets NEEDS_ATTENTION
+    # when it escalates to a human (see emergency_triage_agent/README.md),
+    # staff resolve it back down via POST /conversations/{id}/resolve.
+    status: Mapped[ConversationStatus] = mapped_column(Enum(ConversationStatus), default=ConversationStatus.ACTIVE)
+    # Named `extra_data`, not `metadata` — `metadata` is a reserved attribute
+    # name on SQLAlchemy's Declarative Base (it's the MetaData registry) and
+    # raises InvalidRequestError at class-definition time if used as a column.
+    extra_data: Mapped[dict] = mapped_column(JSONB, default=dict)
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     messages = relationship("Message", back_populates="conversation", cascade="all, delete-orphan")
+    patient = relationship("Patient", back_populates="conversations")

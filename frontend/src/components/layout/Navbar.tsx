@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
 import { ActivityIcon, MenuIcon, XIcon } from "lucide-react";
 import { Button } from "../ui";
+import { readPlanOverride } from "../../app/dashboard/plan/planStorage";
 
 // `@clerk/clerk-react`'s components throw if there's no <ClerkProvider> above
 // them, and index.tsx only mounts one when the publishable key is actually
@@ -78,9 +79,30 @@ export function Navbar() {
               Sign in
             </a>
           }
-          <Button href="#demo" size="sm" arrow className="shadow-soft">
-            Book a demo
-          </Button>
+          {clerkEnabled ?
+          <>
+              <SignedIn>
+                {readPlanOverride() ?
+              <Button to="/dashboard" size="sm" arrow className="shadow-soft">
+                    Go to dashboard
+                  </Button> :
+
+              <Button to="/demo" size="sm" arrow className="shadow-soft">
+                    Book a demo
+                  </Button>
+              }
+              </SignedIn>
+              <SignedOut>
+                <Button to="/demo" size="sm" arrow className="shadow-soft">
+                  Book a demo
+                </Button>
+              </SignedOut>
+            </> :
+
+          <Button to="/demo" size="sm" arrow className="shadow-soft">
+              Book a demo
+            </Button>
+          }
         </div>
 
         <button
@@ -128,15 +150,30 @@ export function Navbar() {
                   </SignedIn>
                 </div>
             }
-              <Button
-                href="#demo"
-                size="sm"
-                arrow
-                onClick={() => setOpen(false)}
-                className="mt-2">
+              {clerkEnabled ?
+            <>
+                  <SignedIn>
+                    <Button
+                  to={readPlanOverride() ? "/dashboard" : "/demo"}
+                  size="sm"
+                  arrow
+                  onClick={() => setOpen(false)}
+                  className="mt-2">
 
-                Book a demo
-              </Button>
+                      {readPlanOverride() ? "Go to dashboard" : "Book a demo"}
+                    </Button>
+                  </SignedIn>
+                  <SignedOut>
+                    <Button to="/demo" size="sm" arrow onClick={() => setOpen(false)} className="mt-2">
+                      Book a demo
+                    </Button>
+                  </SignedOut>
+                </> :
+
+            <Button to="/demo" size="sm" arrow onClick={() => setOpen(false)} className="mt-2">
+                  Book a demo
+                </Button>
+            }
             </div>
           </motion.div>
         }

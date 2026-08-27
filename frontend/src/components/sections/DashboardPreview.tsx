@@ -17,6 +17,9 @@ export function DashboardPreview() {
           <p className="mt-4 text-lg text-ink-soft">
             Every call, booking, procedure, and dollar — measured in one place, in real time.
           </p>
+          <p className="mt-2 text-sm text-ink-muted">
+            Illustrative example — your dashboard reflects your practice's real numbers.
+          </p>
         </div>
 
         <motion.div

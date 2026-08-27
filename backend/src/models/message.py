@@ -25,7 +25,8 @@ class Message(Base):
     role: Mapped[MessageRole] = mapped_column(Enum(MessageRole), nullable=False)
     content: Mapped[str] = mapped_column(Text, nullable=False)
     content_type: Mapped[str] = mapped_column(String(50), default="text")
-    metadata: Mapped[dict] = mapped_column(JSONB, default=dict)
+    # Named `extra_data`, not `metadata` — see the comment on Conversation.extra_data.
+    extra_data: Mapped[dict] = mapped_column(JSONB, default=dict)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     conversation = relationship("Conversation", back_populates="messages")

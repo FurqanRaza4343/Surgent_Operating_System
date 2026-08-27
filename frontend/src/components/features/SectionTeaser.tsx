@@ -15,6 +15,7 @@ interface SectionTeaserProps {
   ctaLabel: string;
   ctaHref: string;
   dark?: boolean;
+  reverse?: boolean;
 }
 
 export function SectionTeaser({
@@ -26,7 +27,8 @@ export function SectionTeaser({
   chips,
   ctaLabel,
   ctaHref,
-  dark
+  dark,
+  reverse
 }: SectionTeaserProps) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = image && !imageFailed;
@@ -42,7 +44,7 @@ export function SectionTeaser({
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className={`aspect-[4/3] overflow-hidden rounded-4xl border ${
+            className={`aspect-[4/3] overflow-hidden rounded-4xl border ${reverse ? "lg:order-2" : ""} ${
             dark ? "border-white/10" : "border-sand-200"} ${
             showImage ? "" : "bg-gradient-to-br from-teal-600 via-ink to-[#C9A24B]"}`
             }>
@@ -57,7 +59,7 @@ export function SectionTeaser({
             }
           </motion.div>
 
-          <div>
+          <div className={reverse ? "lg:order-1" : ""}>
             <p
               className={`text-sm font-semibold uppercase tracking-[0.18em] ${
               dark ? "text-teal-300" : "text-teal-600"}`

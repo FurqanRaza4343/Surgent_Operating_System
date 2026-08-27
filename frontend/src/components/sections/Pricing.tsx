@@ -1,10 +1,13 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckIcon } from "lucide-react";
 import { Button, Container } from "../ui";
 import { PLANS } from "../../data/plans";
+import { CheckoutModal } from "./CheckoutModal";
 
 export function Pricing() {
+  const [checkoutPlan, setCheckoutPlan] = useState<{ id: "solo" | "practice"; name: string } | null>(null);
+
   return (
     <section id="pricing" className="scroll-mt-24 py-24 sm:py-32">
       <Container>
@@ -48,14 +51,20 @@ export function Pricing() {
                 <span className={p.highlight ? "text-white/60" : "text-ink-muted"}>{p.period}</span>
               </div>
 
-              <Button
-              href="#demo"
+              {p.id === "enterprise" ?
+            <Button to="/demo" variant="ink" arrow className="mt-6 w-full">
+                  Talk to sales
+                </Button> :
+
+            <Button
+              onClick={() => setCheckoutPlan({ id: p.id as "solo" | "practice", name: p.name })}
               variant={p.highlight ? "cream" : "ink"}
               arrow
               className="mt-6 w-full">
 
-                {p.price === "Custom" ? "Talk to sales" : "Start free trial"}
-              </Button>
+                  Start free trial
+                </Button>
+            }
 
               <ul className="mt-8 space-y-3">
                 {p.features.map((f) =>
@@ -75,6 +84,9 @@ export function Pricing() {
           )}
         </div>
       </Container>
+      {checkoutPlan &&
+      <CheckoutModal planId={checkoutPlan.id} planName={checkoutPlan.name} onClose={() => setCheckoutPlan(null)} />
+      }
     </section>);
 
 }

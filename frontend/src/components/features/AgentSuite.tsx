@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Container } from "../ui";
 import { AGENT_CATEGORIES, TOTAL_AGENTS } from "../../data/agents";
 
 export function AgentSuite() {
-  const [active, setActive] = useState(AGENT_CATEGORIES[0].id);
+  const [searchParams] = useSearchParams();
+  const requested = searchParams.get("category");
+  const initial = AGENT_CATEGORIES.find((c) => c.id === requested)?.id || AGENT_CATEGORIES[0].id;
+  const [active, setActive] = useState(initial);
   const category = AGENT_CATEGORIES.find((c) => c.id === active)!;
 
   return (

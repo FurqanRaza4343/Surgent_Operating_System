@@ -80,6 +80,7 @@ export function FeatureShowcase() {
                 </div>
               )}
             </div>
+            <p className="mt-3 text-sm text-ink-muted">Example targets — actual results vary by practice.</p>
           </div>
 
           <motion.div

@@ -1,26 +1,33 @@
-﻿from __future__ import annotations
-from pydantic import BaseModel
+from __future__ import annotations
+from datetime import date
+from typing import Optional
 from uuid import UUID
-from datetime import datetime
+
+from pydantic import BaseModel
 
 
-class PracticeCreate(BaseModel):
-    name: str
-    email: str
-    phone: str | None = None
-    address: str | None = None
-    timezone: str = "UTC"
-
-
-class PracticeResponse(BaseModel):
+class PracticeMeResponse(BaseModel):
     id: UUID
     name: str
     email: str
-    phone: str | None
-    address: str | None
+    phone: Optional[str] = None
+    address: Optional[str] = None
     timezone: str
-    settings: dict
-    created_at: datetime
-    updated_at: datetime
+    plan_tier: str
+    subscription_status: str
 
-    model_config = {"from_attributes": True}
+
+class UpdatePracticeRequest(BaseModel):
+    name: Optional[str] = None
+    phone: Optional[str] = None
+    address: Optional[str] = None
+    timezone: Optional[str] = None
+
+
+class ClaimPlanRequest(BaseModel):
+    session_id: str
+
+
+class ClaimPlanResponse(BaseModel):
+    practice_id: UUID
+    plan_tier: str

@@ -24,7 +24,7 @@ const app = (
 if (rootEl) {
   ReactDOM.createRoot(rootEl).render(
     clerkKey ?
-    <ClerkProvider publishableKey={clerkKey}>{app}</ClerkProvider> :
+    <ClerkProvider publishableKey={clerkKey} afterSignInUrl="/dashboard" afterSignUpUrl="/dashboard">{app}</ClerkProvider> :
     app
   );
 }

@@ -33,7 +33,7 @@ function writeSaved(pathname: string, y: number) {
 // Router's own handler processes the navigation, while `window.scrollY` is
 // still the true, un-clamped position of the page the visitor is still on.
 export function ScrollToTop() {
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
   const navigationType = useNavigationType();
 
   useEffect(() => {
@@ -47,6 +47,32 @@ export function ScrollToTop() {
   }, []);
 
   useEffect(() => {
+    // A link like `/#security` (used by the footer to reach a homepage
+    // section from another page) is a real cross-page navigation — pathname
+    // changes, so this effect would otherwise force-scroll to top and fight
+    // the anchor. Scroll to the target element instead once it exists (the
+    // hero's async height means the target may not be laid out yet on the
+    // very first frame).
+    if (hash) {
+      const id = hash.slice(1);
+      let cancelled = false;
+      let attempts = 0;
+      const tryScrollToHash = () => {
+        if (cancelled) return;
+        attempts++;
+        const el = document.getElementById(id);
+        if (el) {
+          el.scrollIntoView();
+        } else if (attempts <= 60) {
+          requestAnimationFrame(tryScrollToHash);
+        }
+      };
+      requestAnimationFrame(tryScrollToHash);
+      return () => {
+        cancelled = true;
+      };
+    }
+
     const saved = navigationType === "POP" ? readSaved(pathname) : 0;
     if (saved <= 0) {
       window.scrollTo({ top: 0, left: 0, behavior: "instant" });
@@ -72,7 +98,7 @@ export function ScrollToTop() {
     return () => {
       cancelled = true;
     };
-  }, [pathname, navigationType]);
+  }, [pathname, navigationType, hash]);
 
   return null;
 }

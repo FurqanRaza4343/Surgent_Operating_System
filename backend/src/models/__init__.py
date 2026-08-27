@@ -11,6 +11,9 @@ from src.models.invoice import Invoice
 from src.models.subscription import Subscription
 from src.models.procedure import Procedure
 from src.models.recovery_journal import RecoveryJournal
+from src.models.pending_signup import PendingSignup
+from src.models.demo_request import DemoRequest
+from src.models.agent_costing import AgentCosting
 
 __all__ = [
     "Practice",
@@ -26,4 +29,7 @@ __all__ = [
     "Subscription",
     "Procedure",
     "RecoveryJournal",
+    "PendingSignup",
+    "DemoRequest",
+    "AgentCosting",
 ]

@@ -33,6 +33,11 @@ from src.router.agents.marketing_followup_agent.marketing_followup_agent_router 
 from src.router.agents.lead_nurturing_agent.lead_nurturing_agent_router import router as lead_nurturing_router
 
 from src.router.v1.webhooks.webhook_router import router as webhook_router
+from src.router.conversations.conversations_router import router as conversations_router
+from src.router.checkout.checkout_router import router as checkout_router
+from src.router.demo.demo_router import router as demo_router
+from src.router.practice.practice_router import router as practice_router
+from src.router.agent_costing.agent_costing_router import router as agent_costing_router
 
 agent_routers = [
     receptionist_router,
@@ -67,6 +72,11 @@ agent_routers = [
     marketing_followup_router,
     lead_nurturing_router,
     webhook_router,
+    conversations_router,
+    checkout_router,
+    demo_router,
+    practice_router,
+    agent_costing_router,
 ]
 
 

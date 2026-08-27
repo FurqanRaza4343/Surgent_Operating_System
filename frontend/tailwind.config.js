@@ -42,6 +42,15 @@ export default {
           300: "#D6CCB9",
         },
         gold: "#C9A24B",
+        // Functional (not brand) colors — shared by the marketing site and
+        // the dashboard, which previously each defined status colors
+        // independently (or, for the dashboard, in a dead `DB_THEME`
+        // constants file nothing imported). Kept close to their prior
+        // dashboard values since these aren't brand identity, just
+        // conventional success/warning/danger semantics.
+        success: "#10B981",
+        warning: "#F59E0B",
+        danger: "#EF4444",
       },
       boxShadow: {
         soft: "0 1px 2px rgba(11,29,38,0.04), 0 8px 24px rgba(11,29,38,0.06)",

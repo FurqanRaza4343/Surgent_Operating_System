@@ -8,13 +8,15 @@ export function Testimonials() {
   return (
     <section id="results" className="scroll-mt-24 bg-white py-24 sm:py-32">
       <Container>
-        <div className="mx-auto max-w-2xl text-center">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-600">
-            Loved by practices
-          </p>
-          <h2 className="mt-3 font-display text-4xl font-500 tracking-tight text-ink sm:text-5xl">
-            Surgeons focus on surgery. Agents do the rest.
-          </h2>
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div className="max-w-xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-600">
+              Loved by practices
+            </p>
+            <h2 className="mt-3 font-display text-4xl font-500 tracking-tight text-ink sm:text-5xl">
+              Surgeons focus on surgery. Agents do the rest.
+            </h2>
+          </div>
         </div>
 
         <div className="mt-14 grid gap-6 lg:grid-cols-3">

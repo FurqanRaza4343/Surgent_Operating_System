@@ -3,38 +3,60 @@ import logging
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
 
 logger = logging.getLogger("aesthetixai")
 
 
-class AuditLogMiddleware(BaseHTTPMiddleware):
-    async def dispatch(self, request: Request, call_next):
-        start = time.time()
+# Shared with main.py's exception handlers — see the comment there for why:
+# CORSMiddleware never adds its header to a response built by a registered
+# `@app.exception_handler`, in any FastAPI/Starlette setup (confirmed with a
+# minimal repro with zero custom middleware) — so those handlers add this
+# header themselves instead of relying on CORSMiddleware to do it.
+ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:5183",
+    "http://localhost:3000",
+]
 
-        response = await call_next(request)
+
+class AuditLogMiddleware:
+    # Plain ASGI middleware, not `BaseHTTPMiddleware` — kept this way since
+    # it's the more robust pattern in general (BaseHTTPMiddleware's
+    # `call_next()` has its own documented history of mishandling responses
+    # from deep exceptions), even though it turned out not to be the actual
+    # cause of the CORS-on-error issue described above.
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        start = time.time()
+        status_holder = {}
+
+        async def send_wrapper(message):
+            if message["type"] == "http.response.start":
+                status_holder["status"] = message["status"]
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
 
         duration = time.time() - start
         logger.info(
             "%s %s %s %.2fms",
-            request.method,
-            request.url.path,
-            response.status_code,
+            scope.get("method"),
+            scope.get("path"),
+            status_holder.get("status"),
             duration * 1000,
         )
-
-        return response
 
 
 def setup_middleware(app: FastAPI):
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=[
-            "http://localhost:5173",
-            "http://localhost:3000",
-            "https://app.triconrepublic.com",
-            "https://api.triconrepublic.com",
-        ],
+        allow_origins=ALLOWED_ORIGINS,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

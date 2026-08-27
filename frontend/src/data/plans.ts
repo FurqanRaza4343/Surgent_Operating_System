@@ -1,4 +1,7 @@
+import type { PlanTier } from "./planTiers";
+
 export interface Plan {
+  id: PlanTier;
   name: string;
   tagline: string;
   price: string;
@@ -9,6 +12,7 @@ export interface Plan {
 
 export const PLANS: Plan[] = [
 {
+  id: "solo",
   name: "Solo",
   tagline: "For single-surgeon practices",
   price: "$690",
@@ -23,6 +27,7 @@ export const PLANS: Plan[] = [
 
 },
 {
+  id: "practice",
   name: "Practice",
   tagline: "For growing multi-surgeon clinics",
   price: "$1,690",
@@ -38,6 +43,7 @@ export const PLANS: Plan[] = [
 
 },
 {
+  id: "enterprise",
   name: "Enterprise",
   tagline: "For groups & multi-location brands",
   price: "Custom",

@@ -36,7 +36,7 @@ export function CTA() {
             surgery logistics, recovery, and marketing — using your own workflows.
           </p>
           <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-            <Button href="#demo" variant="cream" arrow className="px-8">
+            <Button to="/demo" variant="cream" arrow className="px-8">
               Book a demo
             </Button>
             <Button href="#pricing" variant="outline-dark" className="px-8">

@@ -1,31 +1,44 @@
-version: "3.9"
-
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: aesthetixai
-      POSTGRES_PASSWORD: aesthetixai_secret
-      POSTGRES_DB: aesthetixai
+      POSTGRES_USER: ${POSTGRES_USER:-aesthetixai}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-aesthetixai_secret}
+      POSTGRES_DB: ${POSTGRES_DB:-aesthetixai}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-aesthetixai}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
 
   api:
     build: .
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     env_file:
       - .env
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   pgdata:

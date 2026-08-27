@@ -8,6 +8,7 @@ const SECTIONS = [
   still: "/lets-scroll/reception.png",
   stillMobile: "/lets-scroll/reception-mobile.png",
   clip: "/lets-scroll/reception.mp4",
+  clipMobile: "/lets-scroll/reception-mobile.mp4",
   accent: "#0B6362",
   eyebrow: "First Call, Answered",
   title: "Your practice, run by an AI workforce",
@@ -20,6 +21,7 @@ const SECTIONS = [
   still: "/lets-scroll/booking.png",
   stillMobile: "/lets-scroll/booking-mobile.png",
   clip: "/lets-scroll/booking.mp4",
+  clipMobile: "/lets-scroll/booking-mobile.mp4",
   accent: "#0B6362",
   eyebrow: "Consultations, Booked",
   title: "Every inquiry becomes an appointment",
@@ -32,6 +34,7 @@ const SECTIONS = [
   still: "/lets-scroll/care.png",
   stillMobile: "/lets-scroll/care-mobile.png",
   clip: "/lets-scroll/care.mp4",
+  clipMobile: "/lets-scroll/care-mobile.mp4",
   accent: "#0B6362",
   eyebrow: "Healing, Watched Over",
   title: "Recovery checked in on, automatically",
@@ -44,12 +47,16 @@ const SECTIONS = [
   still: "/lets-scroll/growth.png",
   stillMobile: "/lets-scroll/growth-mobile.png",
   clip: "/lets-scroll/growth.mp4",
+  clipMobile: "/lets-scroll/growth-mobile.mp4",
   accent: "#C9A24B",
   eyebrow: "Growth, Visualized",
   title: "See your practice grow",
   body: "Track revenue and every conversation, across every channel, in one view.",
   tags: ["Revenue up", "Multi-channel"],
-  cta: { primary: { label: "Book a demo", href: "#demo" } }
+  // The engine renders this as a raw <a href> inside DOM it builds itself
+  // (not a React element), so it can't be a react-router <Link> — a real
+  // (full-reload) navigation to /demo is the closest this can get.
+  cta: { primary: { label: "Book a demo", href: "/demo" } }
 }];
 
 

@@ -48,7 +48,8 @@ export function HomePage() {
           body="Your agents answer, qualify, and book across every social channel your patients already use."
           chips={CHANNELS.map((c) => ({ label: c.name, icon: c.icon, color: c.color }))}
           ctaLabel="See every channel"
-          ctaHref="/channels" />
+          ctaHref="/channels"
+          reverse />
 
         <FeatureShowcase />
         <DashboardPreview />

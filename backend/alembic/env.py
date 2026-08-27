@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from src.config import get_settings
 from src.database import Base
+import src.models  # noqa: F401 — registers every model on Base.metadata before autogenerate compares against it
 
 settings = get_settings()
 

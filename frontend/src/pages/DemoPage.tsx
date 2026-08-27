@@ -1,0 +1,172 @@
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeftIcon, ClockIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
+import { Navbar, Footer } from "../components/layout";
+import { Container } from "../components/ui";
+import { submitDemoRequest } from "../api/demoRequests";
+import { ApiError } from "../api/client";
+
+export function DemoPage() {
+  const [videoFailed, setVideoFailed] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState({ name: "", email: "", phone: "", practiceName: "", message: "" });
+
+  const update = (field: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+  setForm((f) => ({ ...f, [field]: e.target.value }));
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    try {
+      await submitDemoRequest({
+        name: form.name,
+        email: form.email,
+        phone: form.phone || undefined,
+        practice_name: form.practiceName || undefined,
+        message: form.message || undefined
+      });
+      setSubmitted(true);
+    } catch (err) {
+      setError(
+        err instanceof ApiError ?
+        "We couldn't submit your request right now — please try again in a moment." :
+        "Something went wrong. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen w-full bg-canvas font-sans text-ink">
+      <Navbar />
+      <main className="pt-28 pb-24">
+        <Container>
+          <Link
+            to="/"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-ink-soft transition-colors hover:text-teal-600">
+
+            <ArrowLeftIcon className="h-4 w-4" />
+            Back to home
+          </Link>
+
+          <div className="mt-10 grid gap-12 lg:grid-cols-[380px_1fr] lg:items-start">
+            {/* Avatar + guidance */}
+            <div className="flex flex-col items-center text-center lg:sticky lg:top-28">
+              <div className="relative h-48 w-48 overflow-hidden rounded-full border-4 border-white shadow-lift">
+                {!videoFailed ?
+                <video
+                  autoPlay
+                  loop
+                  muted
+                  playsInline
+                  src="/lets-scroll/avatar-intro.mp4"
+                  onError={() => setVideoFailed(true)}
+                  className="h-full w-full object-cover" /> :
+
+                <img
+                  src="/lets-scroll/avatar-doctor.png"
+                  alt="AesthetixAI guide"
+                  className="h-full w-full object-cover" />
+
+                }
+              </div>
+              <p className="mt-5 font-display text-xl font-600 text-ink">
+                Tell us a bit about your practice
+              </p>
+              <p className="mt-2 max-w-xs text-sm text-ink-soft">
+                Fill out the form and a real person from our team will reach out to
+                walk you through exactly how the agents would work for you.
+              </p>
+              <div className="mt-5 flex items-center gap-2 rounded-full bg-teal-50 px-4 py-2 text-sm font-semibold text-teal-700">
+                <ClockIcon className="h-4 w-4" />
+                Guaranteed response within 24 hours
+              </div>
+              <p className="mt-6 text-xs text-ink-muted">
+                AesthetixAI is built by <span className="font-semibold text-ink-soft">AceOne Solutions</span>.
+              </p>
+            </div>
+
+            {/* Form */}
+            <div className="rounded-4xl border border-sand-200 bg-white p-8 shadow-soft sm:p-10">
+              {submitted ?
+              <div className="flex flex-col items-center py-10 text-center">
+                  <span className="flex h-14 w-14 items-center justify-center rounded-full bg-teal-50 text-teal-600">
+                    <CheckCircle2Icon className="h-7 w-7" />
+                  </span>
+                  <p className="mt-4 font-display text-2xl font-600 text-ink">You're all set</p>
+                  <p className="mt-2 max-w-sm text-sm text-ink-soft">
+                    We've got your request — check your inbox for a confirmation. Our
+                    team will be in touch within 24 hours.
+                  </p>
+                </div> :
+
+              <form onSubmit={submit} className="space-y-5">
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Full name" required value={form.name} onChange={update("name")} placeholder="Dr. Jane Vance" />
+                    <Field label="Work email" type="email" required value={form.email} onChange={update("email")} placeholder="you@practice.com" />
+                  </div>
+                  <div className="grid gap-5 sm:grid-cols-2">
+                    <Field label="Phone" value={form.phone} onChange={update("phone")} placeholder="(555) 123-4567" />
+                    <Field label="Practice name" value={form.practiceName} onChange={update("practiceName")} placeholder="Meridian Plastic Surgery" />
+                  </div>
+                  <label className="block text-sm font-medium text-ink-soft">
+                    What would you like us to walk through? (optional)
+                    <textarea
+                    value={form.message}
+                    onChange={update("message")}
+                    rows={3}
+                    placeholder="e.g. how the receptionist agent handles after-hours calls"
+                    className="mt-1.5 w-full resize-none rounded-xl border border-sand-200 px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-400" />
+
+                  </label>
+
+                  {error && <p className="text-sm text-red-600">{error}</p>}
+
+                  <button
+                  type="submit"
+                  disabled={loading}
+                  className="flex w-full items-center justify-center gap-2 rounded-full bg-ink py-3.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:opacity-60 sm:w-auto sm:px-10">
+
+                    {loading && <Loader2Icon className="h-4 w-4 animate-spin" />}
+                    {loading ? "Submitting…" : "Book my demo"}
+                  </button>
+                </form>
+              }
+            </div>
+          </div>
+        </Container>
+      </main>
+      <Footer />
+    </div>);
+
+}
+
+function Field({
+  label,
+  type = "text",
+  required,
+  value,
+  onChange,
+  placeholder
+
+
+
+}: {label: string;type?: string;required?: boolean;value: string;onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;placeholder?: string;}) {
+  return (
+    <label className="block text-sm font-medium text-ink-soft">
+      {label}{required && <span className="text-teal-600"> *</span>}
+      <input
+        type={type}
+        required={required}
+        value={value}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="mt-1.5 w-full rounded-xl border border-sand-200 px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-400" />
+
+    </label>);
+
+}

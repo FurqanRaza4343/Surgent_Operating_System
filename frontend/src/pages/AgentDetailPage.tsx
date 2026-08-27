@@ -49,7 +49,7 @@ export function AgentDetailPage() {
           <p className="mt-6 text-lg leading-relaxed text-ink-soft">{agent.desc}</p>
 
           <div className="mt-10 flex flex-wrap gap-3">
-            <Button href="#demo" arrow>Book a demo</Button>
+            <Button to="/demo" arrow>Book a demo</Button>
             <Button to="/agents" variant="ghost">See all agents</Button>
           </div>
         </Container>
