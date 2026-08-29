@@ -28,6 +28,12 @@ class SubscriptionStatus(str, enum.Enum):
 class Subscription(Base):
     __tablename__ = "subscriptions"
 
+    # `price` below is a SNAPSHOT of what this practice actually agreed to
+    # pay at signup — it must never be silently rewritten when an admin
+    # later edits Plan.price (models/plan.py) for the tier. Plan.price is
+    # the current list price shown at checkout/in the admin editor; this
+    # field is what a specific practice is actually billed.
+
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     practice_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("practices.id"), nullable=False)
     stripe_subscription_id: Mapped[str] = mapped_column(String(255), nullable=True)

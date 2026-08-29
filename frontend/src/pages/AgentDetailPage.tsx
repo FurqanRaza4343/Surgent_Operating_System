@@ -5,6 +5,10 @@ import { Navbar, Footer } from "../components/layout";
 import { Button, Container } from "../components/ui";
 import { AGENT_CATEGORIES, AGENTS_BY_SLUG } from "../data/agents";
 
+const AGENT_LOGOS: Record<string, string> = {
+  receptionist: "/agent-logos/receptionist.png"
+};
+
 // One shared template for all 31 agents rather than 31 hand-built pages — each
 // agent's own content lives in exactly one small file, data/agents/<slug>.ts
 // (mirroring backend/src/agents/<slug>/), which is the actual "one folder per
@@ -32,7 +36,11 @@ export function AgentDetailPage() {
 
           <div className="mt-8 flex items-start gap-5">
             <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-600">
-              <agent.icon className="h-8 w-8" />
+              {AGENT_LOGOS[agent.slug] ? (
+                <img src={AGENT_LOGOS[agent.slug]} alt={agent.name} className="h-10 w-10 object-contain" />
+              ) : (
+                <agent.icon className="h-8 w-8" />
+              )}
             </span>
             <div>
               {category &&

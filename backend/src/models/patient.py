@@ -35,3 +35,4 @@ class Patient(Base):
     appointments = relationship("Appointment", back_populates="patient", cascade="all, delete-orphan")
     recovery_journals = relationship("RecoveryJournal", back_populates="patient", cascade="all, delete-orphan")
     conversations = relationship("Conversation", back_populates="patient", cascade="all, delete-orphan")
+    review_requests = relationship("ReviewRequest", back_populates="patient", cascade="all, delete-orphan")

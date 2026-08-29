@@ -7,6 +7,7 @@ import { usePatients } from "./usePatients";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import type { Patient } from "./types";
 import { AGENTS_BY_SLUG } from "../../../data/agents";
+import { usePlan } from "../plan/PlanContext";
 
 const STATUS_CLASS: Record<Patient["status"], string> = {
   active: "bg-success/10 text-success",
@@ -26,7 +27,8 @@ function formatDate(iso: string | null) {
 }
 
 export function PatientsPage() {
-  const { patients, loading } = usePatients();
+  const { authedFetch } = usePlan();
+  const { patients, loading } = usePatients(authedFetch);
   const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {

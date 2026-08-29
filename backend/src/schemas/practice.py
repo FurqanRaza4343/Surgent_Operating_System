@@ -15,6 +15,11 @@ class PracticeMeResponse(BaseModel):
     timezone: str
     plan_tier: str
     subscription_status: str
+    role: str
+    # Only meaningful when role == "doctor" — the granted permission keys
+    # from data/doctor_permissions.py (see models/doctor.py's `permissions`
+    # column). Omitted/empty for every other role.
+    permissions: list[str] = []
 
 
 class UpdatePracticeRequest(BaseModel):
@@ -31,3 +36,14 @@ class ClaimPlanRequest(BaseModel):
 class ClaimPlanResponse(BaseModel):
     practice_id: UUID
     plan_tier: str
+
+
+class DoctorSignupCodeResponse(BaseModel):
+    code: str
+    signup_url: str
+
+
+class ValidateDoctorCodeResponse(BaseModel):
+    valid: bool
+    practice_id: Optional[UUID] = None
+    practice_name: Optional[str] = None

@@ -42,6 +42,25 @@ export default {
           300: "#D6CCB9",
         },
         gold: "#C9A24B",
+        // "Aiaceone premium" accent — the blue/cyan "Clinical Ethereal" system
+        // used for the dashboard, auth, and payment surfaces (see
+        // design-references/For.UI/clinical_ethereal/DESIGN.md). Kept
+        // separate from `teal` (the marketing site's brand color) so
+        // restyling these surfaces doesn't reskin the rest of the site.
+        accent: {
+          50: "#EFF6FF",
+          100: "#DBEAFE",
+          400: "#3B82F6",
+          500: "#2563EB",
+          600: "#1D4ED8",
+          700: "#004AC6",
+        },
+        cyan: {
+          400: "#22D3EE",
+          500: "#06B6D4",
+          600: "#0891B2",
+        },
+        panel: "#15171A",
         // Functional (not brand) colors — shared by the marketing site and
         // the dashboard, which previously each defined status colors
         // independently (or, for the dashboard, in a dead `DB_THEME`

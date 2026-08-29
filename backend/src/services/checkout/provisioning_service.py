@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.pending_signup import PendingSignup
 from src.models.practice import Practice
-from src.models.user import User
+from src.models.user import User, UserRole
 from src.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
 from src.models.agent_config import AgentConfig
 from src.services.practice.plan_capabilities import allowed_agent_slugs
@@ -80,7 +80,7 @@ class ProvisioningService:
             practice_id=practice.id,
             clerk_id=clerk_id,
             email=clerk_email or fallback_email,
-            role="owner",
+            role=UserRole.OWNER,
         )
         db.add(user)
         await db.flush()

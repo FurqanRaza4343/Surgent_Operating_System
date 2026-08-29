@@ -3,11 +3,10 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2Icon, Loader2Icon, MailIcon } from "lucide-react";
 import { SignUpButton, useUser } from "@clerk/clerk-react";
 import { OnboardingLayout } from "./OnboardingLayout";
-import { planFor } from "../dashboard/plan/planCapabilities";
+import { planFor, writePlanOverride } from "../dashboard/plan/plan";
 import type { PlanTier } from "../../data/planTiers";
-import { writePlanOverride } from "../dashboard/plan/planStorage";
 import { ONBOARDING_ROUTES } from "./routes";
-import { getCheckoutSession } from "../../api/checkout";
+import { getCheckoutSession } from "../../api/commerce";
 
 const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 const POLL_ATTEMPTS = 5;

@@ -9,7 +9,15 @@ import { SessionsView } from "../sessions/SessionsView";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { usePlan } from "../plan/PlanContext";
 import { UpgradeRequired } from "../plan/UpgradeRequired";
-import { minTierForCategory } from "../plan/planCapabilities";
+import { minTierForCategory } from "../plan/plan";
+
+const CATEGORY_LOGOS: Record<string, string> = {
+  "front-desk": "/agent-logos/Front Desk & Intake.png",
+  "consultation": "/agent-logos/Consultation & Screening.png",
+  "surgery": "/agent-logos/Surgery Management.png",
+  "post-care": "/agent-logos/Post-Surgery Care.png",
+  "business": "/agent-logos/Business & Operations.png",
+};
 
 // One shared template for all 5 category routes (front-desk, consultation,
 // surgery, post-care, business) — matches the marketing site's
@@ -35,7 +43,7 @@ export function AgentCategoryPage() {
 
   return (
     <>
-      <PageHeader title={category.label} subtitle={category.tagline} />
+      <PageHeader title={category.label} subtitle={category.tagline} imgSrc={CATEGORY_LOGOS[category.id]} />
       <div className="mb-6 flex flex-wrap gap-2">
         {category.agents.map((a) =>
         <Link

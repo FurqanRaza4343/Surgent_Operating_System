@@ -13,9 +13,13 @@ export const DASHBOARD_ROUTES = {
   doctorNew: "/dashboard/doctors/new",
   doctorDetail: (id: string) => `/dashboard/doctors/${id}`,
   doctorEdit: (id: string) => `/dashboard/doctors/${id}/edit`,
+  doctorOverview: "/dashboard/doctor",
+  myCalendar: "/dashboard/my-calendar",
   agentCategory: (categoryId: string) => `/dashboard/agents/${categoryId}`,
   agentDetail: (categoryId: string, slug: string) => `/dashboard/agents/${categoryId}/${slug}`,
+  receptionistMonitor: "/dashboard/ai-receptionist",
   analytics: "/dashboard/analytics",
+  commandCenter: "/dashboard/command-center",
   settingsAgents: "/dashboard/settings/agents",
   settingsProfile: "/dashboard/settings/profile",
   settingsBilling: "/dashboard/settings/billing"

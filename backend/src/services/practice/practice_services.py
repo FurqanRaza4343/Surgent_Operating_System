@@ -1,4 +1,5 @@
 from __future__ import annotations
+import secrets
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -36,3 +37,25 @@ class PracticeService:
                 setattr(practice, key, value)
         await db.flush()
         return practice
+
+    async def get_or_create_doctor_signup_code(self, db: AsyncSession, practice: Practice) -> str:
+        code = (practice.settings or {}).get("doctor_signup_code")
+        if code:
+            return code
+        return await self.regenerate_doctor_signup_code(db, practice)
+
+    async def regenerate_doctor_signup_code(self, db: AsyncSession, practice: Practice) -> str:
+        code = secrets.token_hex(6)
+        practice.settings = {**(practice.settings or {}), "doctor_signup_code": code}
+        await db.flush()
+        return code
+
+    async def resolve_doctor_signup_code(self, db: AsyncSession, code: str) -> Practice | None:
+        # No index on a JSONB key — practice counts are small (this is a
+        # per-practice admin tool, not a hot path), so a full scan filtering
+        # in Python is fine rather than adding a dedicated column/index.
+        result = await db.execute(select(Practice))
+        for practice in result.scalars().all():
+            if (practice.settings or {}).get("doctor_signup_code") == code:
+                return practice
+        return None

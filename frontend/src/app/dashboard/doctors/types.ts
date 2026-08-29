@@ -30,6 +30,9 @@ export interface Doctor {
   email: string;
   phone: string;
   specialty: string;
+  // Set once this doctor has accepted their portal invite and a linked User
+  // row exists (backend/src/models/doctor.py's user_id) — null until then.
+  userId: string | null;
   // Procedures/services this doctor is credentialed to perform — what they
   // can actually do, shown as chips on their profile and usable later to
   // route the AI consultation/booking agents to the right doctor.

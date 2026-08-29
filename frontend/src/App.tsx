@@ -12,6 +12,10 @@ import { CheckoutSuccessPage } from "./app/onboarding/CheckoutSuccessPage";
 import { CheckoutCancelPage } from "./app/onboarding/CheckoutCancelPage";
 import { ClaimPlanPage } from "./app/onboarding/ClaimPlanPage";
 import { SetupWizardPage } from "./app/onboarding/SetupWizardPage";
+import { SignInPage } from "./app/auth/SignInPage";
+import { SignUpPage } from "./app/auth/SignUpPage";
+import { DoctorSignUpPage } from "./app/auth/DoctorSignUpPage";
+import { AdminRouter } from "./app/admin/AdminRouter";
 
 export function App() {
   return (
@@ -23,12 +27,16 @@ export function App() {
         <Route path="/agents/:slug" element={<AgentDetailPage />} />
         <Route path="/channels" element={<ChannelsPage />} />
         <Route path="/demo" element={<DemoPage />} />
+        <Route path="/sign-in/*" element={<SignInPage />} />
+        <Route path="/sign-up/*" element={<SignUpPage />} />
+        <Route path="/doctor/sign-up/*" element={<DoctorSignUpPage />} />
         <Route path="/pricing/pay" element={<DemoPaymentPage />} />
         <Route path="/pricing/success" element={<CheckoutSuccessPage />} />
         <Route path="/pricing/cancel" element={<CheckoutCancelPage />} />
         <Route path="/onboarding/claim" element={<ClaimPlanPage />} />
         <Route path="/onboarding/setup" element={<SetupWizardPage />} />
         <Route path="/dashboard/*" element={<DashboardRouter />} />
+        <Route path="/admin/*" element={<AdminRouter />} />
       </Routes>
     </>);
 

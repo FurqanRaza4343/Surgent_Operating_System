@@ -49,6 +49,22 @@ class Settings(BaseSettings):
     stripe_price_solo: str = ""
     stripe_price_practice: str = ""
 
+    # Comma-separated bootstrap allowlist — a Clerk user whose verified email
+    # appears here gets User.is_platform_admin flipped to True on their next
+    # login (see server/dependencies.py). This is only the bootstrap path:
+    # once at least one platform admin exists, further admins are promoted
+    # from the admin panel itself, not by editing this list.
+    platform_admin_emails: str = ""
+
+    # Standalone admin login (POST /api/v1/admin/auth/login) — a plain
+    # username/password + JWT, deliberately independent of Clerk so the
+    # platform admin panel doesn't require a Clerk account at all. Override
+    # both in production; these are the defaults for local/dev use.
+    admin_username: str = "admin"
+    admin_password: str = "Aceone"
+    admin_jwt_secret: str = "aiaceone-admin-jwt-dev-secret-change-in-production"
+    admin_jwt_expires_minutes: int = 60 * 24 * 7  # 7 days
+
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""

@@ -4,12 +4,23 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.pending_signup import PendingSignup
-from src.schemas.practice import PracticeMeResponse, UpdatePracticeRequest, ClaimPlanResponse
+from src.models.doctor import Doctor
+from src.models.user import UserRole
+from src.schemas.practice import (
+    PracticeMeResponse,
+    UpdatePracticeRequest,
+    ClaimPlanResponse,
+    DoctorSignupCodeResponse,
+    ValidateDoctorCodeResponse,
+)
 from src.services.practice.practice_services import PracticeService
 from src.services.checkout.provisioning_service import ProvisioningService
 from src.services.clerk.clerk_service import ClerkService
+from src.config import get_settings
 from src.server.dependencies import PracticeContext
 from src.server.exceptions import NotFoundException, ForbiddenException
+
+settings = get_settings()
 
 
 class PracticeController:
@@ -19,6 +30,14 @@ class PracticeController:
 
     async def get_me(self, db: AsyncSession, ctx: PracticeContext) -> PracticeMeResponse:
         sub = await self.service.active_subscription_for(db, ctx.practice.id)
+
+        permissions: list[str] = []
+        if ctx.user.role == UserRole.DOCTOR:
+            result = await db.execute(select(Doctor).where(Doctor.user_id == ctx.user.id))
+            doctor = result.scalar_one_or_none()
+            if doctor is not None:
+                permissions = doctor.permissions
+
         return PracticeMeResponse(
             id=ctx.practice.id,
             name=ctx.practice.name,
@@ -28,7 +47,23 @@ class PracticeController:
             timezone=ctx.practice.timezone,
             plan_tier=ctx.tier.value,
             subscription_status=sub.status.value if sub else "trial",
+            role=ctx.user.role.value,
+            permissions=permissions,
         )
+
+    async def get_doctor_signup_code(self, db: AsyncSession, ctx: PracticeContext) -> DoctorSignupCodeResponse:
+        code = await self.service.get_or_create_doctor_signup_code(db, ctx.practice)
+        return DoctorSignupCodeResponse(code=code, signup_url=f"{settings.frontend_url}/doctor/apply?code={code}")
+
+    async def regenerate_doctor_signup_code(self, db: AsyncSession, ctx: PracticeContext) -> DoctorSignupCodeResponse:
+        code = await self.service.regenerate_doctor_signup_code(db, ctx.practice)
+        return DoctorSignupCodeResponse(code=code, signup_url=f"{settings.frontend_url}/doctor/apply?code={code}")
+
+    async def validate_doctor_code(self, db: AsyncSession, code: str) -> ValidateDoctorCodeResponse:
+        practice = await self.service.resolve_doctor_signup_code(db, code)
+        if practice is None:
+            return ValidateDoctorCodeResponse(valid=False)
+        return ValidateDoctorCodeResponse(valid=True, practice_id=practice.id, practice_name=practice.name)
 
     async def update_me(self, db: AsyncSession, ctx: PracticeContext, body: UpdatePracticeRequest) -> PracticeMeResponse:
         await self.service.update_practice(

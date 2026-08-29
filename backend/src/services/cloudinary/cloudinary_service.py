@@ -1,3 +1,5 @@
+import asyncio
+
 import cloudinary
 import cloudinary.uploader
 import cloudinary.api
@@ -16,7 +18,9 @@ cloudinary.config(
 
 class CloudinaryService:
     async def upload_image(self, file_path: str, folder: str = "patient_photos") -> dict:
-        result = cloudinary.uploader.upload(file_path, folder=folder)
+        # cloudinary's SDK is synchronous (blocking network I/O) — run it off
+        # the event loop rather than stalling every other in-flight request.
+        result = await asyncio.to_thread(cloudinary.uploader.upload, file_path, folder=folder)
         return {
             "public_id": result["public_id"],
             "url": result["secure_url"],
@@ -25,11 +29,11 @@ class CloudinaryService:
         }
 
     async def upload_from_bytes(self, file_bytes: bytes, filename: str, folder: str = "patient_photos") -> dict:
-        result = cloudinary.uploader.upload(file_bytes, folder=folder, public_id=filename)
+        result = await asyncio.to_thread(cloudinary.uploader.upload, file_bytes, folder=folder, public_id=filename)
         return {
             "public_id": result["public_id"],
             "url": result["secure_url"],
         }
 
     async def delete_image(self, public_id: str):
-        cloudinary.uploader.destroy(public_id)
+        await asyncio.to_thread(cloudinary.uploader.destroy, public_id)

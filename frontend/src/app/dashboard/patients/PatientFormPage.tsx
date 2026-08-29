@@ -7,10 +7,12 @@ import { classifyPatient } from "./classifyPatient";
 import type { Patient } from "./types";
 import { AGENTS_BY_SLUG } from "../../../data/agents";
 import { DASHBOARD_ROUTES } from "../constants/routes";
+import { usePlan } from "../plan/PlanContext";
 
 export function PatientFormPage() {
   const navigate = useNavigate();
-  const { addPatient } = usePatients();
+  const { authedFetch } = usePlan();
+  const { addPatient } = usePatients(authedFetch);
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");

@@ -8,6 +8,7 @@ import { ComingSoon } from "../components/ComingSoon";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import type { Patient } from "./types";
 import { AGENTS_BY_SLUG } from "../../../data/agents";
+import { usePlan } from "../plan/PlanContext";
 
 const STATUS_CLASS: Record<Patient["status"], string> = {
   active: "bg-success/10 text-success",
@@ -22,7 +23,8 @@ function formatDate(iso: string | null) {
 
 export function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { getPatient, loading } = usePatients();
+  const { authedFetch } = usePlan();
+  const { getPatient, loading } = usePatients(authedFetch);
   const patient = id ? getPatient(id) : undefined;
 
   if (loading) return null;

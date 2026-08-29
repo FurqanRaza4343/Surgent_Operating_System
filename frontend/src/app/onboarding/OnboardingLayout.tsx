@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ActivityIcon } from "lucide-react";
+import { Logo } from "../../components/ui";
 
 interface OnboardingLayoutProps {
   children: React.ReactNode;
@@ -17,8 +17,8 @@ export function OnboardingLayout({ children, step }: OnboardingLayoutProps) {
     <div className="flex min-h-screen flex-col bg-canvas font-sans text-ink">
       <header className="flex h-16 items-center justify-between px-6">
         <Link to="/" className="flex items-center gap-2.5">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600 text-white">
-            <ActivityIcon className="h-4.5 w-4.5" strokeWidth={2.4} />
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg border border-sand-200 bg-white">
+            <Logo className="h-5 w-5" />
           </span>
           <span className="text-[15px] font-bold tracking-tight text-ink">
             Aesthetix<span className="text-teal-600">AI</span>

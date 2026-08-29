@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowLeftIcon, ClockIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
 import { Navbar, Footer } from "../components/layout";
 import { Container } from "../components/ui";
-import { submitDemoRequest } from "../api/demoRequests";
+import { submitDemoRequest } from "../api/commerce";
 import { ApiError } from "../api/client";
 
 export function DemoPage() {

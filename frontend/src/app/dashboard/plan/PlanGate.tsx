@@ -1,8 +1,8 @@
 import React from "react";
 import { usePlan } from "./PlanContext";
 import { UpgradeRequired } from "./UpgradeRequired";
-import { minTierForFeature } from "./planCapabilities";
-import type { FeatureKey } from "./types";
+import { minTierForFeature } from "./plan";
+import type { FeatureKey } from "./plan";
 
 interface PlanGateProps {
   feature: FeatureKey;

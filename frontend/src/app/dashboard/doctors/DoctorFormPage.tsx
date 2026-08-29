@@ -13,6 +13,7 @@ type DraftDoctor = Omit<Doctor, "id" | "initial" | "activePatients" | "upcomingS
 
 const EMPTY_DRAFT: DraftDoctor = {
   name: "",
+  userId: null,
   email: "",
   phone: "",
   specialty: "",
@@ -31,9 +32,9 @@ export function DoctorFormPage() {
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
-  const { doctors, getDoctor, addDoctor, updateDoctor, loading } = useDoctors();
+  const { authedFetch, capabilities } = usePlan();
+  const { doctors, getDoctor, addDoctor, updateDoctor, loading } = useDoctors(authedFetch);
   const existing = isEdit ? getDoctor(id!) : undefined;
-  const { capabilities } = usePlan();
 
   // Doctors now load async (IndexedDB) — `existing` isn't available on the
   // very first render, so every hook below must run unconditionally on

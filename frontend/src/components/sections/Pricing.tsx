@@ -2,11 +2,12 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { CheckIcon } from "lucide-react";
 import { Button, Container } from "../ui";
-import { PLANS } from "../../data/plans";
+import { useLivePlans } from "../../hooks/useLivePlans";
 import { CheckoutModal } from "./CheckoutModal";
 
 export function Pricing() {
   const [checkoutPlan, setCheckoutPlan] = useState<{ id: "solo" | "practice"; name: string } | null>(null);
+  const PLANS = useLivePlans();
 
   return (
     <section id="pricing" className="scroll-mt-24 py-24 sm:py-32">

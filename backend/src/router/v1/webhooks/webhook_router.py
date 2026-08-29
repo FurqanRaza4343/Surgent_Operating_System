@@ -8,11 +8,14 @@ from fastapi import APIRouter, Request, Header, Depends
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from uuid import UUID
+
 from src.config import get_settings
 from src.database import get_db
 from src.server.exceptions import AppException
 from src.models.pending_signup import PendingSignup
-from src.models.user import User
+from src.models.user import User, UserRole
+from src.models.doctor import Doctor
 
 settings = get_settings()
 logger = logging.getLogger("aesthetixai.webhooks")
@@ -72,16 +75,69 @@ async def clerk_webhook(
                 (e["email_address"] for e in email_addresses if e.get("id") == data.get("primary_email_address_id")),
                 email_addresses[0]["email_address"] if email_addresses else "",
             )
-            new_user = User(
-                clerk_id=clerk_user_id,
-                email=primary_email,
-                name=data.get("first_name", "") + " " + data.get("last_name", ""),
-                phone=data.get("phone_numbers", [{}])[0].get("phone_number", "") if data.get("phone_numbers") else None,
-                role="staff",
-            )
-            db.add(new_user)
-            await db.flush()
-            logger.info("Created User for clerk_id=%s", clerk_user_id)
+            name = data.get("first_name", "") + " " + data.get("last_name", "")
+            phone = data.get("phone_numbers", [{}])[0].get("phone_number", "") if data.get("phone_numbers") else None
+            public_metadata = data.get("public_metadata", {})
+            unsafe_metadata = data.get("unsafe_metadata", {})
+            invite_type = public_metadata.get("invite_type")
+            self_apply_type = unsafe_metadata.get("invite_type")
+
+            if self_apply_type == "doctor_self_apply" and unsafe_metadata.get("practice_id"):
+                # Self-registration via a practice's shareable signup code
+                # (see practice_router.py's GET /practice/validate-doctor-code
+                # and frontend's DoctorApplyPage) — unsafe_metadata (set
+                # client-side at Clerk sign-up) carries the resolved
+                # practice_id, since there's no invite to stamp public_metadata
+                # with ahead of time. Created inactive: this account can only
+                # submit an application (see get_current_user_record in
+                # dependencies.py) until an Owner reviews and approves it,
+                # which is what flips is_active and creates the real Doctor row.
+                new_user = User(
+                    clerk_id=clerk_user_id,
+                    practice_id=UUID(unsafe_metadata["practice_id"]),
+                    email=primary_email,
+                    name=name,
+                    phone=phone,
+                    role=UserRole.DOCTOR,
+                    is_active=False,
+                )
+                db.add(new_user)
+                await db.flush()
+                logger.info("Created inactive self-applied Doctor User for clerk_id=%s", clerk_user_id)
+            elif invite_type == "doctor" and public_metadata.get("practice_id"):
+                # Invited via POST /api/v1/doctors/{id}/invite (ClerkService.invite_user) —
+                # public_metadata carries the practice/doctor to link, since Clerk's JWT
+                # has no signal about which practice a brand-new sign-up belongs to.
+                new_user = User(
+                    clerk_id=clerk_user_id,
+                    practice_id=UUID(public_metadata["practice_id"]),
+                    email=primary_email,
+                    name=name,
+                    phone=phone,
+                    role=UserRole.DOCTOR,
+                )
+                db.add(new_user)
+                await db.flush()
+
+                doctor_id = public_metadata.get("doctor_id")
+                if doctor_id:
+                    doctor_result = await db.execute(select(Doctor).where(Doctor.id == UUID(doctor_id)))
+                    doctor = doctor_result.scalar_one_or_none()
+                    if doctor:
+                        doctor.user_id = new_user.id
+                        await db.flush()
+                logger.info("Created Doctor User for clerk_id=%s, linked doctor_id=%s", clerk_user_id, doctor_id)
+            else:
+                new_user = User(
+                    clerk_id=clerk_user_id,
+                    email=primary_email,
+                    name=name,
+                    phone=phone,
+                    role=UserRole.STAFF,
+                )
+                db.add(new_user)
+                await db.flush()
+                logger.info("Created User for clerk_id=%s", clerk_user_id)
 
     elif event_type == "user.updated" and clerk_user_id:
         result = await db.execute(select(User).where(User.clerk_id == clerk_user_id))

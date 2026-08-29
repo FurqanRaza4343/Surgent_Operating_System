@@ -9,7 +9,7 @@ import { SessionsView } from "../sessions/SessionsView";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { usePlan } from "../plan/PlanContext";
 import { UpgradeRequired } from "../plan/UpgradeRequired";
-import { minTierForCategory } from "../plan/planCapabilities";
+import { minTierForCategory } from "../plan/plan";
 import { usePatients } from "../patients/usePatients";
 
 // Only `receptionist` has real (if thin) LLM/Twilio logic wired in the
@@ -19,12 +19,16 @@ import { usePatients } from "../patients/usePatients";
 // are equally live.
 const LIVE_AGENT_SLUGS = new Set(["receptionist"]);
 
+const AGENT_LOGOS: Record<string, string> = {
+  receptionist: "/agent-logos/receptionist.png"
+};
+
 export function AgentDetailPage() {
   const { categoryId, agentSlug } = useParams<{ categoryId: string; agentSlug: string }>();
   const category = AGENT_CATEGORIES.find((c) => c.id === categoryId);
   const agent = agentSlug ? AGENTS_BY_SLUG[agentSlug] : undefined;
-  const { allowsCategory, loading } = usePlan();
-  const { patients } = usePatients();
+  const { allowsCategory, loading, authedFetch } = usePlan();
+  const { patients } = usePatients(authedFetch);
 
   if (!category || !agent || agent.categoryId !== categoryId) {
     return <ComingSoon icon={ZapIcon} title="Agent not found" body="This agent doesn't exist in this category." phase="—" />;
@@ -55,7 +59,11 @@ export function AgentDetailPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-600/8 text-teal-600">
-              <agent.icon className="h-7 w-7" />
+              {AGENT_LOGOS[agent.slug] ? (
+                <img src={AGENT_LOGOS[agent.slug]} alt="" className="h-9 w-9 object-contain" />
+              ) : (
+                <agent.icon className="h-7 w-7" />
+              )}
             </span>
             <div>
               <p className="text-lg font-bold text-ink">{agent.name}</p>

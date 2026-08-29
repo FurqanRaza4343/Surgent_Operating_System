@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { XIcon, Loader2Icon } from "lucide-react";
-import { createCheckoutSession } from "../../api/checkout";
+import { createCheckoutSession } from "../../api/commerce";
 import { ApiError } from "../../api/client";
 
 interface CheckoutModalProps {

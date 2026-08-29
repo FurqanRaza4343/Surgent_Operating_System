@@ -2,10 +2,10 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { SignedIn, SignedOut, SignInButton, SignUpButton, UserButton } from "@clerk/clerk-react";
-import { ActivityIcon, MenuIcon, XIcon } from "lucide-react";
-import { Button } from "../ui";
-import { readPlanOverride } from "../../app/dashboard/plan/planStorage";
+import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { MenuIcon, XIcon } from "lucide-react";
+import { Button, Logo } from "../ui";
+import { readPlanOverride } from "../../app/dashboard/plan/plan";
 
 // `@clerk/clerk-react`'s components throw if there's no <ClerkProvider> above
 // them, and index.tsx only mounts one when the publishable key is actually
@@ -40,8 +40,8 @@ export function Navbar() {
       
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
         <Link to="/" className="flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-ink text-white shadow-soft">
-            <ActivityIcon className="h-5 w-5" strokeWidth={2.4} />
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-sand-200 bg-white shadow-soft">
+            <Logo className="h-6 w-6" />
           </span>
           <span className="text-lg font-bold tracking-tight text-ink">
             Aesthetix<span className="text-teal-600">AI</span>
@@ -64,11 +64,9 @@ export function Navbar() {
           {clerkEnabled ?
           <>
               <SignedOut>
-                <SignInButton mode="modal">
-                  <button className="text-sm font-semibold text-ink transition-colors hover:text-teal-600">
-                    Sign in
-                  </button>
-                </SignInButton>
+                <Link to="/sign-in" className="text-sm font-semibold text-ink transition-colors hover:text-teal-600">
+                  Sign in
+                </Link>
               </SignedOut>
               <SignedIn>
                 <UserButton afterSignOutUrl="/" />
@@ -136,14 +134,13 @@ export function Navbar() {
               {clerkEnabled &&
             <div className="mt-2 flex items-center gap-3 px-3">
                   <SignedOut>
-                    <SignInButton mode="modal">
-                      <button
+                    <Link
+                    to="/sign-in"
                     onClick={() => setOpen(false)}
                     className="text-sm font-semibold text-ink transition-colors hover:text-teal-600">
 
-                        Sign in
-                      </button>
-                    </SignInButton>
+                      Sign in
+                    </Link>
                   </SignedOut>
                   <SignedIn>
                     <UserButton afterSignOutUrl="/" />

@@ -4,14 +4,18 @@ from fastapi import Depends, Header
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.config import get_settings
 from src.database import get_db
 from src.server.exceptions import UnauthorizedException, ForbiddenException
 from src.services.clerk.clerk_service import ClerkService
 from src.services.practice.practice_services import PracticeService
-from src.services.practice.plan_capabilities import allows_category, allows_agent
-from src.models.user import User
+from src.services.admin.plan_services import PlanService
+from src.services.admin.admin_auth_service import verify_admin_token
+from src.models.user import User, UserRole
 from src.models.practice import Practice
 from src.models.subscription import SubscriptionTier
+
+plan_service = PlanService()
 
 
 async def get_current_user(
@@ -60,7 +64,73 @@ async def get_current_practice_user(
         raise UnauthorizedException("No practice account found for this Clerk user")
     if not local_user.is_active:
         raise UnauthorizedException("This account has been deactivated")
+
+    # Self-heal platform-admin status from the bootstrap allowlist — mirrors
+    # AgentCostingService's "self-seeding on first read" pattern. Only ever
+    # promotes (never demotes here); once at least one admin exists, further
+    # promotions happen from the admin panel itself, not this list.
+    settings = get_settings()
+    admin_emails = {e.strip().lower() for e in settings.platform_admin_emails.split(",") if e.strip()}
+    if local_user.email.lower() in admin_emails and not local_user.is_platform_admin:
+        local_user.is_platform_admin = True
+        await db.flush()
+
     return local_user
+
+
+async def get_current_user_record(
+    user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> User:
+    # Like get_current_practice_user, but deliberately skips the is_active
+    # check — used only by the doctor self-application endpoints, where the
+    # applicant's User row is intentionally created inactive (see the
+    # user.created webhook's doctor_self_apply branch) until an Owner
+    # approves them. Every other practice-scoped endpoint should keep using
+    # get_current_practice_user instead.
+    result = await db.execute(select(User).where(User.clerk_id == user.get("sub")))
+    local_user = result.scalar_one_or_none()
+    if local_user is None:
+        raise UnauthorizedException("No account found for this Clerk user")
+    return local_user
+
+
+async def require_platform_admin(local_user: User = Depends(get_current_practice_user)) -> User:
+    if not local_user.is_platform_admin:
+        raise ForbiddenException("Platform admin access required.")
+    return local_user
+
+
+def require_role(*roles: UserRole):
+    """Dependency factory gating an endpoint to specific practice roles —
+    e.g. Depends(require_role(UserRole.OWNER)) for owner-only actions."""
+
+    async def _check(local_user: User = Depends(get_current_practice_user)) -> User:
+        if local_user.role not in roles:
+            raise ForbiddenException("You don't have permission to perform this action.")
+        return local_user
+
+    return _check
+
+
+@dataclass
+class AdminPrincipal:
+    username: str
+
+
+async def require_admin_token(authorization: str = Header(default="")) -> AdminPrincipal:
+    # The platform admin panel's real gate — a standalone username/password +
+    # JWT login (POST /api/v1/admin/auth/login, admin_auth_service.py),
+    # deliberately independent of Clerk (require_platform_admin above is the
+    # earlier Clerk-based mechanism; kept for reference/future multi-admin
+    # use, but every /admin/* route now depends on THIS instead).
+    if not authorization.startswith("Bearer "):
+        raise UnauthorizedException("Missing or invalid authorization header")
+    token = authorization.replace("Bearer ", "")
+    payload = verify_admin_token(token)
+    if payload is None:
+        raise UnauthorizedException("Invalid or expired admin token")
+    return AdminPrincipal(username=payload["sub"])
 
 
 @dataclass
@@ -91,8 +161,11 @@ def require_plan_feature(feature: str):
     flag (mirrors dashboard/plan/planCapabilities.ts's FeatureKey). Agent
     access is gated separately via require_agent_category/require_agent."""
 
-    async def _check(ctx: PracticeContext = Depends(get_current_practice_context)) -> PracticeContext:
-        if feature == "analytics" and ctx.tier == SubscriptionTier.SOLO:
+    async def _check(
+        ctx: PracticeContext = Depends(get_current_practice_context),
+        db: AsyncSession = Depends(get_db),
+    ) -> PracticeContext:
+        if feature == "analytics" and not await plan_service.has_analytics(db, ctx.tier):
             raise ForbiddenException(f"Analytics requires the Practice plan or higher — you're on {ctx.tier.value}.")
         return ctx
 
@@ -100,8 +173,11 @@ def require_plan_feature(feature: str):
 
 
 def require_agent_category(category_id: str):
-    async def _check(ctx: PracticeContext = Depends(get_current_practice_context)) -> PracticeContext:
-        if not allows_category(ctx.tier, category_id):
+    async def _check(
+        ctx: PracticeContext = Depends(get_current_practice_context),
+        db: AsyncSession = Depends(get_db),
+    ) -> PracticeContext:
+        if not await plan_service.allows_category(db, ctx.tier, category_id):
             raise ForbiddenException(f"This agent category isn't included in your {ctx.tier.value} plan.")
         return ctx
 
@@ -109,8 +185,11 @@ def require_agent_category(category_id: str):
 
 
 def require_agent(agent_slug: str):
-    async def _check(ctx: PracticeContext = Depends(get_current_practice_context)) -> PracticeContext:
-        if not allows_agent(ctx.tier, agent_slug):
+    async def _check(
+        ctx: PracticeContext = Depends(get_current_practice_context),
+        db: AsyncSession = Depends(get_db),
+    ) -> PracticeContext:
+        if not await plan_service.allows_agent(db, ctx.tier, agent_slug):
             raise ForbiddenException(f"This agent isn't included in your {ctx.tier.value} plan.")
         return ctx
 

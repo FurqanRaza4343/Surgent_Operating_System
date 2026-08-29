@@ -6,11 +6,12 @@ import { EmptyState } from "../components/EmptyState";
 import { useDoctors } from "./useDoctors";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { usePlan } from "../plan/PlanContext";
-import { planFor } from "../plan/planCapabilities";
+import { planFor } from "../plan/plan";
+import { getDoctorCompleteness } from "./doctorCompleteness";
 
 export function DoctorsPage() {
-  const { doctors, loading } = useDoctors();
-  const { capabilities } = usePlan();
+  const { authedFetch, capabilities } = usePlan();
+  const { doctors, loading } = useDoctors(authedFetch);
   const atLimit = doctors.length >= capabilities.limits.maxDoctors;
 
   return (
@@ -44,15 +45,17 @@ export function DoctorsPage() {
         </div> :
 
       <div className="grid gap-4 sm:grid-cols-2">
-          {doctors.map((doc) =>
-        <div
-          key={doc.id}
-          className="group relative rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(11,29,38,0.05)] transition-colors hover:border-teal-600/40">
+          {doctors.map((doc) => {
+          const completeness = getDoctorCompleteness(doc);
+          return (
+            <div
+            key={doc.id}
+            className="group relative rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(11,29,38,0.05)] transition-colors hover:border-teal-600/40">
 
               <Link
-            to={DASHBOARD_ROUTES.doctorEdit(doc.id)}
-            title="Edit doctor"
-            className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted opacity-0 transition-opacity hover:bg-sand-100 hover:text-teal-600 group-hover:opacity-100">
+              to={DASHBOARD_ROUTES.doctorEdit(doc.id)}
+              title="Edit doctor"
+              className="absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-lg text-ink-muted opacity-0 transition-opacity hover:bg-sand-100 hover:text-teal-600 group-hover:opacity-100">
 
                 <PencilIcon className="h-3.5 w-3.5" />
               </Link>
@@ -60,16 +63,24 @@ export function DoctorsPage() {
               <Link to={DASHBOARD_ROUTES.doctorDetail(doc.id)} className="block">
                 <div className="flex items-center gap-4">
                   {doc.photoUrl ?
-              <img src={doc.photoUrl} alt={doc.name} className="h-14 w-14 shrink-0 rounded-full object-cover" /> :
+                <img src={doc.photoUrl} alt={doc.name} className="h-14 w-14 shrink-0 rounded-full object-cover" /> :
 
-              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-600/8 text-lg font-bold text-teal-600">
+                <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-teal-600/8 text-lg font-bold text-teal-600">
                       {doc.initial}
                     </span>
-              }
-                  <div className="min-w-0">
+                }
+                  <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-ink">{doc.name}</p>
                     <p className="truncate text-xs text-ink-muted">{doc.specialty}</p>
                   </div>
+                  {completeness.percent < 100 &&
+                <span
+                  title={`Profile ${completeness.percent}% complete — missing ${completeness.missing.join(", ")}`}
+                  className="shrink-0 rounded-full bg-warning/10 px-2.5 py-1 text-[11px] font-semibold text-warning">
+
+                      {completeness.percent}%
+                    </span>
+                }
                 </div>
 
                 {doc.capabilities.length > 0 &&
@@ -92,8 +103,9 @@ export function DoctorsPage() {
                   <span><span className="font-mono font-semibold text-ink">{doc.upcomingSurgeries}</span> upcoming surgeries</span>
                 </div>
               </Link>
-            </div>
-        )}
+            </div>);
+
+        })}
         </div>
       }
     </>);

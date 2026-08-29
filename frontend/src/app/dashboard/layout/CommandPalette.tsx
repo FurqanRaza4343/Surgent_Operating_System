@@ -73,7 +73,7 @@ export function CommandPalette() {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2.5 rounded-lg border border-sand-200 bg-white px-3.5 py-2 text-sm text-ink-muted transition-colors hover:border-teal-600/30 hover:text-ink">
+        className="flex items-center gap-2.5 rounded-lg border border-sand-200 bg-white px-3.5 py-2 text-sm text-ink-muted transition-colors hover:border-accent-500/30 hover:text-ink">
 
         <SearchIcon className="h-4 w-4" />
         <span className="hidden sm:inline">Search patients, sessions, settings…</span>
@@ -115,7 +115,7 @@ export function CommandPalette() {
             onClick={() => go(c.to)}
             onMouseEnter={() => setActiveIndex(i)}
             className={`flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${
-            i === activeIndex ? "bg-teal-600/8 text-ink" : "text-ink-soft"}`
+            i === activeIndex ? "bg-accent-500/8 text-ink" : "text-ink-soft"}`
             }>
 
               <span className={`font-medium ${c.locked ? "text-ink-muted" : ""}`}>{c.label}</span>

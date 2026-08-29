@@ -1,13 +1,16 @@
 import React, { createContext, useContext, useMemo } from "react";
 import type { PlanTier } from "../../../data/planTiers";
 import { tierAtLeast } from "../../../data/planTiers";
-import { usePlanTier, type PlanSource } from "./usePlanTier";
-import { capabilitiesFor, hasFeature, allowsCategory, allowsAgent } from "./planCapabilities";
-import type { FeatureKey, PlanCapabilities } from "./types";
+import type { Role } from "../../../data/roles";
+import { usePlanTier, type PlanSource, capabilitiesFor, hasFeature, allowsCategory, allowsAgent } from "./plan";
+import type { FeatureKey, PlanCapabilities } from "./plan";
 import { useAuthedFetch } from "../../../api/authFetch";
+
+type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
 
 interface PlanContextValue {
   tier: PlanTier;
+  role: Role;
   source: PlanSource;
   loading: boolean;
   capabilities: PlanCapabilities;
@@ -16,15 +19,30 @@ interface PlanContextValue {
   allowsAgent: (agentSlug: string) => boolean;
   atLeast: (min: PlanTier) => boolean;
   setOverride: (tier: PlanTier) => void;
+  setRoleOverride: (role: Role) => void;
+  // Exposed so other hooks that need a real backend call (e.g.
+  // patients/usePatients.ts) don't have to repeat the Clerk-gated split
+  // below just to get one — PlanProvider already wraps the whole dashboard
+  // and already computes this for its own usePlanTier() call.
+  authedFetch: AuthedFetch;
 }
 
 const PlanContext = createContext<PlanContextValue | null>(null);
 const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
-function useContextValue(tier: PlanTier, source: PlanSource, loading: boolean, setOverride: (t: PlanTier) => void): PlanContextValue {
+function useContextValue(
+  tier: PlanTier,
+  role: Role,
+  source: PlanSource,
+  loading: boolean,
+  setOverride: (t: PlanTier) => void,
+  setRoleOverride: (r: Role) => void,
+  authedFetch: AuthedFetch
+): PlanContextValue {
   return useMemo<PlanContextValue>(
     () => ({
       tier,
+      role,
       source,
       loading,
       capabilities: capabilitiesFor(tier),
@@ -32,9 +50,11 @@ function useContextValue(tier: PlanTier, source: PlanSource, loading: boolean, s
       allowsCategory: (categoryId: string) => allowsCategory(tier, categoryId),
       allowsAgent: (agentSlug: string) => allowsAgent(tier, agentSlug),
       atLeast: (min: PlanTier) => tierAtLeast(tier, min),
-      setOverride
+      setOverride,
+      setRoleOverride,
+      authedFetch
     }),
-    [tier, source, loading, setOverride]
+    [tier, role, source, loading, setOverride, setRoleOverride, authedFetch]
   );
 }
 
@@ -45,14 +65,14 @@ function useContextValue(tier: PlanTier, source: PlanSource, loading: boolean, s
 // profile/ProfilePage.tsx's AccountCard/AccountCardWithUser.
 function PlanProviderWithClerk({ children }: { children: React.ReactNode }) {
   const { authedFetch } = useAuthedFetch();
-  const { tier, source, loading, setOverride } = usePlanTier(authedFetch);
-  const value = useContextValue(tier, source, loading, setOverride);
+  const { tier, role, source, loading, setOverride, setRoleOverride } = usePlanTier(authedFetch);
+  const value = useContextValue(tier, role, source, loading, setOverride, setRoleOverride, authedFetch);
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 }
 
 function PlanProviderWithoutClerk({ children }: { children: React.ReactNode }) {
-  const { tier, source, loading, setOverride } = usePlanTier(null);
-  const value = useContextValue(tier, source, loading, setOverride);
+  const { tier, role, source, loading, setOverride, setRoleOverride } = usePlanTier(null);
+  const value = useContextValue(tier, role, source, loading, setOverride, setRoleOverride, null);
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 }
 

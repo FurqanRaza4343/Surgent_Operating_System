@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { LockIcon } from "lucide-react";
 import type { Agent } from "../../../data/agents";
 import type { PlanTier } from "../../../data/planTiers";
-import { planFor } from "./planCapabilities";
+import { planFor } from "./plan";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 
 interface UpgradeRequiredProps {

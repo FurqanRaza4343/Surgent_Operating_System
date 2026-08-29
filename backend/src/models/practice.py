@@ -23,6 +23,10 @@ class Practice(Base):
 
     users = relationship("User", back_populates="practice", cascade="all, delete-orphan")
     patients = relationship("Patient", back_populates="practice", cascade="all, delete-orphan")
+    doctors = relationship("Doctor", back_populates="practice", cascade="all, delete-orphan")
     appointments = relationship("Appointment", back_populates="practice", cascade="all, delete-orphan")
+    review_requests = relationship("ReviewRequest", back_populates="practice", cascade="all, delete-orphan")
+    pending_doctor_requests = relationship("PendingDoctorRequest", back_populates="practice", cascade="all, delete-orphan")
+    attendance_records = relationship("AttendanceRecord", back_populates="practice", cascade="all, delete-orphan")
     agent_configs = relationship("AgentConfig", back_populates="practice", cascade="all, delete-orphan")
     subscriptions = relationship("Subscription", back_populates="practice", cascade="all, delete-orphan")

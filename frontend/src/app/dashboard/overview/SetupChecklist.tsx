@@ -30,9 +30,9 @@ export function SetupChecklist() {
   if (remaining.length === 0) return null;
 
   return (
-    <div className="mb-6 rounded-3xl border border-teal-600/20 bg-teal-600/[0.03] p-5 shadow-[0_4px_20px_rgba(11,29,38,0.05)]">
+    <div className="mb-6 rounded-3xl border border-accent-500/20 bg-accent-500/[0.03] p-5 shadow-[0_4px_20px_rgba(11,29,38,0.05)]">
       <div className="flex items-center gap-2 text-sm font-bold text-ink">
-        <SparklesIcon className="h-4 w-4 text-teal-600" /> Finish setting up
+        <SparklesIcon className="h-4 w-4 text-accent-500" /> Finish setting up
       </div>
       <div className="mt-3 space-y-1.5">
         {items.map((item) =>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getAgentCosting } from "../../../api/agentCosting";
+import { getAgentCosting } from "../../../api/practice";
 import { DEFAULT_AGENT_COSTS } from "./agentCosting";
 
 // Real cost-per-session from the backend, falling back to the mirrored

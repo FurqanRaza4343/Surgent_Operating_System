@@ -23,6 +23,7 @@ export function FirstDoctorStep({ onNext, onSkip }: StepProps) {
       id: `d${Date.now()}`,
       name: name.trim(),
       initial: name.trim()[0]?.toUpperCase() || "?",
+      userId: null,
       email: "",
       phone: "",
       specialty: specialty.trim(),

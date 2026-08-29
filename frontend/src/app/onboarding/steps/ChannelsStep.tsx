@@ -1,14 +1,14 @@
 import React from "react";
 import { CHANNELS } from "../../dashboard/data/channels";
 import { useConnectedChannels } from "../../dashboard/settings/useConnectedChannels";
-import { usePlanTier } from "../../dashboard/plan/usePlanTier";
+import { usePlanTier } from "../../dashboard/plan/plan";
 
 interface StepProps {
   onNext: () => void;
   onSkip: () => void;
 }
 
-// Tier-limited — Solo's maxSocialChannels is 1 (see dashboard/plan/planCapabilities.ts),
+// Tier-limited — Solo's maxSocialChannels is 1 (see dashboard/plan/plan.ts),
 // so this is the natural place to make that choice, not an afterthought.
 export function ChannelsStep({ onNext, onSkip }: StepProps) {
   const { channels, toggle } = useConnectedChannels();

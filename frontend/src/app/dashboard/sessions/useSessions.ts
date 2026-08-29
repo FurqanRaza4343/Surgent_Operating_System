@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { listConversations, resolveConversation } from "../../../api/conversations";
-import type { ConversationListItem } from "../../../api/conversations";
+import { listConversations, resolveConversation, type ConversationListItem } from "../../../api/entities";
 import type { Session } from "./types";
 
 const AGENT_DISPLAY_NAMES: Record<string, string> = {

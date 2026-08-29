@@ -1,14 +1,13 @@
 import React from "react";
-import { CheckIcon, FlaskConicalIcon } from "lucide-react";
+import { CheckIcon } from "lucide-react";
 import { PLANS } from "../../../data/plans";
 import { usePlan } from "../plan/PlanContext";
 
 // Reuses the marketing site's own PLANS data directly — the in-app
 // comparison is literally the Pricing section's copy, so it can't drift.
-// "Switch to this plan" is dev-only (no real upgrade billing exists yet —
-// this writes the local plan override, same as onboarding's claim step) —
-// this replaced the old Topbar DevPlanSwitcher, so plan-switching now lives
-// only here, where it reads as "manage my plan," not a stray global control.
+// "Switch to this plan" writes the local plan override, same as onboarding's
+// claim step — this replaced the old Topbar DevPlanSwitcher, so plan-switching
+// now lives only here, where it reads as "manage my plan."
 export function PlanComparisonTable() {
   const { tier, setOverride } = usePlan();
 
@@ -44,12 +43,12 @@ export function PlanComparisonTable() {
               )}
             </ul>
 
-            {!isCurrent && import.meta.env.DEV &&
+            {!isCurrent &&
             <button
               onClick={() => setOverride(plan.id)}
               className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-xl border border-dashed border-sand-200 py-2.5 text-xs font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
 
-                <FlaskConicalIcon className="h-3.5 w-3.5" /> Switch to this plan (dev)
+                Switch to this plan
               </button>
             }
           </div>);

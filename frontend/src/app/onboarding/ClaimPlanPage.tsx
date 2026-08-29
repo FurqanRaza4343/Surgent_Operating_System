@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2Icon } from "lucide-react";
 import { OnboardingLayout } from "./OnboardingLayout";
-import { writePlanOverride } from "../dashboard/plan/planStorage";
+import { writePlanOverride } from "../dashboard/plan/plan";
 import type { PlanTier } from "../../data/planTiers";
 import { ONBOARDING_ROUTES } from "./routes";
 import { useAuthedFetch } from "../../api/authFetch";

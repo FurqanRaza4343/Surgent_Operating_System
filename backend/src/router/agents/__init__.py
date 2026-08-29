@@ -38,6 +38,15 @@ from src.router.checkout.checkout_router import router as checkout_router
 from src.router.demo.demo_router import router as demo_router
 from src.router.practice.practice_router import router as practice_router
 from src.router.agent_costing.agent_costing_router import router as agent_costing_router
+from src.router.patients.patients_router import router as patients_router
+from src.router.doctors.doctors_router import router as doctors_router
+from src.router.appointments.appointments_router import router as appointments_router
+from src.router.agent_config.agent_config_router import router as agent_config_router
+from src.router.doctor_applications.doctor_applications_router import router as doctor_applications_router
+from src.router.attendance.attendance_router import router as attendance_router
+from src.router.command_center.command_center_router import router as command_center_router
+from src.router.admin.admin_router import router as admin_router
+from src.router.plans.plans_router import router as plans_router
 
 agent_routers = [
     receptionist_router,
@@ -77,6 +86,15 @@ agent_routers = [
     demo_router,
     practice_router,
     agent_costing_router,
+    patients_router,
+    doctors_router,
+    appointments_router,
+    agent_config_router,
+    doctor_applications_router,
+    attendance_router,
+    command_center_router,
+    admin_router,
+    plans_router,
 ]
 
 

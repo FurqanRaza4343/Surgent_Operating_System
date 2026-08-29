@@ -7,10 +7,11 @@ import { Toggle } from "../components/Toggle";
 import { useAgentSettings } from "./useAgentSettings";
 import type { AgentTone, EscalationSensitivity } from "./types";
 import { usePlan } from "../plan/PlanContext";
-import { minTierForCategory, planFor } from "../plan/planCapabilities";
+import { minTierForCategory, planFor } from "../plan/plan";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { useAgentCosting } from "./useAgentCosting";
 import { MOCK_SESSIONS } from "../data/mockSessions";
+import { MarketingOffersEditor } from "./MarketingOffersEditor";
 
 const TONE_OPTIONS: { value: AgentTone; label: string }[] = [
 { value: "professional", label: "Professional" },
@@ -121,6 +122,10 @@ export function AgentSettingsPage() {
             </div>);
 
         })}
+      </div>
+
+      <div className="mt-6">
+        <MarketingOffersEditor />
       </div>
 
       <p className="mt-4 text-xs text-ink-muted">

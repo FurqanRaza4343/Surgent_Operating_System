@@ -13,12 +13,16 @@ import {
   ChevronDownIcon,
   LayersIcon,
   CreditCardIcon,
-  LockIcon
+  LockIcon,
+  PhoneCallIcon,
+  CalendarIcon
 } from "lucide-react";
 import { AGENT_CATEGORIES } from "../../../data/agents";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { MOCK_SESSIONS } from "../data/mockSessions";
 import { usePlan } from "../plan/PlanContext";
+import type { Role } from "../../../data/roles";
+import { Logo } from "../../../components/ui";
 
 const needsAttentionCount = MOCK_SESSIONS.filter((s) => s.status === "needs_attention").length;
 
@@ -26,13 +30,24 @@ interface NavItem {
   label: string;
   to: string;
   icon: React.ComponentType<{ className?: string }>;
+  imgSrc?: string;
   badge?: number;
   end?: boolean;
   locked?: boolean;
+  // Omitted = visible to every role (every item today). This pass builds
+  // only the Owner dashboard and applies no restrictions — the field exists
+  // so a future Doctor/Receptionist dashboard is "tag an existing item,"
+  // not a rearchitecture. See data/roles.ts.
+  allowedRoles?: Role[];
+}
+
+function visibleFor(items: NavItem[], role: Role): NavItem[] {
+  return items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
 }
 
 const SIMPLE_ITEMS_TOP: NavItem[] = [
-{ label: "Overview", to: DASHBOARD_ROUTES.overview, icon: LayoutDashboardIcon, end: true }];
+{ label: "Overview", to: DASHBOARD_ROUTES.overview, icon: LayoutDashboardIcon, end: true, allowedRoles: ["owner"] },
+{ label: "My Overview", to: DASHBOARD_ROUTES.doctorOverview, icon: LayoutDashboardIcon, end: true, allowedRoles: ["doctor"] }];
 
 
 const SESSION_CHILDREN: NavItem[] = [
@@ -41,14 +56,16 @@ const SESSION_CHILDREN: NavItem[] = [
 
 
 const SIMPLE_ITEMS_MID: NavItem[] = [
-{ label: "Patients", to: DASHBOARD_ROUTES.patients, icon: UsersIcon },
-{ label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon }];
+{ label: "Patients", to: DASHBOARD_ROUTES.patients, icon: UsersIcon, allowedRoles: ["owner"] },
+{ label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon, allowedRoles: ["owner"] },
+{ label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "doctor"] },
+{ label: "My Calendar", to: DASHBOARD_ROUTES.myCalendar, icon: CalendarIcon, allowedRoles: ["doctor"] }];
 
 
 const SETTINGS_ITEMS: NavItem[] = [
-{ label: "Agent settings", to: DASHBOARD_ROUTES.settingsAgents, icon: SettingsIcon },
-{ label: "Profile", to: DASHBOARD_ROUTES.settingsProfile, icon: UserCircleIcon },
-{ label: "Plan & billing", to: DASHBOARD_ROUTES.settingsBilling, icon: CreditCardIcon }];
+{ label: "Agent settings", to: DASHBOARD_ROUTES.settingsAgents, icon: SettingsIcon, allowedRoles: ["owner", "doctor"] },
+{ label: "Profile", to: DASHBOARD_ROUTES.settingsProfile, icon: UserCircleIcon, allowedRoles: ["owner", "doctor"] },
+{ label: "Plan & billing", to: DASHBOARD_ROUTES.settingsBilling, icon: CreditCardIcon, allowedRoles: ["owner"] }];
 
 
 function NavRow({ item }: { item: NavItem }) {
@@ -61,16 +78,20 @@ function NavRow({ item }: { item: NavItem }) {
       item.locked ?
       "text-ink-muted/70 hover:bg-sand-100 hover:text-ink-muted" :
       isActive ?
-      "bg-teal-600/8 text-teal-600" :
+      "bg-accent-500/10 text-accent-700" :
       "text-ink-soft hover:bg-sand-100 hover:text-ink"}`
       }>
 
       {({ isActive }) =>
       <>
           {isActive && !item.locked &&
-        <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-teal-600" />
+        <span className="absolute left-0 top-1/2 h-4 w-[3px] -translate-y-1/2 rounded-full bg-accent-500" />
         }
-          <item.icon className="h-4 w-4 shrink-0" />
+          {item.imgSrc ? (
+            <img src={item.imgSrc} alt="" className="h-4 w-4 shrink-0 rounded object-contain" />
+          ) : (
+            <item.icon className="h-4 w-4 shrink-0" />
+          )}
           <span className="flex-1 truncate">{item.label}</span>
           {item.locked ?
         <LockIcon className="h-3 w-3 shrink-0 text-ink-muted/60" /> :
@@ -88,12 +109,13 @@ function NavRow({ item }: { item: NavItem }) {
 function CollapsibleNavGroup({
   label,
   icon: Icon,
+  imgSrc,
   children,
   badge
 
 
 
-}: {label: string;icon: React.ComponentType<{className?: string;}>;children: NavItem[];badge?: number;}) {
+}: {label: string;icon: React.ComponentType<{className?: string;}>;imgSrc?: string;children: NavItem[];badge?: number;}) {
   const location = useLocation();
   const isWithin = children.some((c) => location.pathname === c.to || location.pathname.startsWith(c.to + "/"));
   const [open, setOpen] = useState(isWithin);
@@ -111,7 +133,11 @@ function CollapsibleNavGroup({
         isWithin ? "text-ink" : "text-ink-soft hover:bg-sand-100 hover:text-ink"}`
         }>
 
-        <Icon className="h-4 w-4 shrink-0" />
+        {imgSrc ? (
+          <img src={imgSrc} alt="" className="h-4 w-4 shrink-0 rounded object-contain" />
+        ) : (
+          <Icon className="h-4 w-4 shrink-0" />
+        )}
         <span className="flex-1 truncate text-left">{label}</span>
         {!!badge &&
         <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
@@ -130,49 +156,56 @@ function CollapsibleNavGroup({
 }
 
 export function Sidebar() {
-  const { allowsCategory, can } = usePlan();
+  const { allowsCategory, can, role } = usePlan();
+
+  const CATEGORY_LOGOS: Record<string, string> = {
+    "front-desk": "/agent-logos/Front Desk & Intake.png",
+    "consultation": "/agent-logos/Consultation & Screening.png",
+    "surgery": "/agent-logos/Surgery Management.png",
+    "post-care": "/agent-logos/Post-Surgery Care.png",
+    "business": "/agent-logos/Business & Operations.png",
+  };
 
   const agentChildren: NavItem[] = AGENT_CATEGORIES.map((c) => ({
     label: c.label,
     to: DASHBOARD_ROUTES.agentCategory(c.id),
     icon: ActivityIcon,
+    imgSrc: CATEGORY_LOGOS[c.id],
     locked: !allowsCategory(c.id)
   }));
 
   const bottomItems: NavItem[] = [
-  { label: "Analytics", to: DASHBOARD_ROUTES.analytics, icon: BarChart3Icon, locked: !can("analytics") }];
+  { label: "Analytics", to: DASHBOARD_ROUTES.analytics, icon: BarChart3Icon, locked: !can("analytics"), allowedRoles: ["owner"] }];
 
 
   return (
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[280px] flex-col border-r border-sand-200/80 bg-white/70 backdrop-blur-md lg:flex">
       <div className="flex h-16 items-center gap-2.5 border-b border-sand-200/80 px-6">
-        <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-teal-600 text-white">
-          <ActivityIcon className="h-4.5 w-4.5" strokeWidth={2.4} />
+        <span className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-sand-200 bg-white">
+          <Logo className="h-5 w-5" />
         </span>
-        <span className="text-[15px] font-bold tracking-tight text-ink">
-          Aesthetix<span className="text-teal-600">AI</span>
-        </span>
+        <span className="text-[15px] font-bold tracking-tight text-ink">Aiaceone</span>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-4 py-5">
         <div className="space-y-0.5">
-          {SIMPLE_ITEMS_TOP.map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(SIMPLE_ITEMS_TOP, role).map((item) => <NavRow key={item.to} item={item} />)}
         </div>
 
         <div className="mt-4">
-          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} children={SESSION_CHILDREN} />
+          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} children={visibleFor(SESSION_CHILDREN, role)} />
         </div>
 
         <div className="mt-4 space-y-0.5">
-          {SIMPLE_ITEMS_MID.map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(SIMPLE_ITEMS_MID, role).map((item) => <NavRow key={item.to} item={item} />)}
         </div>
 
         <div className="mt-4">
-          <CollapsibleNavGroup label="Agents" icon={LayersIcon} children={agentChildren} />
+          <CollapsibleNavGroup label="Agents" icon={LayersIcon} imgSrc="/agent-logos/agents.png" children={visibleFor(agentChildren, role)} />
         </div>
 
         <div className="mt-4 space-y-0.5">
-          {bottomItems.map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(bottomItems, role).map((item) => <NavRow key={item.to} item={item} />)}
         </div>
 
         <div className="mt-6">
@@ -180,7 +213,7 @@ export function Sidebar() {
             Settings
           </p>
           <div className="mt-2 space-y-0.5">
-            {SETTINGS_ITEMS.map((item) => <NavRow key={item.to} item={item} />)}
+            {visibleFor(SETTINGS_ITEMS, role).map((item) => <NavRow key={item.to} item={item} />)}
           </div>
         </div>
       </nav>

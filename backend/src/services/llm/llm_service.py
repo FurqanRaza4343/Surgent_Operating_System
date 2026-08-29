@@ -73,21 +73,37 @@ class LLMService:
         return response.choices[0].message.content or ""
 
     async def chat_with_tools(
-        self, messages: list[dict], tools: list[dict], system_prompt: str | None = None
+        self, messages: list[dict], tools: list[dict], system_prompt: str | None = None, tier: str = "high"
     ) -> dict:
-        # Tool-calling stays on OpenAI regardless of tier — it's always used
-        # for actions (bookings, escalations), never low-stakes chat.
+        # Originally OpenAI-only (bookings/escalations are always high-stakes).
+        # The Command Center orchestrator (services/command_center/) also
+        # needs tool-calling but for low-stakes read-only queries, so this now
+        # accepts the same `tier` routing chat() uses — tier="low" runs on
+        # Mistral (OpenAI-compatible tool-calling) while a real OPENAI_API_KEY
+        # is still a placeholder; switches automatically once that key is real.
         full_messages = []
         if system_prompt:
             full_messages.append({"role": "system", "content": system_prompt})
         full_messages.extend(messages)
 
-        response = await self.openai_client.chat.completions.create(
-            model=self.openai_model,
-            messages=full_messages,
-            tools=tools,
-            temperature=0.7,
-        )
+        client, model = self._client_and_model(tier)
+        try:
+            response = await client.chat.completions.create(
+                model=model,
+                messages=full_messages,
+                tools=tools,
+                temperature=0.7,
+            )
+        except RateLimitError:
+            if client is not self.openai_client:
+                response = await self.openai_client.chat.completions.create(
+                    model=self.openai_model,
+                    messages=full_messages,
+                    tools=tools,
+                    temperature=0.7,
+                )
+            else:
+                raise
 
         choice = response.choices[0]
         return {

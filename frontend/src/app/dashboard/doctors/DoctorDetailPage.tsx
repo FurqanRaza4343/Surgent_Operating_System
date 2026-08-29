@@ -1,17 +1,33 @@
 import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeftIcon, MailIcon, PhoneIcon, AwardIcon, CalendarCheckIcon, DollarSignIcon, PencilIcon, ClockIcon, FileTextIcon, DownloadIcon, Maximize2Icon } from "lucide-react";
+import { ArrowLeftIcon, MailIcon, PhoneIcon, AwardIcon, CalendarCheckIcon, DollarSignIcon, PencilIcon, ClockIcon, FileTextIcon, DownloadIcon, Maximize2Icon, SparklesIcon, SendIcon, CheckCircle2Icon } from "lucide-react";
 import { ComingSoon } from "../components/ComingSoon";
 import { useDoctors } from "./useDoctors";
 import { WEEKDAYS } from "./types";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { DocumentViewerModal } from "./DocumentViewerModal";
+import { getDoctorCompleteness } from "./doctorCompleteness";
+import { usePlan } from "../plan/PlanContext";
+import { inviteDoctor } from "../../../api/entities";
 
 export function DoctorDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { getDoctor, loading } = useDoctors();
+  const { authedFetch, role } = usePlan();
+  const { getDoctor, loading } = useDoctors(authedFetch);
   const doctor = id ? getDoctor(id) : undefined;
   const [viewingDocId, setViewingDocId] = useState<string | null>(null);
+  const [inviteState, setInviteState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function handleInvite() {
+    if (!doctor || !authedFetch) return;
+    setInviteState("sending");
+    try {
+      await inviteDoctor(authedFetch, doctor.id);
+      setInviteState("sent");
+    } catch {
+      setInviteState("error");
+    }
+  }
 
   if (loading) return null;
 
@@ -21,6 +37,7 @@ export function DoctorDetailPage() {
 
   const slotsByDay = new Map(WEEKDAYS.map((d) => [d, doctor.availability.filter((s) => s.day === d)]));
   const viewingDoc = doctor.documents.find((d) => d.id === viewingDocId);
+  const completeness = getDoctorCompleteness(doctor);
 
   return (
     <>
@@ -31,13 +48,60 @@ export function DoctorDetailPage() {
 
           <ArrowLeftIcon className="h-4 w-4" /> Back to doctors
         </Link>
-        <Link
-          to={DASHBOARD_ROUTES.doctorEdit(doctor.id)}
-          className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
+        <div className="flex items-center gap-2">
+          {role === "owner" && !doctor.userId &&
+          <button
+            type="button"
+            onClick={handleInvite}
+            disabled={inviteState === "sending" || inviteState === "sent"}
+            className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600 disabled:cursor-not-allowed disabled:opacity-60">
 
-          <PencilIcon className="h-3.5 w-3.5" /> Edit
-        </Link>
+              {inviteState === "sent" ?
+            <><CheckCircle2Icon className="h-3.5 w-3.5 text-teal-600" /> Invite sent</> :
+
+            <><SendIcon className="h-3.5 w-3.5" /> {inviteState === "sending" ? "Sending…" : "Invite to portal"}</>
+            }
+            </button>
+          }
+          {role === "owner" && doctor.userId &&
+          <span className="flex items-center gap-1.5 rounded-xl bg-teal-600/8 px-4 py-2 text-sm font-semibold text-teal-600">
+              <CheckCircle2Icon className="h-3.5 w-3.5" /> Portal linked
+            </span>
+          }
+          {inviteState === "error" && <p className="text-xs font-medium text-danger">Couldn&apos;t send invite — try again.</p>}
+          <Link
+            to={DASHBOARD_ROUTES.doctorEdit(doctor.id)}
+            className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
+
+            <PencilIcon className="h-3.5 w-3.5" /> Edit
+          </Link>
+        </div>
       </div>
+
+      {completeness.percent < 100 &&
+      <div className="mb-6 rounded-3xl border border-warning/25 bg-warning/[0.05] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
+                <SparklesIcon className="h-4 w-4" />
+              </span>
+              <div>
+                <p className="text-sm font-bold text-ink">Profile {completeness.percent}% complete</p>
+                <p className="text-xs text-ink-muted">Missing: {completeness.missing.join(", ")}</p>
+              </div>
+            </div>
+            <Link
+              to={DASHBOARD_ROUTES.doctorEdit(doctor.id)}
+              className="shrink-0 rounded-xl bg-warning px-4 py-2 text-xs font-semibold text-white transition-colors hover:opacity-90">
+
+              Complete profile
+            </Link>
+          </div>
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white">
+            <div className="h-full rounded-full bg-warning transition-[width]" style={{ width: `${completeness.percent}%` }} />
+          </div>
+        </div>
+      }
 
       <div className="mb-6 rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(11,29,38,0.05)]">
         <div className="flex items-center gap-4">

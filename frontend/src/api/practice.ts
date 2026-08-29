@@ -1,3 +1,11 @@
+import { apiFetch } from "./client";
+
+// ============================================================================
+// Practice / clinic domain — the authed "me" + claim flow, plus the
+// platform-level pricing/health/config endpoints that sit alongside it.
+// ============================================================================
+
+// --- practice (authed) ------------------------------------------------------
 export interface PracticeMeResponse {
   id: string;
   name: string;
@@ -7,6 +15,7 @@ export interface PracticeMeResponse {
   timezone: string;
   plan_tier: "solo" | "practice" | "enterprise";
   subscription_status: string;
+  role: "owner" | "doctor" | "receptionist" | "staff";
 }
 
 export interface ClaimPlanResponse {
@@ -28,4 +37,91 @@ export function claimPlan(authedFetch: AuthedFetch, sessionId: string) {
     method: "POST",
     body: JSON.stringify({ session_id: sessionId })
   });
+}
+
+// --- health -----------------------------------------------------------------
+export interface HealthResponse {
+  status: string;
+  app: string;
+  version: string;
+}
+
+// Matches backend/src/main.py's `/health` route exactly (status/app/version).
+export function getHealth() {
+  return apiFetch<HealthResponse>("/health");
+}
+
+// --- plans (public pricing) -------------------------------------------------
+export interface PlanResponse {
+  id: string;
+  tier: "solo" | "practice" | "enterprise" | "custom";
+  name: string;
+  tagline: string | null;
+  price: number | null;
+  billing_period: string;
+  is_custom_pricing: boolean;
+  features: string[];
+  agent_categories: string[];
+  max_doctors: number | null;
+  max_social_channels: number | null;
+  max_locations: number | null;
+  has_analytics: boolean;
+  stripe_price_id: string | null;
+  is_active: boolean;
+  highlight: boolean;
+  display_order: number;
+  updated_at: string;
+}
+
+// DB-backed pricing (backend/src/models/plan.py) — the source of truth an
+// admin edits from the super-admin plans page. Public/unauthenticated (matches
+// GET /agent-costing's precedent): the checkout/pricing page and the
+// dashboard's own plan-gating (app/dashboard/plan/plan.ts) both need this
+// before any practice-auth chain necessarily exists.
+export function listPlans() {
+  return apiFetch<PlanResponse[]>("/api/v1/plans");
+}
+
+// --- agent config -----------------------------------------------------------
+export interface AgentConfigResponse {
+  id: string;
+  practice_id: string;
+  agent_type: string;
+  enabled: boolean;
+  config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdateAgentConfigRequest {
+  enabled?: boolean;
+  config?: Record<string, unknown>;
+}
+
+// Matches backend/src/router/agent_config/agent_config_router.py — the
+// first real reader/writer of AgentConfig.config.
+export function getAgentConfig(authedFetch: AuthedFetch, agentType: string) {
+  return authedFetch<AgentConfigResponse>(`/api/v1/agent-config/${agentType}`);
+}
+
+export function updateAgentConfig(authedFetch: AuthedFetch, agentType: string, data: UpdateAgentConfigRequest) {
+  return authedFetch<AgentConfigResponse>(`/api/v1/agent-config/${agentType}`, {
+    method: "PUT",
+    body: JSON.stringify(data)
+  });
+}
+
+// --- agent costing ----------------------------------------------------------
+export interface AgentCostingResponse {
+  agent_slug: string;
+  cost_per_session: number;
+  is_active: boolean;
+  total_sessions: number;
+  total_earned: number;
+}
+
+// GET /api/v1/agent-costing — backend/src/router/agent_costing/. No auth:
+// per-session cost is platform pricing, not practice-sensitive.
+export function getAgentCosting() {
+  return apiFetch<AgentCostingResponse[]>("/api/v1/agent-costing");
 }

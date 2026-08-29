@@ -1,9 +1,10 @@
 import React from "react";
-import { CreditCardIcon, HeadsetIcon } from "lucide-react";
+import { CreditCardIcon, HeadsetIcon, EyeIcon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { usePlan } from "../plan/PlanContext";
-import { planFor } from "../plan/planCapabilities";
+import { planFor } from "../plan/plan";
 import { PlanComparisonTable } from "./PlanComparisonTable";
+import type { Role } from "../../../data/roles";
 
 const SUPPORT_LABEL: Record<string, string> = {
   email: "Email support",
@@ -11,8 +12,13 @@ const SUPPORT_LABEL: Record<string, string> = {
   dedicated: "Dedicated success manager"
 };
 
+const ROLE_PREVIEW_OPTIONS: { role: Role; label: string }[] = [
+{ role: "owner", label: "Owner" },
+{ role: "doctor", label: "Doctor" }];
+
+
 export function PlanBillingPage() {
-  const { tier, capabilities } = usePlan();
+  const { tier, role, capabilities, setRoleOverride, source } = usePlan();
   const plan = planFor(tier);
 
   return (
@@ -37,6 +43,34 @@ export function PlanBillingPage() {
       </div>
 
       <PlanComparisonTable />
+
+      {source !== "api" &&
+      <div className="mt-6 rounded-3xl border border-dashed border-sand-200 bg-white p-6">
+          <div className="flex items-center gap-2 text-sm font-bold text-ink">
+            <EyeIcon className="h-4 w-4 text-accent-500" /> Preview as
+          </div>
+          <p className="mt-1 text-xs text-ink-muted">
+            Local-only — switches the dashboard's role-based nav/pages without a real login. No effect on any real
+            account or data; disappears once a real signed-in session resolves a role.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {ROLE_PREVIEW_OPTIONS.map((opt) =>
+          <button
+            key={opt.role}
+            type="button"
+            onClick={() => setRoleOverride(opt.role)}
+            className={`rounded-xl border px-4 py-2 text-xs font-semibold transition-colors ${
+            role === opt.role ?
+            "border-accent-500 bg-accent-500/10 text-accent-700" :
+            "border-sand-200 text-ink-soft hover:border-accent-500/40 hover:text-accent-600"}`
+            }>
+
+                {opt.label}
+              </button>
+          )}
+          </div>
+        </div>
+      }
     </>);
 
 }

@@ -44,3 +44,18 @@ class ClerkService:
             if resp.status_code == 200:
                 return resp.json()
             return None
+
+    async def invite_user(self, email: str, redirect_url: str, public_metadata: dict) -> dict | None:
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{self.base_url}/invitations",
+                json={
+                    "email_address": email,
+                    "redirect_url": redirect_url,
+                    "public_metadata": public_metadata,
+                },
+                headers={"Authorization": f"Bearer {self.secret_key}"},
+            )
+            if resp.status_code in (200, 201):
+                return resp.json()
+            return None

@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ActivityIcon } from "lucide-react";
-import { Container } from "../ui";
+import { Container, Logo } from "../ui";
 import { FOOTER_COLUMNS, type FooterLink } from "../../data/footer";
 
 function FooterLinkItem({ link }: { link: FooterLink }) {
@@ -19,8 +18,8 @@ export function Footer() {
         <div className="grid gap-10 lg:grid-cols-[1.4fr_1fr_1fr]">
           <div>
             <Link to="/" className="flex items-center gap-2.5">
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-teal-500 text-white">
-                <ActivityIcon className="h-5 w-5" strokeWidth={2.4} />
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-sand-200 bg-white shadow-soft">
+                <Logo className="h-6 w-6" />
               </span>
               <span className="text-lg font-bold tracking-tight text-ink">
                 Aesthetix<span className="text-teal-500">AI</span>

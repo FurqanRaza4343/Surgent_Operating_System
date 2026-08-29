@@ -3,7 +3,7 @@ import type { Session } from "./types";
 import { ChannelIcon } from "./ChannelIcon";
 
 const STATUS_DOT: Record<Session["status"], string> = {
-  active: "bg-teal-600",
+  active: "bg-accent-500",
   needs_attention: "bg-danger",
   resolved: "bg-success"
 };
@@ -29,7 +29,7 @@ export function SessionListItem({
     <button
       onClick={onClick}
       className={`flex w-full items-start gap-3 border-b border-sand-200/70 px-4 py-3.5 text-left transition-colors ${
-      active ? "bg-teal-600/6" : "hover:bg-sand-100"}`
+      active ? "bg-accent-500/6" : "hover:bg-sand-100"}`
       }>
 
       <span className="relative mt-0.5">
