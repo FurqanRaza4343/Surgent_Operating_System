@@ -3,7 +3,7 @@ from datetime import datetime
 
 from sqlalchemy import String, Text, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
 
@@ -18,3 +18,5 @@ class AgentLog(Base):
     details: Mapped[dict] = mapped_column(JSONB, default=dict)
     performed_by: Mapped[str] = mapped_column(String(100), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    practice = relationship("Practice", back_populates="agent_logs")

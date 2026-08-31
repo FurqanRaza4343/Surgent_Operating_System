@@ -206,11 +206,11 @@ export function planFor(tier: PlanTier) {
 
 type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
 
-async function fetchFromApi(authedFetch: AuthedFetch): Promise<{ tier: PlanTier; role: Role } | null> {
+async function fetchFromApi(authedFetch: AuthedFetch): Promise<{ tier: PlanTier; role: Role; permissions: string[] } | null> {
   if (!authedFetch) return null;
   try {
     const practice = await getMyPractice(authedFetch);
-    return { tier: practice.plan_tier, role: practice.role };
+    return { tier: practice.plan_tier, role: practice.role, permissions: practice.permissions || [] };
   } catch {
     return null;
   }
@@ -219,6 +219,11 @@ async function fetchFromApi(authedFetch: AuthedFetch): Promise<{ tier: PlanTier;
 export function usePlanTier(authedFetch: AuthedFetch = null) {
   const [tier, setTier] = useState<PlanTier>(() => readPlanOverride() || "solo");
   const [role, setRole] = useState<Role>(() => readRoleOverride() || "owner");
+  // Only meaningful for role === "doctor" (see backend/src/data/doctor_permissions.py)
+  // — the granted permission keys an Owner assigned at application-approval
+  // time. No local override exists for this (unlike role/tier's dev
+  // switchers) since it's meaningless without a real approved Doctor record.
+  const [permissions, setPermissions] = useState<string[]>([]);
   const [source, setSource] = useState<PlanSource>(() => (readPlanOverride() ? "local" : "default"));
   const [loading, setLoading] = useState(true);
 
@@ -230,12 +235,27 @@ export function usePlanTier(authedFetch: AuthedFetch = null) {
       if (result) {
         setTier(result.tier);
         setRole(result.role);
+        setPermissions(result.permissions);
         setSource("api");
-      } else {
+      } else if (!authedFetch) {
+        // No real auth session at all (Clerk disabled) — safe to use the
+        // local dev overrides (Plan & Billing's "preview as" switcher).
         const local = readPlanOverride();
         setTier(local || "solo");
         setRole(readRoleOverride() || "owner");
+        setPermissions([]);
         setSource(local ? "local" : "default");
+      } else {
+        // A real Clerk session exists but the backend has no active
+        // practice/user for it yet (pending doctor approval, unclaimed
+        // signup, etc.) — must never default to a privileged role here.
+        // RequirePractice.tsx is responsible for blocking the dashboard in
+        // this state; this is a defense-in-depth floor so a failed API call
+        // can't silently grant Owner-level access the way it once did.
+        setTier("solo");
+        setRole("staff");
+        setPermissions([]);
+        setSource("default");
       }
       setLoading(false);
     })();
@@ -262,7 +282,7 @@ export function usePlanTier(authedFetch: AuthedFetch = null) {
     setRole(next);
   }, []);
 
-  return { tier, role, source, loading, setOverride, setRoleOverride };
+  return { tier, role, permissions, source, loading, setOverride, setRoleOverride };
 }
 
 export { tierAtLeast };

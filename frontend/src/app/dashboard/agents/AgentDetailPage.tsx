@@ -12,12 +12,15 @@ import { UpgradeRequired } from "../plan/UpgradeRequired";
 import { minTierForCategory } from "../plan/plan";
 import { usePatients } from "../patients/usePatients";
 
-// Only `receptionist` has real (if thin) LLM/Twilio logic wired in the
-// backend today — see backend/src/services/agents/receptionist_agent/. The
-// rest are structurally scaffolded (router/controller/service triads exist)
-// but not yet implemented. Shown honestly rather than implying all 31 agents
-// are equally live.
-const LIVE_AGENT_SLUGS = new Set(["receptionist"]);
+// receptionist, appointment_reminder, and multilingual_translation are real
+// today — see backend/src/services/ai_receptionist/ (voice_chat_service.py,
+// reminder_service.py, translation_service.py; the 3 previously-separate
+// "agent" folders for these were merged into that one module). appointment_booking
+// and reschedule_cancellation are fully covered by the real Receptionist
+// staff role/AppointmentsService instead (no dedicated AI-agent endpoint any
+// more). Everything else here is still structurally scaffolded but not
+// implemented. Shown honestly rather than implying all 31 agents are equally live.
+const LIVE_AGENT_SLUGS = new Set(["receptionist", "appointment_reminder", "multilingual_translation"]);
 
 const AGENT_LOGOS: Record<string, string> = {
   receptionist: "/agent-logos/receptionist.png"

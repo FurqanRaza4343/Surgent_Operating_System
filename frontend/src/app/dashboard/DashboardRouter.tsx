@@ -14,6 +14,8 @@ import { DoctorDetailPage } from "./doctors/DoctorDetailPage";
 import { DoctorFormPage } from "./doctors/DoctorFormPage";
 import { DoctorOverviewPage } from "./doctor-overview/DoctorOverviewPage";
 import { MyCalendarPage } from "./doctor-overview/MyCalendarPage";
+import { DoctorRequestsPage } from "./doctor-requests/DoctorRequestsPage";
+import { DoctorRequestDetailPage } from "./doctor-requests/DoctorRequestDetailPage";
 import { DASHBOARD_ROUTES } from "./constants/routes";
 import { usePlan } from "./plan/PlanContext";
 import { AgentCategoryPage } from "./agents/AgentCategoryPage";
@@ -25,14 +27,34 @@ import { AgentSettingsPage } from "./settings/AgentSettingsPage";
 import { ProfilePage } from "./profile/ProfilePage";
 import { PlanBillingPage } from "./billing/PlanBillingPage";
 import { PlanGate } from "./plan/PlanGate";
+import { FrontDeskPage } from "./front-desk/FrontDeskPage";
+import { WaitingRoomPage } from "./front-desk/WaitingRoomPage";
+import { BookAppointmentPage } from "./front-desk/BookAppointmentPage";
+import { StaffPage } from "./staff/StaffPage";
+import { ProceduresPage } from "./clinical/ProceduresPage";
+import { ConsultationNoteFormPage } from "./clinical/ConsultationNoteFormPage";
+import { TreatmentPlanFormPage } from "./clinical/TreatmentPlanFormPage";
+import { TreatmentPlanPage } from "./clinical/TreatmentPlanPage";
+import { InvoicesPage } from "./billing-invoices/InvoicesPage";
+import { InvoiceFormPage } from "./billing-invoices/InvoiceFormPage";
+import { InvoiceDetailPage } from "./billing-invoices/InvoiceDetailPage";
+import { ExpensesPage } from "./finance/ExpensesPage";
+import { FinanceOverviewPage } from "./finance/FinanceOverviewPage";
+import { FunnelPage } from "./leads/FunnelPage";
+import { InventoryPage } from "./inventory/InventoryPage";
+import { InventoryItemDetailPage } from "./inventory/InventoryItemDetailPage";
+import { MessagesPage } from "./messages/MessagesPage";
+import { MessageThreadPage } from "./messages/MessageThreadPage";
 
 // Doctor's real landing page is /dashboard/doctor, not root — root's
 // OverviewPage is Owner-flavored practice-wide data (greeting, KPIs,
 // AIInsightsPanel) that isn't appropriate for a Doctor login. A doctor
 // landing on root gets sent to their own overview instead of seeing it.
+// Same reasoning for Receptionist → Front Desk.
 function DashboardIndex() {
   const { role } = usePlan();
   if (role === "doctor") return <Navigate to={DASHBOARD_ROUTES.doctorOverview} replace />;
+  if (role === "receptionist") return <Navigate to={DASHBOARD_ROUTES.frontDesk} replace />;
   return <OverviewPage />;
 }
 
@@ -42,6 +64,24 @@ function DashboardIndex() {
 function RequireDoctor({ children }: { children: React.ReactNode }) {
   const { role } = usePlan();
   if (role !== "doctor") return <Navigate to={DASHBOARD_ROUTES.overview} replace />;
+  return <>{children}</>;
+}
+
+// Guards the Front Desk/Waiting Room/Book Appointment routes — mirrors
+// RequireDoctor. Owner can also reach these (full practice visibility), a
+// Doctor cannot.
+function RequireReceptionist({ children }: { children: React.ReactNode }) {
+  const { role } = usePlan();
+  if (role !== "receptionist" && role !== "owner") return <Navigate to={DASHBOARD_ROUTES.overview} replace />;
+  return <>{children}</>;
+}
+
+// Guards the Doctor Requests review pages — a doctor hitting these directly
+// is sent to their own overview instead (no loop risk, same reasoning as
+// RequireDoctor above).
+function RequireOwner({ children }: { children: React.ReactNode }) {
+  const { role } = usePlan();
+  if (role !== "owner") return <Navigate to={DASHBOARD_ROUTES.overview} replace />;
   return <>{children}</>;
 }
 
@@ -65,6 +105,26 @@ export function DashboardRouter() {
         <Route path="doctors/new" element={<DoctorFormPage />} />
         <Route path="doctors/:id" element={<DoctorDetailPage />} />
         <Route path="doctors/:id/edit" element={<DoctorFormPage />} />
+        <Route path="doctor-requests" element={<RequireOwner><DoctorRequestsPage /></RequireOwner>} />
+        <Route path="doctor-requests/:id" element={<RequireOwner><DoctorRequestDetailPage /></RequireOwner>} />
+        <Route path="staff" element={<RequireOwner><StaffPage /></RequireOwner>} />
+        <Route path="front-desk" element={<RequireReceptionist><FrontDeskPage /></RequireReceptionist>} />
+        <Route path="waiting-room" element={<RequireReceptionist><WaitingRoomPage /></RequireReceptionist>} />
+        <Route path="book-appointment" element={<RequireReceptionist><BookAppointmentPage /></RequireReceptionist>} />
+        <Route path="procedures" element={<RequireOwner><ProceduresPage /></RequireOwner>} />
+        <Route path="patients/:patientId/notes/new" element={<RequireDoctor><ConsultationNoteFormPage /></RequireDoctor>} />
+        <Route path="patients/:patientId/treatment-plans/new" element={<RequireDoctor><TreatmentPlanFormPage /></RequireDoctor>} />
+        <Route path="treatment-plans/:id" element={<TreatmentPlanPage />} />
+        <Route path="invoices" element={<InvoicesPage />} />
+        <Route path="invoices/new" element={<RequireReceptionist><InvoiceFormPage /></RequireReceptionist>} />
+        <Route path="invoices/:id" element={<InvoiceDetailPage />} />
+        <Route path="finance/expenses" element={<RequireReceptionist><ExpensesPage /></RequireReceptionist>} />
+        <Route path="finance/overview" element={<RequireOwner><FinanceOverviewPage /></RequireOwner>} />
+        <Route path="leads" element={<FunnelPage />} />
+        <Route path="inventory" element={<RequireReceptionist><InventoryPage /></RequireReceptionist>} />
+        <Route path="inventory/:id" element={<RequireReceptionist><InventoryItemDetailPage /></RequireReceptionist>} />
+        <Route path="messages" element={<MessagesPage />} />
+        <Route path="messages/:staffUserId" element={<RequireOwner><MessageThreadPage /></RequireOwner>} />
         <Route path="agents/:categoryId" element={<AgentCategoryPage />} />
         <Route path="agents/:categoryId/:agentSlug" element={<AgentDetailPage />} />
         <Route path="command-center" element={<CommandCenterPage />} />

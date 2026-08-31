@@ -1,12 +1,23 @@
+import enum
 import uuid
 from datetime import datetime, date
 from decimal import Decimal
 
-from sqlalchemy import String, Text, DateTime, Date, ForeignKey, Numeric, func
+from sqlalchemy import String, Text, DateTime, Date, Enum, ForeignKey, Numeric, func
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
+
+
+class PatientLifecycleStage(str, enum.Enum):
+    INQUIRY = "inquiry"
+    CONTACTED = "contacted"
+    CONSULT_SCHEDULED = "consult_scheduled"
+    CONSULT_COMPLETED = "consult_completed"
+    TREATMENT_PLANNED = "treatment_planned"
+    PATIENT = "patient"
+    LOST = "lost"
 
 
 class Patient(Base):
@@ -27,6 +38,15 @@ class Patient(Base):
     ai_agent_assigned: Mapped[str] = mapped_column(String(100), nullable=True)  # Which agent is handling this patient
     agent_status: Mapped[str] = mapped_column(String(20), default="inactive")  # "active" or "inactive"
     agent_cost: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0.0)  # Per-agent cost tracking
+    # CRM funnel stage — separate from the frontend's derived `status`
+    # ("active"/"lead"), which stays booking-based (has_upcoming/has_completed
+    # appointment) for backward compat. This is the richer, explicit stage a
+    # front-desk/marketing workflow actually tracks a lead through.
+    lifecycle_stage: Mapped[PatientLifecycleStage] = mapped_column(
+        Enum(PatientLifecycleStage), nullable=False, default=PatientLifecycleStage.INQUIRY
+    )
+    lost_reason: Mapped[str] = mapped_column(String(255), nullable=True)
+    source: Mapped[str] = mapped_column(String(100), nullable=True)  # e.g. "Instagram", "Referral", "Walk-in"
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
@@ -36,3 +56,5 @@ class Patient(Base):
     recovery_journals = relationship("RecoveryJournal", back_populates="patient", cascade="all, delete-orphan")
     conversations = relationship("Conversation", back_populates="patient", cascade="all, delete-orphan")
     review_requests = relationship("ReviewRequest", back_populates="patient", cascade="all, delete-orphan")
+    consent_documents = relationship("ConsentDocument", back_populates="patient", cascade="all, delete-orphan")
+    invoices = relationship("Invoice", back_populates="patient", cascade="all, delete-orphan")

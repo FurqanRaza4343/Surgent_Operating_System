@@ -1,0 +1,180 @@
+import React, { useState } from "react";
+import { ShieldCheckIcon, PlusIcon, PenLineIcon, XIcon, CheckIcon } from "lucide-react";
+import { usePlan } from "../plan/PlanContext";
+import { useConsentDocuments } from "./useConsentDocuments";
+import type { ConsentDocumentResponse } from "../../../api/entities";
+
+const STATUS_CLASS: Record<string, string> = {
+  draft: "bg-sand-100 text-ink-soft",
+  sent: "bg-warning/10 text-warning",
+  signed: "bg-success/10 text-success",
+  void: "bg-danger/10 text-danger"
+};
+
+function formatDate(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+// Open to any active practice role — administrative/legal, not clinical
+// judgment (matches consent_router.py's own gate).
+export function ConsentDocumentsList({ patientId }: { patientId: string }) {
+  const { authedFetch } = usePlan();
+  const { documents, loading, create, sign, voidDoc } = useConsentDocuments(authedFetch, patientId);
+  const [adding, setAdding] = useState(false);
+
+  return (
+    <div className="mb-6 rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <div className="flex items-center justify-between border-b border-sand-200 px-5 py-4">
+        <p className="flex items-center gap-2 text-sm font-bold text-ink">
+          <ShieldCheckIcon className="h-4 w-4 text-teal-600" /> Consent documents
+        </p>
+        <button
+          type="button"
+          onClick={() => setAdding((v) => !v)}
+          className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
+
+          <PlusIcon className="h-3.5 w-3.5" /> New document
+        </button>
+      </div>
+
+      {adding && <NewDocumentForm onCreate={create} onDone={() => setAdding(false)} />}
+
+      <div className="p-2">
+        {loading ?
+        <p className="px-3 py-4 text-sm text-ink-muted">Loading…</p> :
+        documents.length === 0 ?
+        <p className="px-3 py-4 text-sm text-ink-muted">No consent documents yet.</p> :
+
+        <div className="divide-y divide-sand-100">
+            {documents.map((doc) => <DocumentRow key={doc.id} document={doc} onSign={sign} onVoid={voidDoc} />)}
+          </div>
+        }
+      </div>
+    </div>);
+
+}
+
+function NewDocumentForm({ onCreate, onDone }: { onCreate: (data: { document_type: string; content?: string | null }) => Promise<unknown>; onDone: () => void }) {
+  const [documentType, setDocumentType] = useState("");
+  const [content, setContent] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!documentType.trim()) return;
+    setSaving(true);
+    await onCreate({ document_type: documentType.trim(), content: content.trim() || null });
+    setSaving(false);
+    onDone();
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3 border-b border-sand-200 bg-sand-50/50 px-5 py-4">
+      <input
+        required
+        value={documentType}
+        onChange={(e) => setDocumentType(e.target.value)}
+        placeholder="Document type, e.g. Surgical Consent"
+        className="w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40" />
+
+      <textarea
+        value={content}
+        onChange={(e) => setContent(e.target.value)}
+        rows={3}
+        placeholder="The consent text the patient will read and sign, optional to fill in now"
+        className="w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40" />
+
+      <div className="flex justify-end gap-2">
+        <button type="button" onClick={onDone} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-muted hover:text-ink">Cancel</button>
+        <button type="submit" disabled={saving || !documentType.trim()} className="rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 disabled:opacity-50">
+          {saving ? "Creating…" : "Create"}
+        </button>
+      </div>
+    </form>);
+
+}
+
+function DocumentRow({
+  document,
+  onSign,
+  onVoid
+
+
+
+
+}: {document: ConsentDocumentResponse;onSign: (id: string, name: string) => Promise<unknown>;onVoid: (id: string) => Promise<unknown>;}) {
+  const [signing, setSigning] = useState(false);
+  const [name, setName] = useState("");
+  const [confirmed, setConfirmed] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  async function handleSign() {
+    if (!name.trim() || !confirmed) return;
+    setSaving(true);
+    try {
+      await onSign(document.id, name.trim());
+      setSigning(false);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className="px-5 py-3.5">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink">{document.document_type}</p>
+          <p className="text-xs text-ink-muted">
+            {document.status === "signed" && document.signed_by_name && document.signed_at ?
+            `Signed by ${document.signed_by_name} on ${formatDate(document.signed_at)}` :
+            `Created ${formatDate(document.created_at)}`}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ${STATUS_CLASS[document.status]}`}>{document.status}</span>
+          {(document.status === "draft" || document.status === "sent") && !signing &&
+          <>
+              <button type="button" onClick={() => setSigning(true)} className="flex items-center gap-1 rounded-lg border border-sand-200 px-2.5 py-1 text-xs font-semibold text-ink-soft hover:border-teal-600/40 hover:text-teal-600">
+                <PenLineIcon className="h-3 w-3" /> Sign
+              </button>
+              <button type="button" onClick={() => onVoid(document.id)} className="rounded-lg px-2 py-1 text-[11px] font-semibold text-ink-muted hover:text-danger">
+                Void
+              </button>
+            </>
+          }
+        </div>
+      </div>
+
+      {signing &&
+      <div className="mt-3 rounded-xl border border-teal-600/20 bg-teal-600/[0.03] p-4">
+          <p className="mb-2 text-xs text-ink-muted">
+            Patient should be present. Have them type their full legal name below to record their signature.
+          </p>
+          <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Patient's full legal name"
+          className="mb-2 w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40" />
+
+          <label className="mb-3 flex items-center gap-2 text-xs text-ink-soft">
+            <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="h-3.5 w-3.5 rounded border-sand-300 text-teal-600 focus:ring-teal-600" />
+            Patient confirms they have read and agree to this document.
+          </label>
+          <div className="flex justify-end gap-2">
+            <button type="button" onClick={() => { setSigning(false); setName(""); setConfirmed(false); }} className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-muted hover:text-ink">
+              <XIcon className="h-3.5 w-3.5" /> Cancel
+            </button>
+            <button
+            type="button"
+            onClick={handleSign}
+            disabled={saving || !name.trim() || !confirmed}
+            className="flex items-center gap-1 rounded-lg bg-teal-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40">
+
+              <CheckIcon className="h-3.5 w-3.5" /> {saving ? "Recording…" : "Record signature"}
+            </button>
+          </div>
+        </div>
+      }
+    </div>);
+
+}

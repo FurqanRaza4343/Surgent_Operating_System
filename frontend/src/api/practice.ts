@@ -16,6 +16,9 @@ export interface PracticeMeResponse {
   plan_tier: "solo" | "practice" | "enterprise";
   subscription_status: string;
   role: "owner" | "doctor" | "receptionist" | "staff";
+  // Only meaningful when role === "doctor" — granted permission keys from
+  // backend/src/data/doctor_permissions.py. Empty for every other role.
+  permissions: string[];
 }
 
 export interface ClaimPlanResponse {
@@ -37,6 +40,35 @@ export function claimPlan(authedFetch: AuthedFetch, sessionId: string) {
     method: "POST",
     body: JSON.stringify({ session_id: sessionId })
   });
+}
+
+// --- doctor signup code (owner-only) -----------------------------------------
+export interface DoctorSignupCodeResponse {
+  code: string;
+  signup_url: string;
+}
+
+export interface ValidateDoctorCodeResponse {
+  valid: boolean;
+  practice_id: string | null;
+  practice_name: string | null;
+}
+
+// Matches backend/src/router/practice/practice_router.py's doctor-signup-code
+// endpoints — the shareable link an Owner gives out for doctors to
+// self-register through (see app/dashboard/doctors/ and app/auth/DoctorApplyPage.tsx).
+export function getDoctorSignupCode(authedFetch: AuthedFetch) {
+  return authedFetch<DoctorSignupCodeResponse>("/api/v1/practice/doctor-signup-code");
+}
+
+export function regenerateDoctorSignupCode(authedFetch: AuthedFetch) {
+  return authedFetch<DoctorSignupCodeResponse>("/api/v1/practice/doctor-signup-code/regenerate", { method: "POST" });
+}
+
+// Public/unauthenticated — a prospective doctor needs to confirm the link is
+// valid before they've created any account at all.
+export function validateDoctorCode(code: string) {
+  return apiFetch<ValidateDoctorCodeResponse>(`/api/v1/practice/validate-doctor-code?code=${encodeURIComponent(code)}`);
 }
 
 // --- health -----------------------------------------------------------------

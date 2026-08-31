@@ -21,15 +21,22 @@ function normalize(patient: Patient): Patient {
     assignedAgentSlug: patient.assignedAgentSlug ?? null,
     assignedCategoryId: patient.assignedCategoryId ?? null,
     assignmentReasoning: patient.assignmentReasoning ?? null,
-    agentStatus: patient.agentStatus ?? "inactive"
+    agentStatus: patient.agentStatus ?? "inactive",
+    lifecycleStage: patient.lifecycleStage ?? "inquiry",
+    lostReason: patient.lostReason ?? null,
+    source: patient.source ?? null
   };
 }
 
-// Backend Patient rows don't carry a lifecycle "status", lastVisit,
-// nextAppointment, procedures, or assignmentReasoning yet (see
-// backend/src/models/patient.py) — a patient synced FROM the API defaults
-// those to the same values PatientFormPage already used locally on create,
-// rather than fabricating fake-looking data.
+// Backend Patient rows don't carry lastVisit, nextAppointment, procedures,
+// or assignmentReasoning yet (see backend/src/models/patient.py) — a patient
+// synced FROM the API defaults those to the same values PatientFormPage
+// already used locally on create, rather than fabricating fake-looking data.
+// `status` IS derivable now: has_upcoming_appointment/has_completed_appointment
+// come from real Appointment rows (see patients_services.py's
+// _attach_appointment_flags()), so a patient with either is "active"; only a
+// patient with neither stays a "lead". Nothing here produces "inactive" —
+// same as before this change.
 function fromApi(p: PatientResponse): Patient {
   const name = `${p.first_name} ${p.last_name}`.trim();
   const agent = p.ai_agent_assigned ? AGENTS_BY_SLUG[p.ai_agent_assigned] : undefined;
@@ -39,7 +46,7 @@ function fromApi(p: PatientResponse): Patient {
     initial: name[0]?.toUpperCase() || "?",
     email: p.email ?? "",
     phone: p.phone ?? "",
-    status: "lead",
+    status: p.has_upcoming_appointment || p.has_completed_appointment ? "active" : "lead",
     lastVisit: null,
     nextAppointment: null,
     procedures: [],
@@ -49,7 +56,10 @@ function fromApi(p: PatientResponse): Patient {
     assignedAgentSlug: p.ai_agent_assigned,
     assignedCategoryId: agent?.categoryId ?? null,
     assignmentReasoning: null,
-    agentStatus: p.agent_status === "active" ? "active" : "inactive"
+    agentStatus: p.agent_status === "active" ? "active" : "inactive",
+    lifecycleStage: (p.lifecycle_stage as Patient["lifecycleStage"]) ?? "inquiry",
+    lostReason: p.lost_reason,
+    source: p.source
   };
 }
 

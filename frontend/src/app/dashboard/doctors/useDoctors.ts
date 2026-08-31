@@ -33,7 +33,8 @@ function normalize(doctor: Doctor): Doctor {
     capabilities: doctor.capabilities ?? [],
     availability: doctor.availability ?? [],
     documents: doctor.documents ?? [],
-    userId: doctor.userId ?? null
+    userId: doctor.userId ?? null,
+    isActive: doctor.isActive ?? true
   };
 }
 
@@ -59,7 +60,8 @@ function fromApi(d: DoctorResponse): Doctor {
     availability: [],
     documents: [],
     activePatients: 0,
-    upcomingSurgeries: 0
+    upcomingSurgeries: 0,
+    isActive: d.is_active
   };
 }
 
@@ -155,7 +157,7 @@ export function useDoctors(authedFetch: AuthedFetch = null) {
           // Keep the locally-known extras the backend doesn't store yet
           // (yearsExperience/availability/documents/photoUrl) but use the
           // real id so future GET /doctors calls match this same record.
-          toSave = { ...doctor, id: created.id, userId: created.user_id };
+          toSave = { ...doctor, id: created.id, userId: created.user_id, isActive: created.is_active };
         } catch {
           // API unavailable — fall through to the local-only save below,
           // same graceful-degradation behavior this hook always had.
@@ -186,7 +188,8 @@ export function useDoctors(authedFetch: AuthedFetch = null) {
             specialty: patch.specialty,
             license_number: patch.licenseNumber,
             bio: patch.bio,
-            capabilities: patch.capabilities
+            capabilities: patch.capabilities,
+            is_active: patch.isActive
           });
         } catch {
           // API unavailable — fall through to the local-only update below.

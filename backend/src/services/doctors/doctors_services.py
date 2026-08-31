@@ -6,8 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import get_settings
 from src.models.doctor import Doctor
+from src.models.user import User
 from src.schemas.doctor import CreateDoctorRequest, UpdateDoctorRequest
-from src.server.exceptions import NotFoundException, AppException
+from src.server.exceptions import NotFoundException
 from src.services.clerk.clerk_service import ClerkService
 
 settings = get_settings()
@@ -61,8 +62,22 @@ class DoctorsService:
         self, db: AsyncSession, practice_id: UUID, doctor_id: UUID, data: UpdateDoctorRequest
     ) -> Doctor:
         doctor = await self.get_doctor(db, practice_id, doctor_id)
-        for field, value in data.model_dump(exclude_unset=True).items():
+        fields = data.model_dump(exclude_unset=True)
+        for field, value in fields.items():
             setattr(doctor, field, value)
+
+        # Doctor.is_active and the linked User.is_active are two separate
+        # flags (a Doctor is a roster entry, a User is a login) — without
+        # this, an Owner "deactivating" a doctor here left their dashboard
+        # login (get_current_practice_user only checks User.is_active)
+        # completely untouched. Keep them in lockstep in both directions so
+        # deactivating actually revokes portal access, and reactivating
+        # actually restores it.
+        if "is_active" in fields and doctor.user_id is not None:
+            linked_user = await db.get(User, doctor.user_id)
+            if linked_user is not None:
+                linked_user.is_active = fields["is_active"]
+
         await db.flush()
         await db.refresh(doctor)
         return doctor
@@ -70,7 +85,7 @@ class DoctorsService:
     async def invite_doctor(self, db: AsyncSession, practice_id: UUID, doctor_id: UUID) -> Doctor:
         doctor = await self.get_doctor(db, practice_id, doctor_id)
         clerk = ClerkService()
-        result = await clerk.invite_user(
+        await clerk.invite_user(
             email=doctor.email,
             redirect_url=f"{settings.frontend_url}/doctor/sign-up",
             public_metadata={
@@ -79,6 +94,4 @@ class DoctorsService:
                 "practice_id": str(doctor.practice_id),
             },
         )
-        if result is None:
-            raise AppException("Failed to send invitation via Clerk")
         return doctor

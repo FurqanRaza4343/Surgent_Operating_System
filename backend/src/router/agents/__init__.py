@@ -1,10 +1,5 @@
 from fastapi import APIRouter
 
-from src.router.agents.receptionist_agent.receptionist_agent_router import router as receptionist_router
-from src.router.agents.appointment_booking_agent.appointment_booking_agent_router import router as appointment_booking_router
-from src.router.agents.reschedule_cancellation_agent.reschedule_cancellation_agent_router import router as reschedule_cancellation_router
-from src.router.agents.appointment_reminder_agent.appointment_reminder_agent_router import router as appointment_reminder_router
-from src.router.agents.multilingual_translation_agent.multilingual_translation_agent_router import router as multilingual_translation_router
 from src.router.agents.ai_consultation_agent.ai_consultation_agent_router import router as ai_consultation_router
 from src.router.agents.photo_analysis_agent.photo_analysis_agent_router import router as photo_analysis_router
 from src.router.agents.video_consultation_agent.video_consultation_agent_router import router as video_consultation_router
@@ -47,13 +42,21 @@ from src.router.attendance.attendance_router import router as attendance_router
 from src.router.command_center.command_center_router import router as command_center_router
 from src.router.admin.admin_router import router as admin_router
 from src.router.plans.plans_router import router as plans_router
+from src.router.analytics.analytics_router import router as analytics_router
+from src.router.staff.staff_router import router as staff_router
+from src.router.procedures.procedures_router import router as procedures_router
+from src.router.clinical.clinical_router import router as clinical_router
+from src.router.patient_photos.patient_photos_router import router as patient_photos_router
+from src.router.consent.consent_router import router as consent_router
+from src.router.billing.billing_router import router as billing_router
+from src.router.finance.finance_router import router as finance_router
+from src.router.inventory.inventory_router import router as inventory_router
+from src.router.ai_receptionist.ai_receptionist_router import router as ai_receptionist_router
+from src.router.staff_messages.staff_message_router import router as staff_message_router
 
 agent_routers = [
-    receptionist_router,
-    appointment_booking_router,
-    reschedule_cancellation_router,
-    appointment_reminder_router,
-    multilingual_translation_router,
+    ai_receptionist_router,
+    staff_message_router,
     ai_consultation_router,
     photo_analysis_router,
     video_consultation_router,
@@ -95,6 +98,15 @@ agent_routers = [
     command_center_router,
     admin_router,
     plans_router,
+    analytics_router,
+    staff_router,
+    procedures_router,
+    clinical_router,
+    patient_photos_router,
+    consent_router,
+    billing_router,
+    finance_router,
+    inventory_router,
 ]
 
 

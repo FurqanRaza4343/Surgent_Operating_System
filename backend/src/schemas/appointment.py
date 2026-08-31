@@ -13,6 +13,7 @@ class AppointmentResponse(BaseModel):
     status: str
     start_time: datetime
     end_time: datetime
+    checked_in_at: datetime | None = None
     notes: str | None
     created_at: datetime
     updated_at: datetime

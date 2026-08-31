@@ -1,26 +1,66 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, Navigate } from "react-router-dom";
 import { SparklesIcon } from "lucide-react";
 import { readPlanOverride } from "../dashboard/plan/plan";
+import { useAuthedFetch } from "../../api/authFetch";
+import { getMyPractice } from "../../api/practice";
+import { getMyApplication } from "../../api/entities";
 
-const clerkEnabled = false; // TEMP-TEST-BYPASS
+const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
-// Closes (partially — see the note below) the gap app/auth/README.md
-// documents: RequireAuth only proves someone is signed in, not that they
-// belong to a practice with an active plan. A real Clerk user who never went
-// through /onboarding/claim (never bought a plan, or bought one before this
-// existed) sees a friendly nudge to pricing instead of silently landing on a
-// Solo-shaped dashboard that isn't really theirs.
-//
-// NOTE: this is a presentation-layer check only, same caveat as everywhere
-// else in dashboard/plan/ — it looks for the local plan override
-// (planStorage.ts), not a real backend practice record (doesn't exist yet,
-// see backend Phase 4 in the plan doc). Degrades to "always allow" when
-// Clerk itself is disabled, so local dev/testing (including Plan & Billing's dev switch buttons)
-// is never blocked by this.
+// Closes the gap app/auth/README.md documents: RequireAuth only proves
+// someone is signed in, not that they belong to a practice with an active
+// role. Checks the REAL backend (GET /practice/me) directly rather than
+// through usePlan()/PlanProvider — PlanProvider only mounts inside
+// DashboardLayout, which this component wraps, so it isn't available yet
+// here. This is the actual enforcement point that keeps a pending doctor
+// application (is_active=False until an Owner approves — see
+// doctor_applications_service.py) out of the dashboard; plan.ts's
+// usePlanTier role default is only a defense-in-depth backstop, not the
+// primary gate. Degrades to "always allow" when Clerk itself is disabled,
+// so local dev/testing is never blocked by this.
 export function RequirePractice({ children }: { children: React.ReactNode }) {
   if (!clerkEnabled) return <>{children}</>;
-  if (readPlanOverride()) return <>{children}</>;
+  return <RealPracticeGate>{children}</RealPracticeGate>;
+}
+
+type CheckState = "loading" | "ok" | "pending-doctor" | "no-practice";
+
+function RealPracticeGate({ children }: { children: React.ReactNode }) {
+  const { authedFetch, isSignedIn } = useAuthedFetch();
+  const [state, setState] = useState<CheckState>("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!isSignedIn) {
+        if (!cancelled) setState(readPlanOverride() ? "ok" : "no-practice");
+        return;
+      }
+      try {
+        await getMyPractice(authedFetch);
+        if (!cancelled) setState("ok");
+        return;
+      } catch {
+        // No active User/Practice for this session yet — check whether it's
+        // specifically a pending doctor application before falling back to
+        // the generic "no plan" message.
+      }
+      try {
+        const application = await getMyApplication(authedFetch);
+        if (!cancelled) setState(application.status === "pending" ? "pending-doctor" : "no-practice");
+      } catch {
+        if (!cancelled) setState(readPlanOverride() ? "ok" : "no-practice");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [authedFetch, isSignedIn]);
+
+  if (state === "loading") return null;
+  if (state === "ok") return <>{children}</>;
+  if (state === "pending-doctor") return <Navigate to="/doctor/apply/pending" replace />;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-canvas px-6">

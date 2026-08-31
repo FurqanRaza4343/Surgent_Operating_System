@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { PhoneCallIcon, AlertCircleIcon, CalendarCheckIcon, DollarSignIcon, ArrowRightIcon, CalendarIcon, PlusIcon } from "lucide-react";
 import { KpiCard } from "../components/KpiCard";
 import { SessionListItem } from "../sessions/SessionListItem";
@@ -12,6 +12,7 @@ import { PatientSpotlight } from "./PatientSpotlight";
 import { PatientVolumeChart } from "./PatientVolumeChart";
 
 export function OverviewPage() {
+  const navigate = useNavigate();
   const needsAttention = MOCK_SESSIONS.filter((s) => s.status === "needs_attention");
   const recent = [...MOCK_SESSIONS].sort((a, b) => +new Date(b.updatedAt) - +new Date(a.updatedAt));
 
@@ -63,7 +64,7 @@ export function OverviewPage() {
 
             <div>
                 {needsAttention.map((s) =>
-              <SessionListItem key={s.id} session={s} active={false} onClick={() => {}} />
+              <SessionListItem key={s.id} session={s} active={false} onClick={() => navigate(DASHBOARD_ROUTES.sessionsNeedsAttention)} />
               )}
               </div>
             }
@@ -78,7 +79,7 @@ export function OverviewPage() {
             </div>
             <div>
               {recent.slice(0, 6).map((s) =>
-              <SessionListItem key={s.id} session={s} active={false} onClick={() => {}} />
+              <SessionListItem key={s.id} session={s} active={false} onClick={() => navigate(DASHBOARD_ROUTES.sessionsAll)} />
               )}
             </div>
           </div>

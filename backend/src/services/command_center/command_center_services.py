@@ -275,5 +275,5 @@ class CommandCenterService:
         invoices = list(result.scalars().all())
         if not invoices:
             return "No pending or overdue invoices on file yet."
-        total = sum(float(inv.amount) for inv in invoices)
+        total = sum(float(inv.total_amount) for inv in invoices)
         return f"{len(invoices)} pending/overdue invoices totaling ${total:,.2f}."

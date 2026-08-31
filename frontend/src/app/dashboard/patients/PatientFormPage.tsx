@@ -55,7 +55,10 @@ export function PatientFormPage() {
       assignedAgentSlug: classification.agentSlug,
       assignedCategoryId: classification.categoryId,
       assignmentReasoning: classification.reasoning,
-      agentStatus: "active"
+      agentStatus: "active",
+      lifecycleStage: "inquiry",
+      lostReason: null,
+      source: null
     };
 
     const ok = await addPatient(patient);

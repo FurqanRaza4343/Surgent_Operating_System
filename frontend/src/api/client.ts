@@ -16,12 +16,28 @@ export class ApiError extends Error {
 }
 
 export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  // A FormData body (file uploads) needs the browser to set its own
+  // multipart Content-Type with boundary — forcing application/json here
+  // would break every upload silently (FastAPI's UploadFile parsing fails
+  // with no boundary to split on).
+  const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
   const res = await fetch(`${BASE_URL}${path}`, {
     ...init,
-    headers: { "Content-Type": "application/json", ...init?.headers }
+    headers: { ...(isFormData ? {} : { "Content-Type": "application/json" }), ...init?.headers }
   });
   if (!res.ok) {
-    throw new ApiError(res.status, `${init?.method || "GET"} ${path} failed with ${res.status}`);
+    // FastAPI's own exception handlers respond with {"detail": "..."} — that
+    // real message (e.g. "This account is already registered as a doctor at
+    // this practice.") is what a caller actually wants to show the user,
+    // not a generic "failed with 400" that was silently swallowing it before.
+    let detail: string | null = null;
+    try {
+      const body = await res.clone().json();
+      if (body && typeof body.detail === "string") detail = body.detail;
+    } catch {
+      // Non-JSON or empty error body — fall through to the generic message.
+    }
+    throw new ApiError(res.status, detail || `${init?.method || "GET"} ${path} failed with ${res.status}`);
   }
   return res.json() as Promise<T>;
 }

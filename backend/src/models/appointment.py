@@ -13,6 +13,7 @@ import enum
 class AppointmentStatus(str, enum.Enum):
     SCHEDULED = "scheduled"
     CONFIRMED = "confirmed"
+    CHECKED_IN = "checked_in"
     CANCELLED = "cancelled"
     COMPLETED = "completed"
     NO_SHOW = "no_show"
@@ -29,6 +30,10 @@ class Appointment(Base):
     status: Mapped[AppointmentStatus] = mapped_column(Enum(AppointmentStatus), default=AppointmentStatus.SCHEDULED)
     start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    # Set by the front desk's check-in action (see appointments_services.py's
+    # check_in_appointment) — null until then. Drives the waiting room's sort
+    # order (earliest-checked-in-first).
+    checked_in_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

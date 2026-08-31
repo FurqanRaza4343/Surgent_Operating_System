@@ -17,4 +17,10 @@ export interface Patient {
   assignedCategoryId: string | null;
   assignmentReasoning: string | null;
   agentStatus: "active" | "inactive";
+  // CRM funnel stage — mirrors backend/src/models/patient.py's
+  // PatientLifecycleStage. Separate from `status` above, which stays
+  // booking-derived for backward compat.
+  lifecycleStage: "inquiry" | "contacted" | "consult_scheduled" | "consult_completed" | "treatment_planned" | "patient" | "lost";
+  lostReason: string | null;
+  source: string | null;
 }

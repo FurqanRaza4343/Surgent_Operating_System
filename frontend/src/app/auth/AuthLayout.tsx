@@ -4,7 +4,7 @@ import { Logo } from "../../components/ui";
 
 interface AuthLayoutProps {
   children: React.ReactNode;
-  variant?: "clinic" | "admin" | "doctor";
+  variant?: "clinic" | "admin" | "doctor" | "staff";
 }
 
 const COPY = {
@@ -21,6 +21,11 @@ const COPY = {
   doctor: {
     eyebrow: "For Doctors",
     headline: "Your schedule, your patients, one place.",
+    showTestimonial: false
+  },
+  staff: {
+    eyebrow: "For Front Desk Staff",
+    headline: "Check patients in, manage the schedule, keep the day moving.",
     showTestimonial: false
   }
 } as const;

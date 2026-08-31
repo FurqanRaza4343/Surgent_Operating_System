@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 
 from sqlalchemy import String, DateTime, Enum, ForeignKey, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.database import Base
@@ -33,6 +33,11 @@ class User(Base):
     role: Mapped[UserRole] = mapped_column(Enum(UserRole), default=UserRole.STAFF, nullable=False)
     phone: Mapped[str] = mapped_column(String(50), nullable=True)
     is_active: Mapped[bool] = mapped_column(default=True)
+    # Granular dashboard access for roles that don't have their own roster
+    # table (unlike Doctor.permissions) — currently only meaningful for
+    # role == RECEPTIONIST, set by the Owner via PATCH /staff/{id}/permissions.
+    # Keys come from data/receptionist_permissions.py's static catalog.
+    permissions: Mapped[list] = mapped_column(JSONB, default=list)
     # Platform-level (Aiaceone team), not practice-level — distinct from
     # `role` above, which only ever means something within `practice_id`.
     # Self-healed to True on login for any email in Settings.platform_admin_emails

@@ -1,11 +1,9 @@
-// Placeholder data for the AI Receptionist live-monitoring page
-// (app/dashboard/receptionist/). The real receptionist backend
-// (backend/src/services/agents/receptionist_agent/receptionist_agent_services.py)
-// has no call/transcript/booking persistence yet — confirmed via
-// exploration, it calls the LLM but writes nothing to Conversation/Message.
-// This page is intentionally UI-first, same convention as mockSessions.ts;
-// wiring real telemetry (Twilio/WhatsApp/Instagram webhooks, real
-// Conversation rows) is the next phase, not this one.
+// Placeholder data for the "Preview" call/transcript widgets on the AI
+// Receptionist monitoring page (app/dashboard/receptionist/) — the page's
+// top KPI row is real now (backend/src/services/ai_receptionist/), but
+// per-call transcripts/live-call state need real Twilio/WhatsApp/Instagram
+// webhook streaming infrastructure that doesn't exist yet. This file is
+// intentionally UI-first, same convention as mockSessions.ts.
 import type { ChannelId } from "../data/channels";
 
 export const MOCK_RECEPTIONIST_STATS = {

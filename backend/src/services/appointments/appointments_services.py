@@ -1,8 +1,8 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.appointment import Appointment, AppointmentStatus
@@ -28,6 +28,21 @@ class AppointmentsService:
             .where(Appointment.practice_id == practice_id, Appointment.doctor_id == doctor.id)
             .order_by(Appointment.start_time)
         )
+        result = await db.execute(query)
+        return list(result.scalars().all())
+
+    async def list_for_practice(
+        self, db: AsyncSession, practice_id: UUID, start: datetime | None = None, end: datetime | None = None
+    ) -> list[Appointment]:
+        # Practice-wide view — Owner/Receptionist see every doctor's
+        # schedule, unlike list_for_doctor_user's own-schedule-only scope.
+        conditions = [Appointment.practice_id == practice_id]
+        if start is not None:
+            conditions.append(Appointment.start_time >= start)
+        if end is not None:
+            conditions.append(Appointment.start_time <= end)
+
+        query = select(Appointment).where(and_(*conditions)).order_by(Appointment.start_time)
         result = await db.execute(query)
         return list(result.scalars().all())
 
@@ -114,6 +129,17 @@ class AppointmentsService:
         appointment.status = AppointmentStatus.CANCELLED
         if reason:
             appointment.notes = f"{appointment.notes}\nCancelled: {reason}" if appointment.notes else f"Cancelled: {reason}"
+        await db.flush()
+        await db.refresh(appointment)
+        return appointment
+
+    async def check_in_appointment(self, db: AsyncSession, practice_id: UUID, appointment_id: UUID) -> Appointment:
+        appointment = await self.get_appointment(db, practice_id, appointment_id)
+        if appointment.status in (AppointmentStatus.CANCELLED, AppointmentStatus.COMPLETED, AppointmentStatus.NO_SHOW):
+            raise AppException(f"Cannot check in a {appointment.status.value} appointment")
+
+        appointment.status = AppointmentStatus.CHECKED_IN
+        appointment.checked_in_at = datetime.now(timezone.utc)
         await db.flush()
         await db.refresh(appointment)
         return appointment

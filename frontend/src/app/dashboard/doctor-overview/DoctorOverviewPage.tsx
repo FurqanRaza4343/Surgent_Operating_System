@@ -4,6 +4,7 @@ import { KpiCard } from "../components/KpiCard";
 import { EmptyState } from "../components/EmptyState";
 import { usePlan } from "../plan/PlanContext";
 import { getMyDoctor, listMyAppointments, type AppointmentResponse } from "../../../api/entities";
+import { AttendanceCard } from "./AttendanceCard";
 
 function isToday(iso: string) {
   const d = new Date(iso);
@@ -16,7 +17,7 @@ function isUpcoming(iso: string) {
 }
 
 export function DoctorOverviewPage() {
-  const { authedFetch } = usePlan();
+  const { authedFetch, permissions } = usePlan();
   const [doctorName, setDoctorName] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +73,12 @@ export function DoctorOverviewPage() {
         <KpiCard icon={ScissorsIcon} label="Upcoming surgeries" value={String(upcomingSurgeries)} color="#10B981" />
         <KpiCard icon={UsersIcon} label="Patients under care" value={String(patientsUnderCare)} color="#06B6D4" />
       </div>
+
+      {permissions.includes("mark_attendance") &&
+      <div className="mt-6 max-w-sm">
+          <AttendanceCard />
+        </div>
+      }
 
       <div className="mt-8 rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
         <div className="flex items-center justify-between border-b border-sand-200 px-5 py-4">

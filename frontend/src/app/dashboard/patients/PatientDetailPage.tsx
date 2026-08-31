@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { ArrowLeftIcon, MailIcon, PhoneIcon, CalendarIcon, ShieldCheckIcon, ShieldAlertIcon, SparklesIcon, ScissorsIcon } from "lucide-react";
 import { usePatients } from "./usePatients";
@@ -9,6 +9,11 @@ import { DASHBOARD_ROUTES } from "../constants/routes";
 import type { Patient } from "./types";
 import { AGENTS_BY_SLUG } from "../../../data/agents";
 import { usePlan } from "../plan/PlanContext";
+import { ClinicalSection } from "../clinical/ClinicalSection";
+import { PatientPhotosGallery } from "../clinical/PatientPhotosGallery";
+import { ConsentDocumentsList } from "../clinical/ConsentDocumentsList";
+import { InvoicesSection } from "../billing-invoices/InvoicesSection";
+import { FunnelStageBadge } from "../leads/FunnelStageBadge";
 
 const STATUS_CLASS: Record<Patient["status"], string> = {
   active: "bg-success/10 text-success",
@@ -25,7 +30,13 @@ export function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { authedFetch } = usePlan();
   const { getPatient, loading } = usePatients(authedFetch);
-  const patient = id ? getPatient(id) : undefined;
+  const fetchedPatient = id ? getPatient(id) : undefined;
+  // Local override for the funnel stage — usePatients()'s cache is
+  // IndexedDB-backed and doesn't reflect a stage PATCH until the page's
+  // next full reload, so FunnelStageBadge's onUpdated patches this instead
+  // of waiting on that refetch.
+  const [stageOverride, setStageOverride] = useState<{ stage: Patient["lifecycleStage"]; lostReason: string | null } | null>(null);
+  const patient = fetchedPatient && stageOverride ? { ...fetchedPatient, lifecycleStage: stageOverride.stage, lostReason: stageOverride.lostReason } : fetchedPatient;
 
   if (loading) return null;
 
@@ -59,6 +70,12 @@ export function PatientDetailPage() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            <FunnelStageBadge
+              patientId={patient.id}
+              stage={patient.lifecycleStage}
+              lostReason={patient.lostReason}
+              onUpdated={(stage, lostReason) => setStageOverride({ stage, lostReason })} />
+
             {patient.consentOnFile ?
             <span className="flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-xs font-semibold text-success">
                 <ShieldCheckIcon className="h-3.5 w-3.5" /> Consent on file
@@ -134,6 +151,11 @@ export function PatientDetailPage() {
         }
         </div>
       }
+
+      <ClinicalSection patientId={patient.id} />
+      <PatientPhotosGallery patientId={patient.id} />
+      <ConsentDocumentsList patientId={patient.id} />
+      <InvoicesSection patientId={patient.id} />
 
       <p className="mb-3 text-sm font-bold text-ink">Session history</p>
       <SessionsView sessions={sessions} />

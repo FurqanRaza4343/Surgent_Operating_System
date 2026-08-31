@@ -11,6 +11,8 @@ type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
 interface PlanContextValue {
   tier: PlanTier;
   role: Role;
+  // Only meaningful when role === "doctor" — see data/doctorPermissions.ts.
+  permissions: string[];
   source: PlanSource;
   loading: boolean;
   capabilities: PlanCapabilities;
@@ -33,6 +35,7 @@ const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 function useContextValue(
   tier: PlanTier,
   role: Role,
+  permissions: string[],
   source: PlanSource,
   loading: boolean,
   setOverride: (t: PlanTier) => void,
@@ -43,6 +46,7 @@ function useContextValue(
     () => ({
       tier,
       role,
+      permissions,
       source,
       loading,
       capabilities: capabilitiesFor(tier),
@@ -54,7 +58,7 @@ function useContextValue(
       setRoleOverride,
       authedFetch
     }),
-    [tier, role, source, loading, setOverride, setRoleOverride, authedFetch]
+    [tier, role, permissions, source, loading, setOverride, setRoleOverride, authedFetch]
   );
 }
 
@@ -65,14 +69,14 @@ function useContextValue(
 // profile/ProfilePage.tsx's AccountCard/AccountCardWithUser.
 function PlanProviderWithClerk({ children }: { children: React.ReactNode }) {
   const { authedFetch } = useAuthedFetch();
-  const { tier, role, source, loading, setOverride, setRoleOverride } = usePlanTier(authedFetch);
-  const value = useContextValue(tier, role, source, loading, setOverride, setRoleOverride, authedFetch);
+  const { tier, role, permissions, source, loading, setOverride, setRoleOverride } = usePlanTier(authedFetch);
+  const value = useContextValue(tier, role, permissions, source, loading, setOverride, setRoleOverride, authedFetch);
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 }
 
 function PlanProviderWithoutClerk({ children }: { children: React.ReactNode }) {
-  const { tier, role, source, loading, setOverride, setRoleOverride } = usePlanTier(null);
-  const value = useContextValue(tier, role, source, loading, setOverride, setRoleOverride, null);
+  const { tier, role, permissions, source, loading, setOverride, setRoleOverride } = usePlanTier(null);
+  const value = useContextValue(tier, role, permissions, source, loading, setOverride, setRoleOverride, null);
   return <PlanContext.Provider value={value}>{children}</PlanContext.Provider>;
 }
 

@@ -33,6 +33,10 @@ export interface Doctor {
   // Set once this doctor has accepted their portal invite and a linked User
   // row exists (backend/src/models/doctor.py's user_id) — null until then.
   userId: string | null;
+  // Owner-controlled — false means the Owner removed this doctor, which also
+  // deactivates their linked login (see doctors_services.py's update_doctor).
+  // Defaults to true (every doctor starts active).
+  isActive: boolean;
   // Procedures/services this doctor is credentialed to perform — what they
   // can actually do, shown as chips on their profile and usable later to
   // route the AI consultation/booking agents to the right doctor.

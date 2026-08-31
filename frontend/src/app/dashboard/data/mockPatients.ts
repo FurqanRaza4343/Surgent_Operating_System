@@ -21,7 +21,10 @@ export const MOCK_PATIENTS: Patient[] = [
   assignedAgentSlug: "procedure_recommendation",
   assignedCategoryId: "consultation",
   assignmentReasoning: 'matched "options" → routed to Procedure Recommendation (surgery indicated).',
-  agentStatus: "active"
+  agentStatus: "active",
+  lifecycleStage: "consult_scheduled",
+  lostReason: null,
+  source: null
 },
 {
   id: "p2",
@@ -39,7 +42,10 @@ export const MOCK_PATIENTS: Patient[] = [
   assignedAgentSlug: "ai_consultation",
   assignedCategoryId: "consultation",
   assignmentReasoning: 'matched "consult", "options" → routed to AI Consultation.',
-  agentStatus: "active"
+  agentStatus: "active",
+  lifecycleStage: "patient",
+  lostReason: null,
+  source: null
 },
 {
   id: "p3",
@@ -57,7 +63,10 @@ export const MOCK_PATIENTS: Patient[] = [
   assignedAgentSlug: "healing_monitoring",
   assignedCategoryId: "post-care",
   assignmentReasoning: 'matched "swelling" → routed to Healing Progress Monitoring.',
-  agentStatus: "active"
+  agentStatus: "active",
+  lifecycleStage: "patient",
+  lostReason: null,
+  source: null
 },
 {
   id: "p4",
@@ -75,7 +84,10 @@ export const MOCK_PATIENTS: Patient[] = [
   assignedAgentSlug: "lead_nurturing",
   assignedCategoryId: "business",
   assignmentReasoning: 'matched "not sure yet" → routed to Lead Nurturing.',
-  agentStatus: "active"
+  agentStatus: "active",
+  lifecycleStage: "inquiry",
+  lostReason: null,
+  source: null
 },
 {
   id: "p5",
@@ -93,7 +105,10 @@ export const MOCK_PATIENTS: Patient[] = [
   assignedAgentSlug: "cost_estimation",
   assignedCategoryId: "business",
   assignmentReasoning: 'matched "how much" → routed to Cost Estimation.',
-  agentStatus: "active"
+  agentStatus: "active",
+  lifecycleStage: "contacted",
+  lostReason: null,
+  source: null
 },
 {
   id: "p6",
@@ -111,5 +126,8 @@ export const MOCK_PATIENTS: Patient[] = [
   assignedAgentSlug: "appointment_booking",
   assignedCategoryId: "front-desk",
   assignmentReasoning: 'matched "book", "consultation" → routed to Appointment Booking.',
-  agentStatus: "active"
+  agentStatus: "active",
+  lifecycleStage: "consult_scheduled",
+  lostReason: null,
+  source: null
 }];

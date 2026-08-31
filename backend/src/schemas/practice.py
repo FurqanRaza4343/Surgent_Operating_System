@@ -16,9 +16,10 @@ class PracticeMeResponse(BaseModel):
     plan_tier: str
     subscription_status: str
     role: str
-    # Only meaningful when role == "doctor" — the granted permission keys
-    # from data/doctor_permissions.py (see models/doctor.py's `permissions`
-    # column). Omitted/empty for every other role.
+    # Only meaningful when role == "doctor" or "receptionist" — the granted
+    # permission keys from data/doctor_permissions.py (models/doctor.py's
+    # `permissions` column) or data/receptionist_permissions.py
+    # (models/user.py's `permissions` column) respectively. Empty for Owner.
     permissions: list[str] = []
 
 

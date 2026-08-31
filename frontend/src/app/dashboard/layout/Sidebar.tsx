@@ -15,7 +15,13 @@ import {
   CreditCardIcon,
   LockIcon,
   PhoneCallIcon,
-  CalendarIcon
+  CalendarIcon,
+  ScissorsIcon,
+  ReceiptIcon,
+  WalletIcon,
+  TrendingUpIcon,
+  PackageIcon,
+  MessageCircleIcon
 } from "lucide-react";
 import { AGENT_CATEGORIES } from "../../../data/agents";
 import { DASHBOARD_ROUTES } from "../constants/routes";
@@ -23,8 +29,6 @@ import { MOCK_SESSIONS } from "../data/mockSessions";
 import { usePlan } from "../plan/PlanContext";
 import type { Role } from "../../../data/roles";
 import { Logo } from "../../../components/ui";
-
-const needsAttentionCount = MOCK_SESSIONS.filter((s) => s.status === "needs_attention").length;
 
 interface NavItem {
   label: string;
@@ -39,27 +43,51 @@ interface NavItem {
   // so a future Doctor/Receptionist dashboard is "tag an existing item,"
   // not a rearchitecture. See data/roles.ts.
   allowedRoles?: Role[];
+  // Additional gate on top of allowedRoles, checked for role === "doctor" or
+  // "receptionist" — either also needs this key in their granted permissions
+  // (data/doctorPermissions.ts / data/receptionistPermissions.ts
+  // respectively). Owner is never permission-gated: owning the practice is
+  // the permission.
+  requiresPermission?: string;
 }
 
-function visibleFor(items: NavItem[], role: Role): NavItem[] {
-  return items.filter((item) => !item.allowedRoles || item.allowedRoles.includes(role));
+function visibleFor(items: NavItem[], role: Role, permissions: string[]): NavItem[] {
+  return items.filter((item) => {
+    if (item.allowedRoles && !item.allowedRoles.includes(role)) return false;
+    // Owner is never permission-gated (see NavItem.requiresPermission's own
+    // comment) — Doctor and Receptionist both grant access via a per-record
+    // permissions list an Owner assigns (doctorPermissions.ts /
+    // receptionistPermissions.ts), so both need the same check here.
+    if (item.requiresPermission && (role === "doctor" || role === "receptionist") && !permissions.includes(item.requiresPermission)) return false;
+    return true;
+  });
 }
 
 const SIMPLE_ITEMS_TOP: NavItem[] = [
 { label: "Overview", to: DASHBOARD_ROUTES.overview, icon: LayoutDashboardIcon, end: true, allowedRoles: ["owner"] },
-{ label: "My Overview", to: DASHBOARD_ROUTES.doctorOverview, icon: LayoutDashboardIcon, end: true, allowedRoles: ["doctor"] }];
-
-
-const SESSION_CHILDREN: NavItem[] = [
-{ label: "All conversations", to: DASHBOARD_ROUTES.sessionsAll, icon: InboxIcon },
-{ label: "Needs attention", to: DASHBOARD_ROUTES.sessionsNeedsAttention, icon: AlertCircleIcon, badge: needsAttentionCount }];
+{ label: "My Overview", to: DASHBOARD_ROUTES.doctorOverview, icon: LayoutDashboardIcon, end: true, allowedRoles: ["doctor"] },
+{ label: "Front Desk", to: DASHBOARD_ROUTES.frontDesk, icon: LayoutDashboardIcon, end: true, allowedRoles: ["receptionist"], requiresPermission: "view_front_desk" }];
 
 
 const SIMPLE_ITEMS_MID: NavItem[] = [
-{ label: "Patients", to: DASHBOARD_ROUTES.patients, icon: UsersIcon, allowedRoles: ["owner"] },
-{ label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon, allowedRoles: ["owner"] },
-{ label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "doctor"] },
-{ label: "My Calendar", to: DASHBOARD_ROUTES.myCalendar, icon: CalendarIcon, allowedRoles: ["doctor"] }];
+{ label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["owner", "doctor", "receptionist"] },
+{ label: "Patients", to: DASHBOARD_ROUTES.patients, icon: UsersIcon, allowedRoles: ["owner", "doctor", "receptionist"], requiresPermission: "view_patients" },
+{ label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon, allowedRoles: ["owner", "doctor"], requiresPermission: "view_doctors_crm" },
+{ label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "doctor"], requiresPermission: "view_ai_receptionist" },
+{ label: "My Calendar", to: DASHBOARD_ROUTES.myCalendar, icon: CalendarIcon, allowedRoles: ["doctor"], requiresPermission: "view_own_calendar" },
+{ label: "Front Desk", to: DASHBOARD_ROUTES.frontDesk, icon: LayoutDashboardIcon, allowedRoles: ["owner"] },
+{ label: "Waiting Room", to: DASHBOARD_ROUTES.waitingRoom, icon: UsersIcon, allowedRoles: ["owner", "receptionist"], requiresPermission: "manage_waiting_room" },
+{ label: "Staff", to: DASHBOARD_ROUTES.staff, icon: UsersIcon, allowedRoles: ["owner"] },
+{ label: "Procedures", to: DASHBOARD_ROUTES.procedures, icon: ScissorsIcon, allowedRoles: ["owner"] },
+{ label: "Invoices", to: DASHBOARD_ROUTES.invoices, icon: ReceiptIcon, allowedRoles: ["owner", "doctor", "receptionist"] },
+// Owner reaches Expenses via the "Manage expenses" link inside Finance
+// itself (FinanceOverviewPage.tsx) — one sidebar entry for Owner instead of
+// two. Receptionist has no Finance overview access, so Expenses stays their
+// own direct entry.
+{ label: "Expenses", to: DASHBOARD_ROUTES.expenses, icon: WalletIcon, allowedRoles: ["receptionist"] },
+{ label: "Finance", to: DASHBOARD_ROUTES.financeOverview, icon: WalletIcon, allowedRoles: ["owner"] },
+{ label: "Leads / Funnel", to: DASHBOARD_ROUTES.leadsFunnel, icon: TrendingUpIcon, allowedRoles: ["owner", "receptionist"] },
+{ label: "Inventory", to: DASHBOARD_ROUTES.inventory, icon: PackageIcon, allowedRoles: ["owner", "receptionist"] }];
 
 
 const SETTINGS_ITEMS: NavItem[] = [
@@ -156,7 +184,13 @@ function CollapsibleNavGroup({
 }
 
 export function Sidebar() {
-  const { allowsCategory, can, role } = usePlan();
+  const { allowsCategory, can, role, permissions } = usePlan();
+  const needsAttentionCount = MOCK_SESSIONS.filter((s) => s.status === "needs_attention").length;
+
+  const sessionChildren: NavItem[] = [
+  { label: "All conversations", to: DASHBOARD_ROUTES.sessionsAll, icon: InboxIcon },
+  { label: "Needs attention", to: DASHBOARD_ROUTES.sessionsNeedsAttention, icon: AlertCircleIcon, badge: needsAttentionCount }];
+
 
   const CATEGORY_LOGOS: Record<string, string> = {
     "front-desk": "/agent-logos/Front Desk & Intake.png",
@@ -175,7 +209,7 @@ export function Sidebar() {
   }));
 
   const bottomItems: NavItem[] = [
-  { label: "Analytics", to: DASHBOARD_ROUTES.analytics, icon: BarChart3Icon, locked: !can("analytics"), allowedRoles: ["owner"] }];
+  { label: "Analytics", to: DASHBOARD_ROUTES.analytics, icon: BarChart3Icon, locked: !can("analytics"), allowedRoles: ["owner", "doctor"], requiresPermission: "view_analytics" }];
 
 
   return (
@@ -189,23 +223,23 @@ export function Sidebar() {
 
       <nav className="flex-1 overflow-y-auto px-4 py-5">
         <div className="space-y-0.5">
-          {visibleFor(SIMPLE_ITEMS_TOP, role).map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(SIMPLE_ITEMS_TOP, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
         </div>
 
         <div className="mt-4">
-          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} children={visibleFor(SESSION_CHILDREN, role)} />
+          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} children={visibleFor(sessionChildren, role, permissions)} />
         </div>
 
         <div className="mt-4 space-y-0.5">
-          {visibleFor(SIMPLE_ITEMS_MID, role).map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(SIMPLE_ITEMS_MID, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
         </div>
 
         <div className="mt-4">
-          <CollapsibleNavGroup label="Agents" icon={LayersIcon} imgSrc="/agent-logos/agents.png" children={visibleFor(agentChildren, role)} />
+          <CollapsibleNavGroup label="Agents" icon={LayersIcon} imgSrc="/agent-logos/agents.png" children={visibleFor(agentChildren, role, permissions)} />
         </div>
 
         <div className="mt-4 space-y-0.5">
-          {visibleFor(bottomItems, role).map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(bottomItems, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
         </div>
 
         <div className="mt-6">
@@ -213,7 +247,7 @@ export function Sidebar() {
             Settings
           </p>
           <div className="mt-2 space-y-0.5">
-            {visibleFor(SETTINGS_ITEMS, role).map((item) => <NavRow key={item.to} item={item} />)}
+            {visibleFor(SETTINGS_ITEMS, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
           </div>
         </div>
       </nav>

@@ -14,6 +14,7 @@ type DraftDoctor = Omit<Doctor, "id" | "initial" | "activePatients" | "upcomingS
 const EMPTY_DRAFT: DraftDoctor = {
   name: "",
   userId: null,
+  isActive: true,
   email: "",
   phone: "",
   specialty: "",

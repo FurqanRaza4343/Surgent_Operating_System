@@ -37,6 +37,10 @@ class PracticeController:
             doctor = result.scalar_one_or_none()
             if doctor is not None:
                 permissions = doctor.permissions
+        elif ctx.user.role == UserRole.RECEPTIONIST:
+            # Lives directly on User (models/user.py), not a separate roster
+            # row — see data/receptionist_permissions.py.
+            permissions = ctx.user.permissions
 
         return PracticeMeResponse(
             id=ctx.practice.id,

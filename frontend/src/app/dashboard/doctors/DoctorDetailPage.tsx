@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeftIcon, MailIcon, PhoneIcon, AwardIcon, CalendarCheckIcon, DollarSignIcon, PencilIcon, ClockIcon, FileTextIcon, DownloadIcon, Maximize2Icon, SparklesIcon, SendIcon, CheckCircle2Icon } from "lucide-react";
+import { ArrowLeftIcon, MailIcon, PhoneIcon, AwardIcon, CalendarCheckIcon, DollarSignIcon, PencilIcon, ClockIcon, FileTextIcon, DownloadIcon, Maximize2Icon, SparklesIcon, SendIcon, CheckCircle2Icon, UserXIcon, UserCheckIcon, AlertTriangleIcon } from "lucide-react";
 import { ComingSoon } from "../components/ComingSoon";
 import { useDoctors } from "./useDoctors";
 import { WEEKDAYS } from "./types";
@@ -13,20 +13,33 @@ import { inviteDoctor } from "../../../api/entities";
 export function DoctorDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { authedFetch, role } = usePlan();
-  const { getDoctor, loading } = useDoctors(authedFetch);
+  const { getDoctor, updateDoctor, loading } = useDoctors(authedFetch);
   const doctor = id ? getDoctor(id) : undefined;
   const [viewingDocId, setViewingDocId] = useState<string | null>(null);
   const [inviteState, setInviteState] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [removeSaving, setRemoveSaving] = useState(false);
 
   async function handleInvite() {
     if (!doctor || !authedFetch) return;
     setInviteState("sending");
+    setInviteError(null);
     try {
       await inviteDoctor(authedFetch, doctor.id);
       setInviteState("sent");
-    } catch {
+    } catch (err: unknown) {
       setInviteState("error");
+      setInviteError(err instanceof Error && err.message ? err.message : "Couldn't send invite — try again.");
     }
+  }
+
+  async function handleSetActive(nextActive: boolean) {
+    if (!doctor) return;
+    setRemoveSaving(true);
+    await updateDoctor(doctor.id, { isActive: nextActive });
+    setRemoveSaving(false);
+    setConfirmingRemove(false);
   }
 
   if (loading) return null;
@@ -68,15 +81,67 @@ export function DoctorDetailPage() {
               <CheckCircle2Icon className="h-3.5 w-3.5" /> Portal linked
             </span>
           }
-          {inviteState === "error" && <p className="text-xs font-medium text-danger">Couldn&apos;t send invite — try again.</p>}
+          {inviteState === "error" && <p className="text-xs font-medium text-danger">{inviteError}</p>}
           <Link
             to={DASHBOARD_ROUTES.doctorEdit(doctor.id)}
             className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
 
             <PencilIcon className="h-3.5 w-3.5" /> Edit
           </Link>
+          {role === "owner" && doctor.isActive && !confirmingRemove &&
+          <button
+            type="button"
+            onClick={() => setConfirmingRemove(true)}
+            className="flex items-center gap-1.5 rounded-xl border border-danger/25 px-4 py-2 text-sm font-semibold text-danger transition-colors hover:bg-danger/5">
+
+              <UserXIcon className="h-3.5 w-3.5" /> Remove doctor
+            </button>
+          }
+          {role === "owner" && doctor.isActive && confirmingRemove &&
+          <div className="flex items-center gap-2 rounded-xl border border-danger/25 bg-danger/5 px-3 py-1.5">
+              <span className="text-xs font-medium text-danger">Revoke their dashboard access?</span>
+              <button
+              type="button"
+              onClick={() => handleSetActive(false)}
+              disabled={removeSaving}
+              className="rounded-lg bg-danger px-2.5 py-1 text-xs font-semibold text-white transition-colors hover:opacity-90 disabled:opacity-50">
+
+                {removeSaving ? "Removing…" : "Confirm"}
+              </button>
+              <button
+              type="button"
+              onClick={() => setConfirmingRemove(false)}
+              disabled={removeSaving}
+              className="rounded-lg px-2.5 py-1 text-xs font-semibold text-ink-muted hover:text-ink">
+
+                Cancel
+              </button>
+            </div>
+          }
+          {role === "owner" && !doctor.isActive &&
+          <button
+            type="button"
+            onClick={() => handleSetActive(true)}
+            disabled={removeSaving}
+            className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-4 py-2 text-sm font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600 disabled:opacity-50">
+
+              <UserCheckIcon className="h-3.5 w-3.5" /> {removeSaving ? "Reactivating…" : "Reactivate doctor"}
+            </button>
+          }
         </div>
       </div>
+
+      {!doctor.isActive &&
+      <div className="mb-6 flex items-center gap-2.5 rounded-3xl border border-danger/25 bg-danger/[0.05] p-5">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger">
+            <AlertTriangleIcon className="h-4 w-4" />
+          </span>
+          <div>
+            <p className="text-sm font-bold text-ink">This doctor has been removed</p>
+            <p className="text-xs text-ink-muted">Their dashboard login access is revoked. Reactivate to restore it.</p>
+          </div>
+        </div>
+      }
 
       {completeness.percent < 100 &&
       <div className="mb-6 rounded-3xl border border-warning/25 bg-warning/[0.05] p-5">

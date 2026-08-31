@@ -4,6 +4,7 @@ import jwt
 from jwt import PyJWKClient
 
 from src.config import get_settings
+from src.server.exceptions import AppException
 
 settings = get_settings()
 
@@ -45,7 +46,7 @@ class ClerkService:
                 return resp.json()
             return None
 
-    async def invite_user(self, email: str, redirect_url: str, public_metadata: dict) -> dict | None:
+    async def invite_user(self, email: str, redirect_url: str, public_metadata: dict) -> dict:
         async with httpx.AsyncClient() as client:
             resp = await client.post(
                 f"{self.base_url}/invitations",
@@ -58,4 +59,15 @@ class ClerkService:
             )
             if resp.status_code in (200, 201):
                 return resp.json()
-            return None
+            # Clerk's error body carries the real, specific reason (e.g.
+            # "That email address is taken." when inviting an email that
+            # already has an account) — surface that instead of a generic
+            # failure, same reasoning as apiFetch()'s fix on the frontend.
+            detail = "Failed to send invitation"
+            try:
+                errors = resp.json().get("errors") or []
+                if errors and errors[0].get("message"):
+                    detail = errors[0]["message"]
+            except ValueError:
+                pass
+            raise AppException(detail)

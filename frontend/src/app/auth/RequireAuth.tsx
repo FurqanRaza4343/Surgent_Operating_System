@@ -7,7 +7,7 @@ import { Logo } from "../../components/ui";
 // (see index.tsx, components/layout/Navbar.tsx) — a clone without
 // VITE_CLERK_PUBLISHABLE_KEY set keeps the dashboard reachable rather than
 // throwing, since ClerkProvider itself isn't mounted in that case.
-const clerkEnabled = false; // TEMP-TEST-BYPASS
+const clerkEnabled = Boolean(import.meta.env.VITE_CLERK_PUBLISHABLE_KEY);
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   if (!clerkEnabled) return <>{children}</>;

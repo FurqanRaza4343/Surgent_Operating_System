@@ -127,6 +127,25 @@ async def clerk_webhook(
                         doctor.user_id = new_user.id
                         await db.flush()
                 logger.info("Created Doctor User for clerk_id=%s, linked doctor_id=%s", clerk_user_id, doctor_id)
+            elif invite_type == "receptionist" and public_metadata.get("practice_id"):
+                # Invited via POST /api/v1/staff (ClerkService.invite_user) —
+                # unlike Doctor, there's no pre-existing roster row to link:
+                # permissions travel in public_metadata at invite time and
+                # land directly on User.permissions (see models/user.py).
+                # Owner can still edit them afterward via PATCH /staff/{id}.
+                granted = public_metadata.get("permissions", [])
+                new_user = User(
+                    clerk_id=clerk_user_id,
+                    practice_id=UUID(public_metadata["practice_id"]),
+                    email=primary_email,
+                    name=name,
+                    phone=phone,
+                    role=UserRole.RECEPTIONIST,
+                    permissions=granted if isinstance(granted, list) else [],
+                )
+                db.add(new_user)
+                await db.flush()
+                logger.info("Created Receptionist User for clerk_id=%s", clerk_user_id)
             else:
                 new_user = User(
                     clerk_id=clerk_user_id,

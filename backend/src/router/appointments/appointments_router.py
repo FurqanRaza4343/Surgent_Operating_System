@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query
@@ -22,11 +23,17 @@ controller = AppointmentsController()
 @router.get("", response_model=list[AppointmentResponse])
 async def list_appointments(
     doctor_id: str = Query(default="me"),
+    scope: str = Query(default="me"),
+    start: datetime | None = Query(default=None),
+    end: datetime | None = Query(default=None),
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Only "me" (the caller's own linked Doctor row) is supported for now —
-    # real cross-doctor scheduling views are a later phase.
+    # scope=practice — every doctor's appointments (Owner/Receptionist front
+    # desk view). Default stays "me" (the caller's own linked Doctor row) to
+    # not change the Doctor Dashboard's existing behavior.
+    if scope == "practice":
+        return await controller.list_practice_appointments(db, user, start, end)
     return await controller.list_my_appointments(db, user)
 
 
@@ -57,6 +64,15 @@ async def cancel_appointment(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.cancel_appointment(db, user, appointment_id, data)
+
+
+@router.patch("/{appointment_id}/check-in", response_model=AppointmentResponse)
+async def check_in_appointment(
+    appointment_id: UUID,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.check_in_appointment(db, user, appointment_id)
 
 
 @router.patch("/{appointment_id}/complete", response_model=AppointmentResponse)

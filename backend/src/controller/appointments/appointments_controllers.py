@@ -1,4 +1,5 @@
 from __future__ import annotations
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -21,6 +22,12 @@ class AppointmentsController:
 
     async def list_my_appointments(self, db: AsyncSession, user: User) -> list[AppointmentResponse]:
         appointments = await self.service.list_for_doctor_user(db, user.practice_id, user.id)
+        return [AppointmentResponse.model_validate(a) for a in appointments]
+
+    async def list_practice_appointments(
+        self, db: AsyncSession, user: User, start: datetime | None, end: datetime | None
+    ) -> list[AppointmentResponse]:
+        appointments = await self.service.list_for_practice(db, user.practice_id, start, end)
         return [AppointmentResponse.model_validate(a) for a in appointments]
 
     async def create_appointment(self, db: AsyncSession, user: User, data: CreateAppointmentRequest) -> AppointmentResponse:
@@ -70,6 +77,18 @@ class AppointmentsController:
             agent_type="reschedule_cancellation",
             action="appointment_cancelled",
             details={"appointment_id": str(appointment.id), "reason": data.reason},
+            performed_by=str(user.id),
+        )
+        return AppointmentResponse.model_validate(appointment)
+
+    async def check_in_appointment(self, db: AsyncSession, user: User, appointment_id: UUID) -> AppointmentResponse:
+        appointment = await self.service.check_in_appointment(db, user.practice_id, appointment_id)
+        await self.agent_log.log(
+            db,
+            user.practice_id,
+            agent_type="front_desk",
+            action="appointment_checked_in",
+            details={"appointment_id": str(appointment.id)},
             performed_by=str(user.id),
         )
         return AppointmentResponse.model_validate(appointment)

@@ -1,7 +1,7 @@
-import { FaInstagram, FaWhatsapp, FaFacebook, FaPhone, FaComments } from "react-icons/fa6";
+import { FaInstagram, FaWhatsapp, FaFacebook, FaPhone, FaComments, FaCommentSms, FaEnvelope } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 
-export type ChannelId = "instagram" | "whatsapp" | "facebook" | "phone" | "web_chat";
+export type ChannelId = "instagram" | "whatsapp" | "facebook" | "phone" | "web_chat" | "sms" | "email";
 
 export interface ChannelMeta {
   id: ChannelId;
@@ -21,5 +21,7 @@ export const CHANNELS: Record<ChannelId, ChannelMeta> = {
   // fold into the site's own primary/secondary pair instead of an arbitrary
   // unrelated hue.
   phone: { id: "phone", label: "Phone", icon: FaPhone, color: "#0B6362" },
-  web_chat: { id: "web_chat", label: "Web chat", icon: FaComments, color: "#C9A24B" }
+  web_chat: { id: "web_chat", label: "Web chat", icon: FaComments, color: "#C9A24B" },
+  sms: { id: "sms", label: "SMS", icon: FaCommentSms, color: "#6366F1" },
+  email: { id: "email", label: "Email", icon: FaEnvelope, color: "#64748B" }
 };

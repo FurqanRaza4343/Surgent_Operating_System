@@ -99,6 +99,14 @@ class DoctorApplicationsService:
         if applicant_user is None:
             raise NotFoundException("No account found for this applicant")
 
+        # Doctor.user_id is unique — a second application from an account
+        # that's already linked to a Doctor row (e.g. someone re-applying
+        # with an account that was already approved) would otherwise hit a
+        # raw IntegrityError here instead of a clear rejection.
+        existing_doctor = await db.execute(select(Doctor).where(Doctor.user_id == applicant_user.id))
+        if existing_doctor.scalar_one_or_none() is not None:
+            raise AppException("This account is already registered as a doctor at this practice.")
+
         granted = [p for p in permissions if p in VALID_DOCTOR_PERMISSION_KEYS]
 
         doctor = Doctor(

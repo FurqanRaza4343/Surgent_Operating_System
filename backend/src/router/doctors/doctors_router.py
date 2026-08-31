@@ -54,7 +54,11 @@ async def get_doctor(
 async def update_doctor(
     doctor_id: UUID,
     data: UpdateDoctorRequest,
-    user: User = Depends(get_current_practice_user),
+    # Owner-only — a Doctor editing another Doctor's record (or toggling
+    # is_active, which now also flips the linked User's login access, see
+    # doctors_services.py) is exactly the kind of Owner-level control a
+    # Doctor must never have.
+    user: User = Depends(require_role(UserRole.OWNER)),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.update_doctor(db, user, doctor_id, data)
