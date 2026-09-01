@@ -39,6 +39,12 @@ RECEPTIONIST_PERMISSIONS = [
         "recommended": True,
     },
     {
+        "key": "view_ai_receptionist",
+        "label": "AI Receptionist monitor",
+        "description": "See how the AI Receptionist is handling inbound patients.",
+        "recommended": True,
+    },
+    {
         "key": "view_analytics",
         "label": "Analytics",
         "description": "Practice-wide analytics and reporting.",

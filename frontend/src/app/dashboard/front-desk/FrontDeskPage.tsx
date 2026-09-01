@@ -5,6 +5,7 @@ import { PageHeader } from "../components/PageHeader";
 import { EmptyState } from "../components/EmptyState";
 import { usePlan } from "../plan/PlanContext";
 import { useFrontDesk } from "./useFrontDesk";
+import { AttendanceCalendar } from "../attendance/AttendanceCalendar";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 
 const STATUS_CLASS: Record<string, string> = {
@@ -50,6 +51,10 @@ export function FrontDeskPage() {
 
           <PlusIcon className="h-4 w-4" /> Book appointment
         </Link>
+      </div>
+
+      <div className="mb-6 max-w-md">
+        <AttendanceCalendar />
       </div>
 
       {loading ?

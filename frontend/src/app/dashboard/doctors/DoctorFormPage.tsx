@@ -142,20 +142,22 @@ export function DoctorFormPage() {
       return;
     }
 
-    const id = `d${Date.now()}`;
     const newDoctor: Doctor = {
       ...draft,
-      id,
+      id: `d${Date.now()}`,
       initial: draft.name.trim()[0]?.toUpperCase() || "?",
       activePatients: 0,
       upcomingSurgeries: 0
     };
-    const ok = await addDoctor(newDoctor);
-    if (!ok) {
+    // addDoctor returns the saved record — when signed in the backend assigns
+    // its real id, which is what we must navigate with (navigating to the
+    // throwaway local id above made the detail page report "Doctor not found").
+    const saved = await addDoctor(newDoctor);
+    if (!saved) {
       setSaveError("Couldn't save — this browser's storage is full. Try removing a large photo or document.");
       return;
     }
-    navigate(DASHBOARD_ROUTES.doctorDetail(id));
+    navigate(DASHBOARD_ROUTES.doctorDetail(saved.id));
   }
 
   const slotsByDay = useMemo(() => {

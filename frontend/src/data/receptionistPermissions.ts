@@ -14,6 +14,7 @@ export const RECEPTIONIST_PERMISSIONS: ReceptionistPermission[] = [
   { key: "manage_waiting_room", label: "Manage waiting room", description: "See who's checked in and waiting to be seen.", recommended: true },
   { key: "book_appointments", label: "Book appointments", description: "Create new appointments for any patient and doctor.", recommended: true },
   { key: "view_patients", label: "Full patients list", description: "See every patient in the practice.", recommended: true },
+  { key: "view_ai_receptionist", label: "AI Receptionist monitor", description: "See how the AI Receptionist is handling inbound patients.", recommended: true },
   { key: "view_analytics", label: "Analytics", description: "Practice-wide analytics and reporting.", recommended: false }
 ];
 

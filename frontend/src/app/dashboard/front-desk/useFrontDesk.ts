@@ -56,10 +56,14 @@ export function useFrontDesk(authedFetch: AuthedFetch) {
   const enriched: FrontDeskAppointment[] = appointments.map((a) => {
     const patient = patients.find((p) => p.id === a.patient_id);
     const doctor = doctors.find((d) => d.id === a.doctor_id);
+    // Patient name comes server-side on the appointment now (patient_name join,
+    // see appointments_services.py); the client-side patient map is just a
+    // fallback for hosts running an older backend.
+    const patientName = a.patient_name || patient?.name || "Unknown patient";
     return {
       ...a,
-      patientName: patient?.name || "Unknown patient",
-      patientInitial: patient?.initial || "?",
+      patientName,
+      patientInitial: patientName.trim()[0]?.toUpperCase() || "?",
       doctorName: doctor?.name || null
     };
   });

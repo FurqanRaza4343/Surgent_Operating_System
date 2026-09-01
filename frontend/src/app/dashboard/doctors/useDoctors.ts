@@ -140,7 +140,7 @@ export function useDoctors(authedFetch: AuthedFetch = null) {
   const getDoctor = useCallback((id: string) => doctors.find((d) => d.id === id), [doctors]);
 
   const addDoctor = useCallback(
-    async (doctor: Doctor): Promise<boolean> => {
+    async (doctor: Doctor): Promise<Doctor | null> => {
       let toSave = doctor;
 
       if (authedFetch) {
@@ -169,9 +169,9 @@ export function useDoctors(authedFetch: AuthedFetch = null) {
         await withTimeout(saveDoctorsDB(next));
         doctorsRef.current = next;
         setDoctors(next);
-        return true;
+        return toSave;
       } catch {
-        return false;
+        return null;
       }
     },
     [authedFetch]

@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 
 from fastapi import Depends, Header
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.config import get_settings
@@ -60,6 +60,20 @@ async def get_current_practice_user(
     # trusting a client-supplied practice_id.
     result = await db.execute(select(User).where(User.clerk_id == user.get("sub")))
     local_user = result.scalar_one_or_none()
+
+    # Self-heal a reissued Clerk `sub` (a dev-instance reset / reinstall gives
+    # every account a NEW id while emails stay stable). When no row matches
+    # the sub, re-link by email so the existing practice account keeps working
+    # instead of 401-ing until manually re-provisioned.
+    if local_user is None:
+        email = (user.get("email") or "").strip().lower()
+        if email:
+            result = await db.execute(select(User).where(func.lower(User.email) == email))
+            local_user = result.scalar_one_or_none()
+            if local_user is not None:
+                local_user.clerk_id = user.get("sub")
+                await db.flush()
+
     if local_user is None:
         raise UnauthorizedException("No practice account found for this Clerk user")
     if not local_user.is_active:

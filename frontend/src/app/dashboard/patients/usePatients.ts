@@ -136,7 +136,7 @@ export function usePatients(authedFetch: AuthedFetch = null) {
   const getPatient = useCallback((id: string) => patients.find((p) => p.id === id), [patients]);
 
   const addPatient = useCallback(
-    async (patient: Patient): Promise<boolean> => {
+    async (patient: Patient): Promise<Patient | null> => {
       let toSave = patient;
 
       if (authedFetch) {
@@ -166,9 +166,9 @@ export function usePatients(authedFetch: AuthedFetch = null) {
         await withTimeout(savePatientsDB(next));
         patientsRef.current = next;
         setPatients(next);
-        return true;
+        return toSave;
       } catch {
-        return false;
+        return null;
       }
     },
     [authedFetch]

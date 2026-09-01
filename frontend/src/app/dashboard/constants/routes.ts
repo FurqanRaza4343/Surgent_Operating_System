@@ -15,6 +15,7 @@ export const DASHBOARD_ROUTES = {
   doctorEdit: (id: string) => `/dashboard/doctors/${id}/edit`,
   doctorOverview: "/dashboard/doctor",
   myCalendar: "/dashboard/my-calendar",
+  myBook: "/dashboard/my-book",
   doctorRequests: "/dashboard/doctor-requests",
   doctorRequestDetail: (id: string) => `/dashboard/doctor-requests/${id}`,
   agentCategory: (categoryId: string) => `/dashboard/agents/${categoryId}`,
@@ -28,7 +29,6 @@ export const DASHBOARD_ROUTES = {
   waitingRoom: "/dashboard/waiting-room",
   bookAppointment: "/dashboard/book-appointment",
   staff: "/dashboard/staff",
-  procedures: "/dashboard/procedures",
   consultationNoteNew: (patientId: string) => `/dashboard/patients/${patientId}/notes/new`,
   treatmentPlanNew: (patientId: string) => `/dashboard/patients/${patientId}/treatment-plans/new`,
   treatmentPlanDetail: (id: string) => `/dashboard/treatment-plans/${id}`,
@@ -43,6 +43,7 @@ export const DASHBOARD_ROUTES = {
   inventory: "/dashboard/inventory",
   inventoryItemDetail: (id: string) => `/dashboard/inventory/${id}`,
   settingsAgents: "/dashboard/settings/agents",
+  settingsProcedures: "/dashboard/settings/procedures",
   settingsProfile: "/dashboard/settings/profile",
   settingsBilling: "/dashboard/settings/billing"
 } as const;

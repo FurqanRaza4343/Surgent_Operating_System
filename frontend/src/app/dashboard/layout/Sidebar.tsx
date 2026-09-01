@@ -17,7 +17,6 @@ import {
   PhoneCallIcon,
   CalendarIcon,
   ScissorsIcon,
-  ReceiptIcon,
   WalletIcon,
   TrendingUpIcon,
   PackageIcon,
@@ -73,19 +72,11 @@ const SIMPLE_ITEMS_MID: NavItem[] = [
 { label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["owner", "doctor", "receptionist"] },
 { label: "Patients", to: DASHBOARD_ROUTES.patients, icon: UsersIcon, allowedRoles: ["owner", "doctor", "receptionist"], requiresPermission: "view_patients" },
 { label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon, allowedRoles: ["owner", "doctor"], requiresPermission: "view_doctors_crm" },
-{ label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "doctor"], requiresPermission: "view_ai_receptionist" },
+{ label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "receptionist"], requiresPermission: "view_ai_receptionist" },
 { label: "My Calendar", to: DASHBOARD_ROUTES.myCalendar, icon: CalendarIcon, allowedRoles: ["doctor"], requiresPermission: "view_own_calendar" },
 { label: "Front Desk", to: DASHBOARD_ROUTES.frontDesk, icon: LayoutDashboardIcon, allowedRoles: ["owner"] },
 { label: "Waiting Room", to: DASHBOARD_ROUTES.waitingRoom, icon: UsersIcon, allowedRoles: ["owner", "receptionist"], requiresPermission: "manage_waiting_room" },
 { label: "Staff", to: DASHBOARD_ROUTES.staff, icon: UsersIcon, allowedRoles: ["owner"] },
-{ label: "Procedures", to: DASHBOARD_ROUTES.procedures, icon: ScissorsIcon, allowedRoles: ["owner"] },
-{ label: "Invoices", to: DASHBOARD_ROUTES.invoices, icon: ReceiptIcon, allowedRoles: ["owner", "doctor", "receptionist"] },
-// Owner reaches Expenses via the "Manage expenses" link inside Finance
-// itself (FinanceOverviewPage.tsx) — one sidebar entry for Owner instead of
-// two. Receptionist has no Finance overview access, so Expenses stays their
-// own direct entry.
-{ label: "Expenses", to: DASHBOARD_ROUTES.expenses, icon: WalletIcon, allowedRoles: ["receptionist"] },
-{ label: "Finance", to: DASHBOARD_ROUTES.financeOverview, icon: WalletIcon, allowedRoles: ["owner"] },
 { label: "Leads / Funnel", to: DASHBOARD_ROUTES.leadsFunnel, icon: TrendingUpIcon, allowedRoles: ["owner", "receptionist"] },
 { label: "Inventory", to: DASHBOARD_ROUTES.inventory, icon: PackageIcon, allowedRoles: ["owner", "receptionist"] }];
 
@@ -93,16 +84,19 @@ const SIMPLE_ITEMS_MID: NavItem[] = [
 const SETTINGS_ITEMS: NavItem[] = [
 { label: "Agent settings", to: DASHBOARD_ROUTES.settingsAgents, icon: SettingsIcon, allowedRoles: ["owner", "doctor"] },
 { label: "Profile", to: DASHBOARD_ROUTES.settingsProfile, icon: UserCircleIcon, allowedRoles: ["owner", "doctor"] },
+{ label: "Procedures", to: DASHBOARD_ROUTES.settingsProcedures, icon: ScissorsIcon, allowedRoles: ["owner", "doctor"] },
 { label: "Plan & billing", to: DASHBOARD_ROUTES.settingsBilling, icon: CreditCardIcon, allowedRoles: ["owner"] }];
 
 
-function NavRow({ item }: { item: NavItem }) {
+function NavRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   return (
     <NavLink
       to={item.to}
       end={item.end}
+      title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
       `group relative flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
+      collapsed ? "justify-center" : ""} ${
       item.locked ?
       "text-ink-muted/70 hover:bg-sand-100 hover:text-ink-muted" :
       isActive ?
@@ -120,13 +114,17 @@ function NavRow({ item }: { item: NavItem }) {
           ) : (
             <item.icon className="h-4 w-4 shrink-0" />
           )}
-          <span className="flex-1 truncate">{item.label}</span>
-          {item.locked ?
-        <LockIcon className="h-3 w-3 shrink-0 text-ink-muted/60" /> :
-        !!item.badge &&
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
-              {item.badge}
-            </span>
+          {!collapsed &&
+        <>
+            <span className="flex-1 truncate">{item.label}</span>
+            {item.locked ?
+          <LockIcon className="h-3 w-3 shrink-0 text-ink-muted/60" /> :
+          !!item.badge &&
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
+                {item.badge}
+              </span>
+          }
+          </>
         }
         </>
       }
@@ -139,11 +137,10 @@ function CollapsibleNavGroup({
   icon: Icon,
   imgSrc,
   children,
-  badge
+  badge,
+  collapsed
 
-
-
-}: {label: string;icon: React.ComponentType<{className?: string;}>;imgSrc?: string;children: NavItem[];badge?: number;}) {
+}: {label: string;icon: React.ComponentType<{className?: string;}>;imgSrc?: string;children: NavItem[];badge?: number;collapsed: boolean;}) {
   const location = useLocation();
   const isWithin = children.some((c) => location.pathname === c.to || location.pathname.startsWith(c.to + "/"));
   const [open, setOpen] = useState(isWithin);
@@ -156,8 +153,10 @@ function CollapsibleNavGroup({
     <div>
       <button
         onClick={() => setOpen((v) => !v)}
+        title={collapsed ? label : undefined}
         aria-expanded={open}
         className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm font-medium transition-colors ${
+        collapsed ? "justify-center" : ""} ${
         isWithin ? "text-ink" : "text-ink-soft hover:bg-sand-100 hover:text-ink"}`
         }>
 
@@ -166,30 +165,41 @@ function CollapsibleNavGroup({
         ) : (
           <Icon className="h-4 w-4 shrink-0" />
         )}
-        <span className="flex-1 truncate text-left">{label}</span>
-        {!!badge &&
-        <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
-            {badge}
-          </span>
+        {!collapsed &&
+        <>
+            <span className="flex-1 truncate text-left">{label}</span>
+            {!!badge &&
+          <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
+              {badge}
+            </span>
+          }
+            <ChevronDownIcon className={`h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform ${open ? "rotate-180" : ""}`} />
+          </>
         }
-        <ChevronDownIcon className={`h-3.5 w-3.5 shrink-0 text-ink-muted transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
-      {open &&
+      {!collapsed && open &&
       <div className="relative ml-[18px] mt-0.5 space-y-0.5 border-l border-sand-200 pl-3.5">
-          {children.map((item) => <NavRow key={item.to} item={item} />)}
+          {children.map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>
       }
     </div>);
 
 }
 
-export function Sidebar() {
+export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const { allowsCategory, can, role, permissions } = usePlan();
   const needsAttentionCount = MOCK_SESSIONS.filter((s) => s.status === "needs_attention").length;
 
   const sessionChildren: NavItem[] = [
   { label: "All conversations", to: DASHBOARD_ROUTES.sessionsAll, icon: InboxIcon },
   { label: "Needs attention", to: DASHBOARD_ROUTES.sessionsNeedsAttention, icon: AlertCircleIcon, badge: needsAttentionCount }];
+
+
+  // Money — the owner's finance/sales hub lives in a single entry; every
+  // invoice / payment / salary screen is reached from inside Finance, so the
+  // sidebar stays clean.
+  const moneyChildren: NavItem[] = [
+  { label: "Finance", to: DASHBOARD_ROUTES.financeOverview, icon: WalletIcon, allowedRoles: ["owner", "receptionist"] }];
 
 
   const CATEGORY_LOGOS: Record<string, string> = {
@@ -213,41 +223,51 @@ export function Sidebar() {
 
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-[280px] flex-col border-r border-sand-200/80 bg-white/70 backdrop-blur-md lg:flex">
-      <div className="flex h-16 items-center gap-2.5 border-b border-sand-200/80 px-6">
+    <aside className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-sand-200/80 bg-white/70 backdrop-blur-md lg:flex ${collapsed ? "w-[72px]" : "w-[280px]"}`}>
+      <div className={`flex h-16 items-center gap-2.5 border-b border-sand-200/80 ${collapsed ? "justify-center px-2" : "px-6"}`}>
         <span className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-sand-200 bg-white">
           <Logo className="h-5 w-5" />
         </span>
+        {!collapsed &&
         <span className="text-[15px] font-bold tracking-tight text-ink">Aiaceone</span>
+        }
       </div>
 
-      <nav className="flex-1 overflow-y-auto px-4 py-5">
+      <nav className={`flex-1 overflow-y-auto py-5 ${collapsed ? "px-3" : "px-4"}`}>
         <div className="space-y-0.5">
-          {visibleFor(SIMPLE_ITEMS_TOP, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(SIMPLE_ITEMS_TOP, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>
 
         <div className="mt-4">
-          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} children={visibleFor(sessionChildren, role, permissions)} />
+          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} collapsed={collapsed} children={visibleFor(sessionChildren, role, permissions)} />
         </div>
 
         <div className="mt-4 space-y-0.5">
-          {visibleFor(SIMPLE_ITEMS_MID, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(SIMPLE_ITEMS_MID, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>
+
+        {visibleFor(moneyChildren, role, permissions).length > 0 &&
+        <div className="mt-4">
+            <CollapsibleNavGroup label="Money" icon={WalletIcon} collapsed={collapsed} children={visibleFor(moneyChildren, role, permissions)} />
+          </div>
+        }
 
         <div className="mt-4">
-          <CollapsibleNavGroup label="Agents" icon={LayersIcon} imgSrc="/agent-logos/agents.png" children={visibleFor(agentChildren, role, permissions)} />
+          <CollapsibleNavGroup label="Agents" icon={LayersIcon} imgSrc="/agent-logos/agents.png" collapsed={collapsed} children={visibleFor(agentChildren, role, permissions)} />
         </div>
 
         <div className="mt-4 space-y-0.5">
-          {visibleFor(bottomItems, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
+          {visibleFor(bottomItems, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>
 
         <div className="mt-6">
+          {!collapsed &&
           <p className="px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
             Settings
           </p>
-          <div className="mt-2 space-y-0.5">
-            {visibleFor(SETTINGS_ITEMS, role, permissions).map((item) => <NavRow key={item.to} item={item} />)}
+          }
+          <div className={collapsed ? "space-y-0.5" : "mt-2 space-y-0.5"}>
+            {visibleFor(SETTINGS_ITEMS, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
           </div>
         </div>
       </nav>

@@ -53,8 +53,12 @@ from src.router.finance.finance_router import router as finance_router
 from src.router.inventory.inventory_router import router as inventory_router
 from src.router.ai_receptionist.ai_receptionist_router import router as ai_receptionist_router
 from src.router.staff_messages.staff_message_router import router as staff_message_router
+from src.router.patient_portal.patient_portal_router import router as patient_portal_router
+from src.router.public.consultation_request_router import router as public_router
 
 agent_routers = [
+    patient_portal_router,
+    public_router,
     ai_receptionist_router,
     staff_message_router,
     ai_consultation_router,

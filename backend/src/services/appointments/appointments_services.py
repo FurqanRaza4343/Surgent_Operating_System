@@ -15,6 +15,16 @@ class AppointmentsService:
     """Every method here is practice-scoped; callers must always pass the
     requesting user's own practice_id, never trust one from the client."""
 
+    @staticmethod
+    def _with_patient_names(rows: list[tuple[Appointment, Patient]]) -> list[Appointment]:
+        # Attach a transient patient_name so the response schema can surface it
+        # without a migration (the column lives only on Patient).
+        appointments: list[Appointment] = []
+        for appointment, patient in rows:
+            appointment.patient_name = f"{patient.first_name} {patient.last_name}".strip()
+            appointments.append(appointment)
+        return appointments
+
     async def list_for_doctor_user(self, db: AsyncSession, practice_id: UUID, user_id: UUID) -> list[Appointment]:
         result = await db.execute(
             select(Doctor).where(Doctor.practice_id == practice_id, Doctor.user_id == user_id)
@@ -24,12 +34,13 @@ class AppointmentsService:
             raise NotFoundException("No doctor profile linked to this account")
 
         query = (
-            select(Appointment)
+            select(Appointment, Patient)
+            .join(Patient, Patient.id == Appointment.patient_id)
             .where(Appointment.practice_id == practice_id, Appointment.doctor_id == doctor.id)
             .order_by(Appointment.start_time)
         )
         result = await db.execute(query)
-        return list(result.scalars().all())
+        return self._with_patient_names(result.all())
 
     async def list_for_practice(
         self, db: AsyncSession, practice_id: UUID, start: datetime | None = None, end: datetime | None = None
@@ -42,9 +53,14 @@ class AppointmentsService:
         if end is not None:
             conditions.append(Appointment.start_time <= end)
 
-        query = select(Appointment).where(and_(*conditions)).order_by(Appointment.start_time)
+        query = (
+            select(Appointment, Patient)
+            .join(Patient, Patient.id == Appointment.patient_id)
+            .where(and_(*conditions))
+            .order_by(Appointment.start_time)
+        )
         result = await db.execute(query)
-        return list(result.scalars().all())
+        return self._with_patient_names(result.all())
 
     async def get_appointment(self, db: AsyncSession, practice_id: UUID, appointment_id: UUID) -> Appointment:
         result = await db.execute(

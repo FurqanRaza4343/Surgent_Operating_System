@@ -14,6 +14,7 @@ import { DoctorDetailPage } from "./doctors/DoctorDetailPage";
 import { DoctorFormPage } from "./doctors/DoctorFormPage";
 import { DoctorOverviewPage } from "./doctor-overview/DoctorOverviewPage";
 import { MyCalendarPage } from "./doctor-overview/MyCalendarPage";
+import { MyBookAppointmentPage } from "./doctor-overview/MyBookAppointmentPage";
 import { DoctorRequestsPage } from "./doctor-requests/DoctorRequestsPage";
 import { DoctorRequestDetailPage } from "./doctor-requests/DoctorRequestDetailPage";
 import { DASHBOARD_ROUTES } from "./constants/routes";
@@ -85,6 +86,15 @@ function RequireOwner({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Guard for the Procedures page — Owner manages (add/edit) and a Doctor is
+// expected to at least see the practice's procedure catalog and prices. Both
+// roles reach it; anyone else (receptionist/staff) is sent back to root.
+function RequireOwnerOrDoctor({ children }: { children: React.ReactNode }) {
+  const { role } = usePlan();
+  if (role !== "owner" && role !== "doctor") return <Navigate to={DASHBOARD_ROUTES.overview} replace />;
+  return <>{children}</>;
+}
+
 // Single registrar for every /dashboard/* screen — mirrors
 // backend/src/router/agents/__init__.py's role for the agent routers. Every
 // path in constants/routes.ts has exactly one matching <Route> here; nothing
@@ -96,6 +106,7 @@ export function DashboardRouter() {
         <Route index element={<DashboardIndex />} />
         <Route path="doctor" element={<RequireDoctor><DoctorOverviewPage /></RequireDoctor>} />
         <Route path="my-calendar" element={<RequireDoctor><MyCalendarPage /></RequireDoctor>} />
+        <Route path="my-book" element={<RequireDoctor><MyBookAppointmentPage /></RequireDoctor>} />
         <Route path="sessions" element={<SessionsPage />} />
         <Route path="sessions/needs-attention" element={<NeedsAttentionPage />} />
         <Route path="patients" element={<PatientsPage />} />
@@ -111,7 +122,7 @@ export function DashboardRouter() {
         <Route path="front-desk" element={<RequireReceptionist><FrontDeskPage /></RequireReceptionist>} />
         <Route path="waiting-room" element={<RequireReceptionist><WaitingRoomPage /></RequireReceptionist>} />
         <Route path="book-appointment" element={<RequireReceptionist><BookAppointmentPage /></RequireReceptionist>} />
-        <Route path="procedures" element={<RequireOwner><ProceduresPage /></RequireOwner>} />
+        <Route path="settings/procedures" element={<RequireOwnerOrDoctor><ProceduresPage /></RequireOwnerOrDoctor>} />
         <Route path="patients/:patientId/notes/new" element={<RequireDoctor><ConsultationNoteFormPage /></RequireDoctor>} />
         <Route path="patients/:patientId/treatment-plans/new" element={<RequireDoctor><TreatmentPlanFormPage /></RequireDoctor>} />
         <Route path="treatment-plans/:id" element={<TreatmentPlanPage />} />
@@ -119,7 +130,7 @@ export function DashboardRouter() {
         <Route path="invoices/new" element={<RequireReceptionist><InvoiceFormPage /></RequireReceptionist>} />
         <Route path="invoices/:id" element={<InvoiceDetailPage />} />
         <Route path="finance/expenses" element={<RequireReceptionist><ExpensesPage /></RequireReceptionist>} />
-        <Route path="finance/overview" element={<RequireOwner><FinanceOverviewPage /></RequireOwner>} />
+        <Route path="finance/overview" element={<RequireReceptionist><FinanceOverviewPage /></RequireReceptionist>} />
         <Route path="leads" element={<FunnelPage />} />
         <Route path="inventory" element={<RequireReceptionist><InventoryPage /></RequireReceptionist>} />
         <Route path="inventory/:id" element={<RequireReceptionist><InventoryItemDetailPage /></RequireReceptionist>} />
@@ -128,7 +139,7 @@ export function DashboardRouter() {
         <Route path="agents/:categoryId" element={<AgentCategoryPage />} />
         <Route path="agents/:categoryId/:agentSlug" element={<AgentDetailPage />} />
         <Route path="command-center" element={<CommandCenterPage />} />
-        <Route path="ai-receptionist" element={<ReceptionistMonitorPage />} />
+        <Route path="ai-receptionist" element={<RequireReceptionist><ReceptionistMonitorPage /></RequireReceptionist>} />
         <Route
           path="analytics"
           element={

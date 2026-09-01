@@ -1,7 +1,8 @@
 import React, { useState } from "react";
-import { UsersIcon, PlusIcon, UserXIcon, UserCheckIcon, PencilIcon, CheckIcon, XIcon } from "lucide-react";
+import { UsersIcon, PlusIcon, UserCheckIcon, PencilIcon, CheckIcon, XIcon, TrashIcon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { EmptyState } from "../components/EmptyState";
+import { KebabMenu } from "../components/KebabMenu";
 import { usePlan } from "../plan/PlanContext";
 import { useStaff } from "./useStaff";
 import { RECEPTIONIST_PERMISSIONS, RECOMMENDED_RECEPTIONIST_PERMISSIONS } from "../../../data/receptionistPermissions";
@@ -126,6 +127,7 @@ function StaffRow({ staff, onUpdate }: { staff: StaffResponse; onUpdate: (id: st
   const [editing, setEditing] = useState(false);
   const [selected, setSelected] = useState<string[]>(staff.permissions);
   const [saving, setSaving] = useState(false);
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
 
   function toggle(key: string) {
     setSelected((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
@@ -160,19 +162,51 @@ function StaffRow({ staff, onUpdate }: { staff: StaffResponse; onUpdate: (id: st
 
             <PencilIcon className="h-3.5 w-3.5" /> Permissions
           </button>
+          {!staff.is_active &&
           <button
             type="button"
             onClick={toggleActive}
             disabled={saving}
-            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-            staff.is_active ? "border-danger/25 text-danger hover:bg-danger/5" : "border-sand-200 text-ink-soft hover:border-teal-600/40 hover:text-teal-600"}`
-            }>
+            className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600 disabled:opacity-50">
 
-            {staff.is_active ? <UserXIcon className="h-3.5 w-3.5" /> : <UserCheckIcon className="h-3.5 w-3.5" />}
-            {staff.is_active ? "Remove" : "Reactivate"}
+            <UserCheckIcon className="h-3.5 w-3.5" /> Reactivate
           </button>
+          }
+          <KebabMenu items={[
+            {
+              label: "Delete permanently",
+              icon: <TrashIcon className="h-3.5 w-3.5" />,
+              danger: true,
+              onClick: () => setConfirmingDelete(true)
+            }
+          ]} />
         </div>
       </div>
+
+      {confirmingDelete &&
+      <div className="mt-3 rounded-xl border border-danger/25 bg-danger/[0.03] p-4">
+          <p className="text-sm font-semibold text-ink">Delete {staff.name || staff.email} permanently?</p>
+          <p className="mt-1 text-xs text-ink-muted">Their account will lose access and be removed from your staff list. Their past history (messages, expenses, consents) will be kept.</p>
+          <div className="mt-3 flex items-center justify-end gap-2">
+            <button
+            type="button"
+            onClick={() => setConfirmingDelete(false)}
+            className="rounded-lg border border-sand-200 px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-sand-100">
+              Cancel
+            </button>
+            <button
+            type="button"
+            onClick={() => {
+              setConfirmingDelete(false);
+              void toggleActive();
+            }}
+            disabled={saving}
+            className="flex items-center gap-1 rounded-lg bg-danger px-3 py-1.5 text-xs font-semibold text-white hover:bg-danger/90 disabled:opacity-50">
+              <TrashIcon className="h-3.5 w-3.5" /> {saving ? "Deleting…" : "Delete permanently"}
+            </button>
+          </div>
+        </div>
+      }
 
       {!editing &&
       <div className="mt-3 flex flex-wrap gap-1.5">

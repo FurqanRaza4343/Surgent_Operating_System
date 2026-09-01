@@ -67,7 +67,7 @@ async def delete_expense(
 
 @router.get("/overview", response_model=FinanceOverviewResponse)
 async def get_overview(
-    user: User = Depends(require_role(UserRole.OWNER)),
+    user: User = Depends(require_role(*_EXPENSE_ROLES)),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.get_overview(db, user)

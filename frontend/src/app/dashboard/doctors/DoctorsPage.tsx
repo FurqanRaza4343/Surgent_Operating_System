@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { LockIcon, PencilIcon, PlusIcon, StethoscopeIcon, UserCircleIcon } from "lucide-react";
+import { LockIcon, PencilIcon, PlusIcon, StethoscopeIcon, TrashIcon, UserCircleIcon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { EmptyState } from "../components/EmptyState";
 import { useDoctors } from "./useDoctors";
@@ -9,11 +9,17 @@ import { usePlan } from "../plan/PlanContext";
 import { planFor } from "../plan/plan";
 import { getDoctorCompleteness } from "./doctorCompleteness";
 import { DoctorSignupLinkCard } from "./DoctorSignupLinkCard";
+import { KebabMenu } from "../components/KebabMenu";
 
 export function DoctorsPage() {
   const { authedFetch, role, capabilities } = usePlan();
-  const { doctors, loading } = useDoctors(authedFetch);
+  const { doctors, loading, updateDoctor } = useDoctors(authedFetch);
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<string | null>(null);
   const atLimit = doctors.length >= capabilities.limits.maxDoctors;
+  // Deactivated ("permanently removed") doctors drop off the active roster —
+  // their record is kept (so linked history stays safe) but they no longer
+  // show up as available staff.
+  const activeDoctors = doctors.filter((d) => d.isActive);
 
   return (
     <>
@@ -52,13 +58,13 @@ export function DoctorsPage() {
 
       {loading ?
       <p className="text-sm text-ink-muted">Loading…</p> :
-      doctors.length === 0 ?
+      activeDoctors.length === 0 ?
       <div className="rounded-3xl border border-sand-200 bg-white">
           <EmptyState icon={StethoscopeIcon} title="No doctors yet" body="Add your practice's surgeons to see them here." />
         </div> :
 
       <div className="grid gap-4 sm:grid-cols-2">
-          {doctors.map((doc) => {
+          {activeDoctors.map((doc) => {
           const completeness = getDoctorCompleteness(doc);
           return (
             <div
@@ -72,6 +78,41 @@ export function DoctorsPage() {
 
                 <PencilIcon className="h-3.5 w-3.5" />
               </Link>
+
+              <div className="absolute right-[4.5rem] top-5 z-20 opacity-0 transition-opacity group-hover:opacity-100">
+                <KebabMenu items={[
+                  {
+                    label: "Delete permanently",
+                    icon: <TrashIcon className="h-3.5 w-3.5" />,
+                    danger: true,
+                    onClick: () => setConfirmingDeleteId(doc.id)
+                  }
+                ]} />
+              </div>
+
+              {confirmingDeleteId === doc.id &&
+              <div className="absolute right-5 top-14 z-30 rounded-xl border border-danger/25 bg-white w-72 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.14)]">
+                  <p className="text-sm font-semibold text-ink">Delete {doc.name} permanently?</p>
+                  <p className="mt-1 text-xs text-ink-muted">They'll be removed from your doctors list and lose access. Their past history (appointments, notes, plans) will be kept.</p>
+                  <div className="mt-3 flex items-center justify-end gap-2">
+                    <button
+                    type="button"
+                    onClick={() => setConfirmingDeleteId(null)}
+                    className="rounded-lg border border-sand-200 px-3 py-1.5 text-xs font-semibold text-ink-soft hover:bg-sand-100">
+                      Cancel
+                    </button>
+                    <button
+                    type="button"
+                    onClick={() => {
+                      setConfirmingDeleteId(null);
+                      void updateDoctor(doc.id, { isActive: false });
+                    }}
+                    className="flex items-center gap-1 rounded-lg bg-danger px-3 py-1.5 text-xs font-semibold text-white hover:bg-danger/90">
+                      <TrashIcon className="h-3.5 w-3.5" /> Delete permanently
+                    </button>
+                  </div>
+                </div>
+              }
 
               <Link to={DASHBOARD_ROUTES.doctorDetail(doc.id)} className="block">
                 <div className="flex items-center gap-4">

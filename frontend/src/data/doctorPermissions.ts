@@ -13,8 +13,8 @@ export const DOCTOR_PERMISSIONS: DoctorPermission[] = [
   { key: "view_own_calendar", label: "My Calendar", description: "Their own appointment schedule.", recommended: true },
   { key: "mark_attendance", label: "Mark attendance", description: "Daily check-in / check-out.", recommended: true },
   { key: "edit_own_profile", label: "Edit own profile", description: "Update their own bio, specialty, and photo.", recommended: true },
-  { key: "view_ai_receptionist", label: "AI Receptionist monitor", description: "See how the AI Receptionist is handling inbound patients.", recommended: true },
-  { key: "view_patients", label: "Full patients list", description: "See every patient in the practice, not just their own appointments.", recommended: false },
+  { key: "view_ai_receptionist", label: "AI Receptionist monitor", description: "See how the AI Receptionist is handling inbound patients.", recommended: false },
+  { key: "view_patients", label: "Full patients list", description: "See every patient in the practice, not just their own appointments.", recommended: true },
   { key: "view_doctors_crm", label: "Doctors roster", description: "See the full list of doctors in the practice.", recommended: false },
   { key: "view_analytics", label: "Analytics", description: "Practice-wide analytics and reporting.", recommended: false }
 ];

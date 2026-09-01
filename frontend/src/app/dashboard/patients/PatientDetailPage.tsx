@@ -14,6 +14,7 @@ import { PatientPhotosGallery } from "../clinical/PatientPhotosGallery";
 import { ConsentDocumentsList } from "../clinical/ConsentDocumentsList";
 import { InvoicesSection } from "../billing-invoices/InvoicesSection";
 import { FunnelStageBadge } from "../leads/FunnelStageBadge";
+import { PatientPortalLinkCard } from "./PatientPortalLinkCard";
 
 const STATUS_CLASS: Record<Patient["status"], string> = {
   active: "bg-success/10 text-success",
@@ -117,6 +118,8 @@ export function PatientDetailPage() {
           </div>
         }
       </div>
+
+      <PatientPortalLinkCard patientId={patient.id} />
 
       {patient.chiefComplaint &&
       <div className="mb-6 rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">

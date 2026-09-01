@@ -6,6 +6,8 @@ import { AGENTS_BY_SLUG } from "../../../data/agents";
 import type { AgentCategory } from "../../../data/agents";
 import { PLANS } from "../../../data/plans";
 import { getMyPractice } from "../../../api/practice";
+import { RECOMMENDED_DOCTOR_PERMISSIONS } from "../../../data/doctorPermissions";
+import { RECOMMENDED_RECEPTIONIST_PERMISSIONS } from "../../../data/receptionistPermissions";
 
 // ============================================================================
 // Types
@@ -78,6 +80,16 @@ export function writeRoleOverride(role: Role) {
     localStorage.setItem(ROLE_STORAGE_KEY, role);
   } catch {
     // private browsing / storage disabled — the role just won't persist across reloads
+  }
+}
+
+// Clears the dev "preview as" role override (and the Portal switcher's demo
+// override) so a real signed-in session's role takes over again.
+export function clearRoleOverride() {
+  try {
+    localStorage.removeItem(ROLE_STORAGE_KEY);
+  } catch {
+    // ignore storage failures
   }
 }
 
@@ -232,7 +244,28 @@ export function usePlanTier(authedFetch: AuthedFetch = null) {
     (async () => {
       const result = await fetchFromApi(authedFetch);
       if (cancelled) return;
-      if (result) {
+      // A local "preview as"/Portal demo role override always wins over the
+      // API. This is what lets the Portal switcher hop into a Doctor or
+      // Receptionist dashboard even while signed in as a real Owner — same
+      // intent as Plan & Billing's existing dev preview buttons. Only ever
+      // demo behavior; production role enforcement belongs in the backend.
+      const override = readRoleOverride();
+      if (override) {
+        const local = readPlanOverride();
+        setTier(local || "solo");
+        setRole(override);
+        // A demo/Portal doctor or receptionist needs the recommended default
+        // permissions, otherwise Patients/Procedures/etc. never surface in the
+        // sidebar. Owners are never permission-gated.
+        setPermissions(
+          override === "doctor"
+            ? RECOMMENDED_DOCTOR_PERMISSIONS
+            : override === "receptionist"
+            ? RECOMMENDED_RECEPTIONIST_PERMISSIONS
+            : []
+        );
+        setSource(local ? "local" : "default");
+      } else if (result) {
         setTier(result.tier);
         setRole(result.role);
         setPermissions(result.permissions);

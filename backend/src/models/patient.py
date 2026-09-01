@@ -47,6 +47,13 @@ class Patient(Base):
     )
     lost_reason: Mapped[str] = mapped_column(String(255), nullable=True)
     source: Mapped[str] = mapped_column(String(100), nullable=True)  # e.g. "Instagram", "Referral", "Walk-in"
+    # Patient portal (link-based demo access). portal_token is the raw token
+    # used to open /portal/:token; portal_enabled gates it on/off. Storing the
+    # raw (high-entropy) token is acceptable for this demo surface, but this
+    # must move to a hashed value if the portal ever goes to production — see
+    # the security note in the patient_portal service.
+    portal_token: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True)
+    portal_enabled: Mapped[bool] = mapped_column(default=False)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

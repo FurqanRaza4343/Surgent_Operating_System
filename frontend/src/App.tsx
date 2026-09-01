@@ -21,6 +21,9 @@ import { DoctorApplyCompletePage } from "./app/auth/DoctorApplyCompletePage";
 import { DoctorApplyPendingPage } from "./app/auth/DoctorApplyPendingPage";
 import { AdminRouter } from "./app/admin/AdminRouter";
 import { DoctorApplyRecovery } from "./app/auth/DoctorApplyRecovery";
+import { PortalPage } from "./app/portal/PortalPage";
+import { PortalSwitchPage } from "./app/portal/PortalSwitchPage";
+import { PlanProvider } from "./app/dashboard/plan/PlanContext";
 
 export function App() {
   return (
@@ -47,6 +50,8 @@ export function App() {
         <Route path="/onboarding/setup" element={<SetupWizardPage />} />
         <Route path="/dashboard/*" element={<DashboardRouter />} />
         <Route path="/admin/*" element={<AdminRouter />} />
+        <Route path="/portal" element={<PlanProvider><PortalSwitchPage /></PlanProvider>} />
+        <Route path="/portal/:token" element={<PortalPage />} />
       </Routes>
     </>);
 

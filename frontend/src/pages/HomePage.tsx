@@ -12,6 +12,7 @@ import {
 } from "../components/sections";
 import { SectionTeaser, CHANNELS } from "../components/features";
 import { CTA } from "../components/cta";
+import { BookConsultationSection } from "../components/book-consultation/BookConsultationSection";
 import { TOTAL_AGENTS } from "../data/agents";
 
 export function HomePage() {
@@ -56,6 +57,7 @@ export function HomePage() {
         <Security />
         <Testimonials />
         <Pricing />
+        <BookConsultationSection />
         <CTA />
       </main>
       <Footer />

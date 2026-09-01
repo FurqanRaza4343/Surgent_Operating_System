@@ -1,0 +1,1257 @@
+INFO:     Started server process [10560]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+2026-09-01 17:54:41,121 INFO GET /health 200 1.81ms
+2026-09-01 17:56:08,117 INFO GET /health 200 2.16ms
+2026-09-01 18:04:48,336 INFO OPTIONS /api/v1/patients 200 0.98ms
+2026-09-01 18:04:57,326 INFO select pg_catalog.version()
+2026-09-01 18:04:57,326 INFO [raw sql] ()
+2026-09-01 18:04:57,330 INFO select current_schema()
+2026-09-01 18:04:57,330 INFO [raw sql] ()
+2026-09-01 18:04:57,332 INFO show standard_conforming_strings
+2026-09-01 18:04:57,332 INFO [raw sql] ()
+2026-09-01 18:04:57,334 INFO BEGIN (implicit)
+2026-09-01 18:04:57,459 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:04:57,461 INFO [generated in 0.00185s] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:04:57,502 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:04:57,503 INFO [generated in 0.00096s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:04:57,530 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:04:57,531 INFO [generated in 0.00095s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 4, 57, 528722, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:04:57,549 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:04:57,550 INFO [generated in 0.00101s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:04:57,558 INFO COMMIT
+2026-09-01 18:04:57,561 INFO GET /api/v1/patients 200 9221.54ms
+2026-09-01 18:05:16,274 INFO BEGIN (implicit)
+2026-09-01 18:05:16,276 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:05:16,277 INFO [cached since 18.82s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:05:16,283 INFO OPTIONS /api/v1/practice/me 200 1.36ms
+2026-09-01 18:05:16,286 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:05:16,287 INFO [cached since 18.78s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:05:16,291 INFO OPTIONS /api/v1/practice/me 200 1.38ms
+2026-09-01 18:05:16,295 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:05:16,297 INFO [cached since 18.77s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 5, 16, 294403, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:05:16,398 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:05:16,400 INFO [cached since 18.85s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:05:16,405 INFO COMMIT
+2026-09-01 18:05:16,410 INFO GET /api/v1/patients 200 2838.82ms
+2026-09-01 18:05:16,458 INFO BEGIN (implicit)
+2026-09-01 18:05:16,460 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:05:16,461 INFO [cached since 19s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:05:16,491 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:05:16,492 INFO [generated in 0.00091s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:05:16,500 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:05:16,502 INFO [generated in 0.00135s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:05:16,515 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:05:16,516 INFO [cached since 0.01552s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:05:16,518 INFO COMMIT
+2026-09-01 18:05:16,521 INFO GET /api/v1/practice/me 200 222.04ms
+2026-09-01 18:05:17,392 INFO BEGIN (implicit)
+2026-09-01 18:05:17,393 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:05:17,394 INFO [cached since 19.94s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:05:17,397 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:05:17,398 INFO [cached since 0.9077s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:05:17,405 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:05:17,406 INFO [cached since 0.9055s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:05:17,418 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:05:17,419 INFO [cached since 0.9186s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:05:17,421 INFO COMMIT
+2026-09-01 18:05:17,423 INFO GET /api/v1/practice/me 200 901.61ms
+2026-09-01 18:05:18,587 INFO BEGIN (implicit)
+2026-09-01 18:05:18,591 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:05:18,593 INFO [cached since 21.13s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:05:18,675 INFO BEGIN (implicit)
+2026-09-01 18:05:18,676 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:05:18,678 INFO [cached since 21.22s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:05:18,681 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:05:18,682 INFO [cached since 21.18s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:05:18,685 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:05:18,686 INFO [cached since 2.195s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:05:18,689 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:05:18,691 INFO [cached since 2.19s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:05:18,694 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:05:18,696 INFO [cached since 2.195s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:05:18,698 INFO COMMIT
+2026-09-01 18:05:18,700 INFO GET /api/v1/practice/me 200 103.59ms
+2026-09-01 18:05:18,708 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:05:18,709 INFO [cached since 21.18s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 5, 18, 707481, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:05:18,725 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:05:18,726 INFO [cached since 21.18s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:05:18,729 INFO COMMIT
+2026-09-01 18:05:18,732 INFO GET /api/v1/patients 200 1150.63ms
+2026-09-01 18:06:24,555 INFO BEGIN (implicit)
+2026-09-01 18:06:24,558 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:24,561 INFO [cached since 87.1s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:24,664 INFO BEGIN (implicit)
+2026-09-01 18:06:24,666 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:24,666 INFO [cached since 87.21s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:24,669 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:06:24,670 INFO [cached since 87.17s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:24,672 INFO OPTIONS /api/v1/doctors 200 0.80ms
+2026-09-01 18:06:24,675 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:06:24,676 INFO [cached since 87.15s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 6, 24, 673863, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:24,678 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:06:24,679 INFO [cached since 68.19s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:25,639 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:06:25,640 INFO [cached since 88.09s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:25,642 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:06:25,643 INFO [cached since 69.14s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:06:25,645 INFO COMMIT
+2026-09-01 18:06:25,650 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:06:25,650 INFO [cached since 69.15s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:06:25,653 INFO COMMIT
+2026-09-01 18:06:25,655 INFO GET /api/v1/patients 200 2297.14ms
+2026-09-01 18:06:25,657 INFO GET /api/v1/practice/me 200 1091.64ms
+2026-09-01 18:06:25,713 INFO BEGIN (implicit)
+2026-09-01 18:06:25,714 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:25,715 INFO [cached since 88.26s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:25,748 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID ORDER BY doctors.created_at DESC
+2026-09-01 18:06:25,749 INFO [generated in 0.00092s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:25,756 INFO COMMIT
+2026-09-01 18:06:25,758 INFO GET /api/v1/doctors 200 1077.57ms
+2026-09-01 18:06:27,704 INFO BEGIN (implicit)
+2026-09-01 18:06:27,706 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:27,708 INFO [cached since 90.25s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:27,712 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:06:27,713 INFO [cached since 71.22s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:27,718 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:06:27,720 INFO [cached since 71.22s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:06:27,724 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:06:27,726 INFO [cached since 71.23s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:06:27,729 INFO COMMIT
+2026-09-01 18:06:27,733 INFO GET /api/v1/practice/me 200 921.35ms
+2026-09-01 18:06:27,845 INFO OPTIONS /api/v1/attendance/me 200 1.19ms
+2026-09-01 18:06:27,854 INFO OPTIONS /api/v1/doctors/me 200 1.06ms
+2026-09-01 18:06:27,856 INFO OPTIONS /api/v1/appointments 200 0.88ms
+2026-09-01 18:06:27,937 INFO BEGIN (implicit)
+2026-09-01 18:06:27,940 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:27,942 INFO [cached since 90.48s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:28,230 INFO BEGIN (implicit)
+2026-09-01 18:06:28,233 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:28,235 INFO [cached since 90.78s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:29,080 INFO BEGIN (implicit)
+2026-09-01 18:06:29,082 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:29,083 INFO [cached since 91.62s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:30,110 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:06:30,113 INFO [cached since 92.61s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:30,119 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:06:30,121 INFO [generated in 0.00193s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:06:30,124 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:06:30,126 INFO [cached since 73.63s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:30,130 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:06:30,132 INFO [cached since 92.6s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 6, 30, 129171, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:30,135 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:06:30,136 INFO [cached since 73.64s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:06:30,138 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:06:30,139 INFO [cached since 92.59s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:30,141 INFO ROLLBACK
+2026-09-01 18:06:30,143 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:06:30,144 INFO [cached since 73.64s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:06:30,146 INFO COMMIT
+2026-09-01 18:06:30,148 INFO COMMIT
+2026-09-01 18:06:30,150 INFO GET /api/v1/doctors/me 404 2206.32ms
+2026-09-01 18:06:30,152 INFO GET /api/v1/patients 200 2293.97ms
+2026-09-01 18:06:30,154 INFO GET /api/v1/practice/me 200 1915.00ms
+2026-09-01 18:06:30,196 INFO BEGIN (implicit)
+2026-09-01 18:06:30,197 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:30,198 INFO [cached since 92.74s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:30,224 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:06:30,225 INFO [cached since 0.1061s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:06:30,229 INFO ROLLBACK
+2026-09-01 18:06:30,230 INFO GET /api/v1/appointments 404 1012.03ms
+2026-09-01 18:06:30,282 INFO BEGIN (implicit)
+2026-09-01 18:06:30,282 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:30,283 INFO [cached since 92.82s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:30,313 INFO SELECT attendance_records.id, attendance_records.practice_id, attendance_records.user_id, attendance_records.doctor_id, attendance_records.check_in_at, attendance_records.check_out_at 
+FROM attendance_records 
+WHERE attendance_records.practice_id = $1::UUID AND attendance_records.user_id = $2::UUID ORDER BY attendance_records.check_in_at DESC 
+ LIMIT $3::INTEGER
+2026-09-01 18:06:30,314 INFO [generated in 0.00083s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'), 30)
+2026-09-01 18:06:30,319 INFO COMMIT
+2026-09-01 18:06:30,321 INFO GET /api/v1/attendance/me 200 1235.47ms
+2026-09-01 18:06:32,186 INFO BEGIN (implicit)
+2026-09-01 18:06:32,189 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:32,192 INFO [cached since 94.73s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:32,202 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:06:32,203 INFO [cached since 94.7s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:32,221 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:06:32,221 INFO [cached since 94.69s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 6, 32, 220365, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:32,237 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:06:32,237 INFO [cached since 94.69s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:32,239 INFO COMMIT
+2026-09-01 18:06:32,241 INFO GET /api/v1/patients 200 130.71ms
+2026-09-01 18:06:33,203 INFO OPTIONS /api/v1/staff-messages/me 200 2.99ms
+2026-09-01 18:06:33,332 INFO BEGIN (implicit)
+2026-09-01 18:06:33,334 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:33,334 INFO [cached since 95.88s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:33,338 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.id = $1::UUID AND users.practice_id = $2::UUID AND users.role != $3::userrole
+2026-09-01 18:06:33,339 INFO [generated in 0.00074s] (UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'), UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'OWNER')
+2026-09-01 18:06:33,343 INFO ROLLBACK
+2026-09-01 18:06:33,347 INFO GET /api/v1/staff-messages/me 404 139.01ms
+2026-09-01 18:06:35,098 INFO BEGIN (implicit)
+2026-09-01 18:06:35,100 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:35,101 INFO [cached since 97.64s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:35,105 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:06:35,106 INFO [cached since 4.988s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:06:35,115 INFO ROLLBACK
+2026-09-01 18:06:35,118 INFO GET /api/v1/appointments 404 908.98ms
+2026-09-01 18:06:36,096 INFO BEGIN (implicit)
+2026-09-01 18:06:36,098 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:36,099 INFO [cached since 98.64s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:36,264 INFO BEGIN (implicit)
+2026-09-01 18:06:36,265 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:36,267 INFO [cached since 98.81s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:36,349 INFO BEGIN (implicit)
+2026-09-01 18:06:36,350 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:36,351 INFO [cached since 98.89s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:36,354 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:06:36,355 INFO [cached since 98.85s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:36,359 INFO SELECT attendance_records.id, attendance_records.practice_id, attendance_records.user_id, attendance_records.doctor_id, attendance_records.check_in_at, attendance_records.check_out_at 
+FROM attendance_records 
+WHERE attendance_records.practice_id = $1::UUID AND attendance_records.user_id = $2::UUID ORDER BY attendance_records.check_in_at DESC 
+ LIMIT $3::INTEGER
+2026-09-01 18:06:36,360 INFO [cached since 6.047s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'), 30)
+2026-09-01 18:06:37,388 INFO BEGIN (implicit)
+2026-09-01 18:06:37,389 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:37,390 INFO [cached since 99.93s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:37,394 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:06:37,395 INFO [cached since 7.277s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:06:37,397 INFO COMMIT
+2026-09-01 18:06:37,399 INFO ROLLBACK
+2026-09-01 18:06:37,403 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:06:37,404 INFO [cached since 7.285s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:06:37,407 INFO GET /api/v1/attendance/me 200 1306.23ms
+2026-09-01 18:06:37,410 INFO GET /api/v1/appointments 404 1138.94ms
+2026-09-01 18:06:37,414 INFO ROLLBACK
+2026-09-01 18:06:37,419 INFO GET /api/v1/doctors/me 404 1056.62ms
+2026-09-01 18:06:37,429 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:06:37,430 INFO [cached since 99.9s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 6, 37, 427895, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:37,447 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:06:37,448 INFO [cached since 99.9s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:37,452 INFO COMMIT
+2026-09-01 18:06:37,455 INFO GET /api/v1/patients 200 2300.29ms
+2026-09-01 18:06:49,215 INFO BEGIN (implicit)
+2026-09-01 18:06:49,217 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:49,217 INFO [cached since 111.8s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:49,220 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.id = $1::UUID AND users.practice_id = $2::UUID AND users.role != $3::userrole
+2026-09-01 18:06:49,221 INFO [cached since 15.88s ago] (UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'), UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'OWNER')
+2026-09-01 18:06:49,223 INFO ROLLBACK
+2026-09-01 18:06:49,228 INFO GET /api/v1/staff-messages/me 404 876.70ms
+2026-09-01 18:06:50,986 INFO BEGIN (implicit)
+2026-09-01 18:06:50,988 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:06:50,988 INFO [cached since 113.5s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:06:50,993 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:06:50,994 INFO [cached since 113.5s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:06:51,006 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:06:51,007 INFO [cached since 113.5s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 6, 51, 5861, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:51,019 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:06:51,020 INFO [cached since 113.5s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:06:51,023 INFO COMMIT
+2026-09-01 18:06:51,026 INFO GET /api/v1/patients 200 129.04ms
+2026-09-01 18:08:08,652 INFO BEGIN (implicit)
+2026-09-01 18:08:08,653 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:08:08,654 INFO [cached since 191.2s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:08:08,757 INFO BEGIN (implicit)
+2026-09-01 18:08:08,759 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:08:08,760 INFO [cached since 191.3s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:08:08,765 INFO OPTIONS /api/v1/staff 200 1.39ms
+2026-09-01 18:08:08,767 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:08:08,769 INFO [cached since 172.3s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:08:08,772 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:08:08,773 INFO [cached since 191.3s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:08:08,854 INFO BEGIN (implicit)
+2026-09-01 18:08:08,855 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:08:08,855 INFO [cached since 191.4s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:08:08,858 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:08:08,859 INFO [cached since 191.3s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 8, 8, 857531, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:08:08,861 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:08:08,862 INFO [cached since 172.4s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:08:08,864 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:08:08,865 INFO [cached since 191.3s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:08:08,868 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.practice_id = $1::UUID AND users.role = $2::userrole ORDER BY users.created_at DESC
+2026-09-01 18:08:08,868 INFO [generated in 0.00069s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'RECEPTIONIST')
+2026-09-01 18:08:08,870 INFO COMMIT
+2026-09-01 18:08:08,873 INFO GET /api/v1/patients 200 218.53ms
+2026-09-01 18:08:08,875 INFO COMMIT
+2026-09-01 18:08:08,878 INFO GET /api/v1/staff 200 101.86ms
+2026-09-01 18:08:08,887 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:08:08,888 INFO [cached since 172.4s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:08:08,890 INFO COMMIT
+2026-09-01 18:08:08,893 INFO GET /api/v1/practice/me 200 2632.14ms
+2026-09-01 18:08:14,560 INFO BEGIN (implicit)
+2026-09-01 18:08:14,561 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:08:14,562 INFO [cached since 197.1s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:08:14,564 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.practice_id = $1::UUID AND users.role = $2::userrole ORDER BY users.created_at DESC
+2026-09-01 18:08:14,565 INFO [cached since 5.697s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'RECEPTIONIST')
+2026-09-01 18:08:14,567 INFO COMMIT
+2026-09-01 18:08:14,569 INFO GET /api/v1/staff 200 807.07ms
+2026-09-01 18:08:56,906 INFO BEGIN (implicit)
+2026-09-01 18:08:56,907 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:08:56,907 INFO [cached since 239.4s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:09:00,973 INFO HTTP Request: POST https://api.clerk.com/v1/invitations "HTTP/1.1 422 Unprocessable Entity"
+2026-09-01 18:09:00,976 INFO ROLLBACK
+2026-09-01 18:09:00,980 INFO POST /api/v1/staff 400 4160.07ms
+2026-09-01 18:09:52,874 INFO BEGIN (implicit)
+2026-09-01 18:09:52,875 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:09:52,876 INFO [cached since 295.4s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:09:54,206 INFO HTTP Request: POST https://api.clerk.com/v1/invitations "HTTP/1.1 400 Bad Request"
+2026-09-01 18:09:54,207 INFO ROLLBACK
+2026-09-01 18:09:54,210 INFO POST /api/v1/staff 400 4169.45ms
+2026-09-01 18:16:57,192 INFO OPTIONS /api/v1/patients 200 1.37ms
+2026-09-01 18:16:57,194 INFO OPTIONS /api/v1/doctors 200 1.06ms
+2026-09-01 18:16:57,200 ERROR Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-01 18:16:57,221 INFO OPTIONS /api/v1/appointments 200 0.90ms
+2026-09-01 18:17:00,391 INFO BEGIN (implicit)
+2026-09-01 18:17:00,393 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:17:00,398 INFO [cached since 722.9s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:17:00,646 INFO BEGIN (implicit)
+2026-09-01 18:17:00,649 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:17:00,650 INFO [cached since 723.2s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:17:01,564 INFO BEGIN (implicit)
+2026-09-01 18:17:01,566 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:17:01,568 INFO [cached since 724.1s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:17:01,572 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:17:01,573 INFO [cached since 724.1s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:17:01,580 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID ORDER BY doctors.created_at DESC
+2026-09-01 18:17:01,582 INFO [cached since 635.8s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:17:01,599 INFO SELECT appointments.id, appointments.practice_id, appointments.patient_id, appointments.doctor_id, appointments.appointment_type, appointments.status, appointments.start_time, appointments.end_time, appointments.checked_in_at, appointments.notes, appointments.created_at, appointments.updated_at, patients.id AS id_1, patients.practice_id AS practice_id_1, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at AS created_at_1, patients.updated_at AS updated_at_1 
+FROM appointments JOIN patients ON patients.id = appointments.patient_id 
+WHERE appointments.practice_id = $1::UUID ORDER BY appointments.start_time
+2026-09-01 18:17:01,600 INFO [generated in 0.00113s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:17:01,603 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:17:01,604 INFO [cached since 724.1s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 17, 1, 602303, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:17:01,613 INFO COMMIT
+2026-09-01 18:17:01,620 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:17:01,621 INFO [cached since 724.1s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:17:01,629 INFO COMMIT
+2026-09-01 18:17:01,632 INFO GET /api/v1/doctors 200 1232.37ms
+2026-09-01 18:17:01,636 INFO GET /api/v1/patients 200 4407.73ms
+2026-09-01 18:17:01,640 INFO COMMIT
+2026-09-01 18:17:01,655 INFO GET /api/v1/appointments 200 1000.74ms
+2026-09-01 18:17:04,066 INFO OPTIONS /api/v1/staff-messages/threads 200 1.02ms
+2026-09-01 18:17:04,182 INFO BEGIN (implicit)
+2026-09-01 18:17:04,184 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:17:04,184 INFO [cached since 726.7s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:17:04,193 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.practice_id = $1::UUID AND users.role != $2::userrole AND users.is_active = true
+2026-09-01 18:17:04,195 INFO [generated in 0.00215s] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'OWNER')
+2026-09-01 18:17:04,204 INFO COMMIT
+2026-09-01 18:17:04,209 INFO GET /api/v1/staff-messages/threads 200 129.39ms
+2026-09-01 18:17:10,286 INFO BEGIN (implicit)
+2026-09-01 18:17:10,289 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:17:10,290 INFO [cached since 732.8s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:17:10,295 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:17:10,297 INFO [cached since 732.8s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:17:10,303 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:17:10,305 INFO [cached since 732.8s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 17, 10, 302250, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:17:10,309 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:17:10,310 INFO [cached since 732.8s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:17:10,314 INFO COMMIT
+2026-09-01 18:17:10,318 INFO GET /api/v1/patients 200 107.28ms
+2026-09-01 18:17:13,626 INFO OPTIONS /api/v1/practice/doctor-signup-code 200 1.63ms
+2026-09-01 18:17:14,490 INFO BEGIN (implicit)
+2026-09-01 18:17:14,492 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:17:14,493 INFO [cached since 737s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:17:14,585 INFO BEGIN (implicit)
+2026-09-01 18:17:14,588 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:17:14,590 INFO [cached since 737.1s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:17:14,593 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID ORDER BY doctors.created_at DESC
+2026-09-01 18:17:14,594 INFO [cached since 648.8s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:17:14,603 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:17:14,605 INFO [cached since 718.1s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:17:14,609 INFO COMMIT
+2026-09-01 18:17:14,626 INFO GET /api/v1/doctors 200 998.46ms
+2026-09-01 18:17:14,653 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:17:14,656 INFO [cached since 718.2s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:17:14,717 INFO COMMIT
+2026-09-01 18:17:14,724 INFO GET /api/v1/practice/doctor-signup-code 200 228.84ms
+2026-09-01 18:21:02,491 INFO BEGIN (implicit)
+2026-09-01 18:21:02,493 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:21:02,494 INFO [cached since 965s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:21:02,501 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID ORDER BY doctors.created_at DESC
+2026-09-01 18:21:02,503 INFO [cached since 876.8s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:21:02,508 INFO COMMIT
+2026-09-01 18:21:02,511 INFO GET /api/v1/doctors 200 1667.34ms
+2026-09-01 18:21:07,966 INFO OPTIONS /api/v1/patients 200 1.17ms
+2026-09-01 18:21:08,115 INFO BEGIN (implicit)
+2026-09-01 18:21:08,116 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:21:08,117 INFO [cached since 970.7s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:21:08,121 INFO ROLLBACK
+2026-09-01 18:21:08,125 INFO GET /api/v1/patients 401 153.31ms
+2026-09-01 18:21:11,423 INFO OPTIONS /api/v1/staff 200 0.74ms
+2026-09-01 18:21:11,494 INFO BEGIN (implicit)
+2026-09-01 18:21:11,495 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:21:11,496 INFO [cached since 974s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:21:11,567 INFO BEGIN (implicit)
+2026-09-01 18:21:11,568 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:21:11,570 INFO [cached since 974.1s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:21:11,576 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:21:11,578 INFO [cached since 974.1s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:21:11,584 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.practice_id = $1::UUID AND users.role = $2::userrole ORDER BY users.created_at DESC
+2026-09-01 18:21:11,585 INFO [cached since 782.7s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'RECEPTIONIST')
+2026-09-01 18:21:11,591 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:21:11,594 INFO [cached since 974.1s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 21, 11, 588594, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:21:11,599 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:21:11,600 INFO [cached since 974.1s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:21:11,603 INFO COMMIT
+2026-09-01 18:21:11,612 INFO GET /api/v1/patients 200 187.41ms
+2026-09-01 18:21:11,615 INFO COMMIT
+2026-09-01 18:21:11,619 INFO GET /api/v1/staff 200 120.12ms
+2026-09-01 18:21:15,041 INFO BEGIN (implicit)
+2026-09-01 18:21:15,043 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:21:15,044 INFO [cached since 977.6s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:21:15,047 INFO OPTIONS /api/v1/doctors 200 0.79ms
+2026-09-01 18:21:15,117 INFO BEGIN (implicit)
+2026-09-01 18:21:15,119 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:21:15,120 INFO [cached since 977.7s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:21:15,125 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:21:15,126 INFO [cached since 977.6s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:21:16,016 INFO BEGIN (implicit)
+2026-09-01 18:21:16,018 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:21:16,020 INFO [cached since 978.6s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:21:16,028 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:21:16,029 INFO [cached since 978.5s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 21, 16, 26619, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:21:16,032 INFO ROLLBACK
+2026-09-01 18:21:16,034 INFO ROLLBACK
+2026-09-01 18:21:16,038 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:21:16,040 INFO [cached since 978.5s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:21:16,045 INFO COMMIT
+2026-09-01 18:21:16,047 INFO GET /api/v1/patients 401 998.96ms
+2026-09-01 18:21:16,049 INFO GET /api/v1/doctors 401 922.15ms
+2026-09-01 18:21:16,055 INFO GET /api/v1/patients 200 1951.94ms
+2026-09-01 18:24:24,556 INFO BEGIN (implicit)
+2026-09-01 18:24:24,558 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:24:24,559 INFO [cached since 1167s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:24:24,562 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:24:24,563 INFO [cached since 1167s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:24:24,568 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:24:24,570 INFO [cached since 1167s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 24, 24, 567601, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:24:24,573 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:24:24,574 INFO [cached since 1167s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:24:24,576 INFO COMMIT
+2026-09-01 18:24:24,578 INFO GET /api/v1/patients 200 567.49ms
+2026-09-01 18:24:34,426 INFO OPTIONS /api/v1/practice/me 200 1.36ms
+2026-09-01 18:24:35,293 INFO BEGIN (implicit)
+2026-09-01 18:24:35,294 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:24:35,295 INFO [cached since 1178s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:24:35,297 ERROR Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-01 18:24:36,228 INFO BEGIN (implicit)
+2026-09-01 18:24:36,230 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:24:36,231 INFO [cached since 1179s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:24:36,238 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:24:36,239 INFO [cached since 1179s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:24:36,245 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:24:36,246 INFO [cached since 1179s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 24, 36, 243360, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:24:36,249 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:24:36,249 INFO [cached since 1160s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:24:36,254 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:24:36,256 INFO [cached since 1179s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:24:36,259 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:24:36,260 INFO [cached since 1160s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:24:36,261 INFO COMMIT
+2026-09-01 18:24:36,263 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:24:36,264 INFO [cached since 1160s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:24:36,267 INFO COMMIT
+2026-09-01 18:24:36,269 INFO GET /api/v1/patients 200 1841.36ms
+2026-09-01 18:24:36,272 INFO GET /api/v1/practice/me 200 973.45ms
+2026-09-01 18:53:06,156 INFO OPTIONS /api/v1/staff 200 1.01ms
+2026-09-01 18:53:07,533 INFO BEGIN (implicit)
+2026-09-01 18:53:07,534 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:07,534 INFO [cached since 2890s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:53:07,538 INFO OPTIONS /api/v1/patients 200 0.68ms
+2026-09-01 18:53:07,541 INFO OPTIONS /api/v1/patients 200 0.89ms
+2026-09-01 18:53:07,543 INFO OPTIONS /api/v1/doctors 200 0.81ms
+2026-09-01 18:53:07,545 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.practice_id = $1::UUID AND users.role = $2::userrole ORDER BY users.created_at DESC
+2026-09-01 18:53:07,546 INFO [cached since 2699s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'RECEPTIONIST')
+2026-09-01 18:53:07,548 INFO OPTIONS /api/v1/patients 200 0.71ms
+2026-09-01 18:53:07,766 INFO BEGIN (implicit)
+2026-09-01 18:53:07,767 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:07,767 INFO [cached since 2890s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:53:07,832 INFO BEGIN (implicit)
+2026-09-01 18:53:07,833 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:07,834 INFO [cached since 2890s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:53:07,835 ERROR Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-01 18:53:07,838 INFO COMMIT
+2026-09-01 18:53:08,278 INFO BEGIN (implicit)
+2026-09-01 18:53:08,279 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:08,279 INFO [cached since 2891s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:53:08,282 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:53:08,282 INFO [cached since 2891s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:53:08,284 INFO ROLLBACK
+2026-09-01 18:53:08,287 INFO GET /api/v1/staff 200 2127.51ms
+2026-09-01 18:53:08,289 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:53:08,290 INFO [cached since 2891s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 53, 8, 288463, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:08,292 INFO ROLLBACK
+2026-09-01 18:53:08,295 INFO GET /api/v1/doctors 401 526.14ms
+2026-09-01 18:53:08,297 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:53:08,298 INFO [cached since 2891s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:08,300 INFO COMMIT
+2026-09-01 18:53:08,303 INFO GET /api/v1/patients 401 463.69ms
+2026-09-01 18:53:08,305 INFO GET /api/v1/patients 200 755.07ms
+2026-09-01 18:53:08,380 INFO BEGIN (implicit)
+2026-09-01 18:53:08,381 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:08,382 INFO [cached since 2891s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:53:08,384 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:53:08,385 INFO [cached since 2891s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:53:08,388 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:53:08,389 INFO [cached since 2891s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 53, 8, 387199, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:08,392 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:53:08,392 INFO [cached since 2891s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:08,394 INFO COMMIT
+2026-09-01 18:53:08,396 INFO GET /api/v1/patients 200 89.99ms
+2026-09-01 18:53:52,177 INFO BEGIN (implicit)
+2026-09-01 18:53:52,180 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:52,183 INFO [cached since 2935s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:53:52,266 INFO BEGIN (implicit)
+2026-09-01 18:53:52,269 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:52,271 INFO [cached since 2935s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:53:52,363 INFO BEGIN (implicit)
+2026-09-01 18:53:52,366 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:52,367 INFO [cached since 2935s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:53:52,369 INFO ROLLBACK
+2026-09-01 18:53:52,461 INFO BEGIN (implicit)
+2026-09-01 18:53:52,464 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:52,467 INFO [cached since 2935s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:53:52,472 INFO ROLLBACK
+2026-09-01 18:53:52,476 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:53:52,482 INFO [cached since 2935s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:53:52,487 INFO GET /api/v1/doctors 401 1325.99ms
+2026-09-01 18:53:52,489 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.practice_id = $1::UUID AND users.role = $2::userrole ORDER BY users.created_at DESC
+2026-09-01 18:53:52,490 INFO [cached since 2744s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'RECEPTIONIST')
+2026-09-01 18:53:52,497 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:53:52,499 INFO [cached since 2935s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 53, 52, 495416, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:52,503 INFO GET /api/v1/patients 401 314.33ms
+2026-09-01 18:53:52,505 INFO COMMIT
+2026-09-01 18:53:52,508 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:53:52,510 INFO [cached since 2935s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:52,515 INFO COMMIT
+2026-09-01 18:53:52,519 INFO GET /api/v1/staff 200 147.01ms
+2026-09-01 18:53:52,522 INFO GET /api/v1/patients 200 247.68ms
+2026-09-01 18:53:52,622 INFO BEGIN (implicit)
+2026-09-01 18:53:52,623 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:53:52,626 INFO [cached since 2935s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:53:52,631 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:53:52,632 INFO [cached since 2935s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:53:52,636 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:53:52,638 INFO [cached since 2935s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 53, 52, 635737, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:52,643 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:53:52,643 INFO [cached since 2935s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:53:52,646 INFO COMMIT
+2026-09-01 18:53:52,648 INFO GET /api/v1/patients 200 124.67ms
+2026-09-01 18:54:05,244 INFO BEGIN (implicit)
+2026-09-01 18:54:05,245 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:05,246 INFO [cached since 2948s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:54:05,344 INFO BEGIN (implicit)
+2026-09-01 18:54:05,346 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:05,346 INFO [cached since 2948s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:54:05,829 INFO BEGIN (implicit)
+2026-09-01 18:54:05,830 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:05,831 INFO [cached since 2948s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:54:05,832 INFO ROLLBACK
+2026-09-01 18:54:05,834 INFO OPTIONS /api/v1/practice/me 200 0.74ms
+2026-09-01 18:54:05,835 INFO ROLLBACK
+2026-09-01 18:54:06,316 INFO BEGIN (implicit)
+2026-09-01 18:54:06,316 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:06,317 INFO [cached since 2949s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:54:06,319 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:54:06,319 INFO [cached since 2949s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:54:06,321 INFO GET /api/v1/doctors 401 1229.89ms
+2026-09-01 18:54:06,323 INFO GET /api/v1/patients 401 1076.33ms
+2026-09-01 18:54:06,326 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:54:06,327 INFO [cached since 2949s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 54, 6, 325701, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:06,330 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:54:06,331 INFO [cached since 2930s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:54:06,333 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:54:06,334 INFO [cached since 2949s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:06,337 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:54:06,338 INFO [cached since 2930s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:54:06,340 INFO COMMIT
+2026-09-01 18:54:06,342 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:54:06,343 INFO [cached since 2930s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:54:06,345 INFO COMMIT
+2026-09-01 18:54:06,347 INFO GET /api/v1/patients 200 997.42ms
+2026-09-01 18:54:06,350 INFO GET /api/v1/practice/me 200 512.50ms
+2026-09-01 18:54:06,619 INFO BEGIN (implicit)
+2026-09-01 18:54:06,620 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:06,621 INFO [cached since 2949s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:54:06,624 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:54:06,625 INFO [cached since 2949s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:54:06,628 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:54:06,629 INFO [cached since 2949s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 54, 6, 627065, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:06,631 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:54:06,632 INFO [cached since 2949s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:06,634 INFO COMMIT
+2026-09-01 18:54:06,636 INFO GET /api/v1/patients 200 285.01ms
+2026-09-01 18:54:39,449 INFO BEGIN (implicit)
+2026-09-01 18:54:39,450 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:39,451 INFO [cached since 2982s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:54:39,938 INFO BEGIN (implicit)
+2026-09-01 18:54:39,940 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:39,942 INFO [cached since 2982s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:54:40,160 INFO BEGIN (implicit)
+2026-09-01 18:54:40,161 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:40,162 INFO [cached since 2983s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:54:40,164 INFO ROLLBACK
+2026-09-01 18:54:40,166 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:54:40,167 INFO [cached since 2983s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:54:40,169 INFO ROLLBACK
+2026-09-01 18:54:40,170 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:54:40,171 INFO [cached since 2983s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 54, 40, 170175, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:40,173 INFO GET /api/v1/doctors 401 4777.92ms
+2026-09-01 18:54:40,175 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:54:40,176 INFO [cached since 2983s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:40,178 INFO GET /api/v1/patients 401 230.90ms
+2026-09-01 18:54:40,179 INFO COMMIT
+2026-09-01 18:54:40,181 INFO GET /api/v1/patients 200 729.06ms
+2026-09-01 18:54:40,593 INFO BEGIN (implicit)
+2026-09-01 18:54:40,596 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:54:40,598 INFO [cached since 2983s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:54:40,604 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:54:40,606 INFO [cached since 2983s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:54:40,612 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:54:40,614 INFO [cached since 2983s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 54, 40, 610964, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:40,620 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:54:40,622 INFO [cached since 2983s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:54:40,627 INFO COMMIT
+2026-09-01 18:54:40,633 INFO GET /api/v1/patients 200 449.41ms
+2026-09-01 18:55:11,035 INFO BEGIN (implicit)
+2026-09-01 18:55:11,036 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:55:11,037 INFO [cached since 3014s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:55:11,149 INFO BEGIN (implicit)
+2026-09-01 18:55:11,150 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:55:11,150 INFO [cached since 3014s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:55:11,152 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:55:11,153 INFO [cached since 3014s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:55:11,252 INFO BEGIN (implicit)
+2026-09-01 18:55:11,253 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:55:11,254 INFO [cached since 3014s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:55:11,256 INFO OPTIONS /api/v1/practice/me 200 0.69ms
+2026-09-01 18:55:11,259 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:55:11,259 INFO [cached since 3014s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 55, 11, 257852, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:55:11,261 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 18:55:11,262 INFO [cached since 2995s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:55:11,264 ERROR Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-01 18:55:11,267 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:55:11,268 INFO [cached since 3014s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:55:11,270 INFO ROLLBACK
+2026-09-01 18:55:11,379 INFO BEGIN (implicit)
+2026-09-01 18:55:11,380 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:55:11,380 INFO [cached since 3014s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 18:55:11,382 INFO COMMIT
+2026-09-01 18:55:11,385 INFO GET /api/v1/patients 401 230.79ms
+2026-09-01 18:55:11,386 INFO ROLLBACK
+2026-09-01 18:55:11,388 INFO GET /api/v1/patients 200 1633.92ms
+2026-09-01 18:55:11,391 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:55:11,392 INFO [cached since 2995s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:55:11,394 INFO GET /api/v1/practice/me 401 123.17ms
+2026-09-01 18:55:11,421 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 18:55:11,422 INFO [cached since 2995s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 18:55:11,424 INFO COMMIT
+2026-09-01 18:55:11,427 INFO GET /api/v1/practice/me 200 385.56ms
+2026-09-01 18:59:48,863 INFO OPTIONS /api/v1/appointments 200 1.48ms
+2026-09-01 18:59:48,866 ERROR Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-01 18:59:51,221 INFO BEGIN (implicit)
+2026-09-01 18:59:51,225 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:59:51,228 INFO [cached since 3294s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:59:51,266 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:59:51,268 INFO [cached since 3201s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:59:51,277 INFO ROLLBACK
+2026-09-01 18:59:51,288 INFO GET /api/v1/appointments 404 2418.72ms
+2026-09-01 18:59:53,038 INFO OPTIONS /api/v1/attendance/me 200 1.10ms
+2026-09-01 18:59:53,115 INFO BEGIN (implicit)
+2026-09-01 18:59:53,116 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:59:53,116 INFO [cached since 3296s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:59:53,118 INFO OPTIONS /api/v1/doctors/me 200 0.74ms
+2026-09-01 18:59:53,234 INFO BEGIN (implicit)
+2026-09-01 18:59:53,236 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:59:53,237 INFO [cached since 3296s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:59:53,851 INFO BEGIN (implicit)
+2026-09-01 18:59:53,859 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:59:53,862 INFO [cached since 3296s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:59:53,865 ERROR Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-01 18:59:53,875 INFO SELECT patients.id, patients.practice_id, patients.first_name, patients.last_name, patients.email, patients.phone, patients.date_of_birth, patients.medical_history, patients.consent_status, patients.plan_type, patients.chief_complaint, patients.needs_surgery, patients.ai_agent_assigned, patients.agent_status, patients.agent_cost, patients.lifecycle_stage, patients.lost_reason, patients.source, patients.portal_token, patients.portal_enabled, patients.created_at, patients.updated_at 
+FROM patients 
+WHERE patients.practice_id = $1::UUID ORDER BY patients.created_at DESC
+2026-09-01 18:59:53,877 INFO [cached since 3296s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 18:59:53,972 INFO BEGIN (implicit)
+2026-09-01 18:59:53,974 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:59:53,976 INFO [cached since 3297s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:59:53,983 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:59:53,986 INFO [cached since 3204s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:59:53,995 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($4::UUID, $5::UUID) AND appointments.start_time >= $2::TIMESTAMP WITH TIME ZONE AND appointments.status != $3::appointmentstatus
+2026-09-01 18:59:54,010 INFO [cached since 3296s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), datetime.datetime(2026, 9, 1, 13, 59, 53, 991847, tzinfo=datetime.timezone.utc), 'CANCELLED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:59:54,047 INFO SELECT attendance_records.id, attendance_records.practice_id, attendance_records.user_id, attendance_records.doctor_id, attendance_records.check_in_at, attendance_records.check_out_at 
+FROM attendance_records 
+WHERE attendance_records.practice_id = $1::UUID AND attendance_records.user_id = $2::UUID ORDER BY attendance_records.check_in_at DESC 
+ LIMIT $3::INTEGER
+2026-09-01 18:59:54,049 INFO [cached since 3204s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'), 30)
+2026-09-01 18:59:54,056 INFO SELECT DISTINCT appointments.patient_id 
+FROM appointments 
+WHERE appointments.practice_id = $1::UUID AND appointments.patient_id IN ($3::UUID, $4::UUID) AND appointments.status = $2::appointmentstatus
+2026-09-01 18:59:54,058 INFO [cached since 3297s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'COMPLETED', UUID('3e6dd1dd-e2aa-46ae-bae4-b64c75f7bafe'), UUID('c4a9ef0d-7c8d-4da9-aaf7-e9e94a6fdc44'))
+2026-09-01 18:59:54,066 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:59:54,068 INFO [cached since 3204s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:59:54,072 INFO ROLLBACK
+2026-09-01 18:59:54,082 INFO COMMIT
+2026-09-01 18:59:54,092 INFO GET /api/v1/appointments 404 971.11ms
+2026-09-01 18:59:54,113 INFO GET /api/v1/patients 200 1072.80ms
+2026-09-01 18:59:54,118 INFO ROLLBACK
+2026-09-01 18:59:54,128 INFO GET /api/v1/doctors/me 404 248.44ms
+2026-09-01 18:59:54,167 INFO COMMIT
+2026-09-01 18:59:54,175 INFO GET /api/v1/attendance/me 200 933.74ms
+2026-09-01 18:59:56,690 INFO BEGIN (implicit)
+2026-09-01 18:59:56,692 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 18:59:56,694 INFO [cached since 3299s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 18:59:56,698 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 18:59:56,699 INFO [cached since 3207s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 18:59:56,702 INFO ROLLBACK
+2026-09-01 18:59:56,706 INFO GET /api/v1/appointments 404 97.16ms
+2026-09-01 19:25:07,314 INFO OPTIONS /api/v1/practice/me 200 1.36ms
+2026-09-01 19:25:09,759 INFO BEGIN (implicit)
+2026-09-01 19:25:09,761 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 19:25:09,762 INFO [cached since 4812s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 19:25:09,766 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 19:25:09,767 INFO [cached since 4793s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 19:25:09,770 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 19:25:09,772 INFO [cached since 4793s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 19:25:09,775 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 19:25:09,776 INFO [cached since 4793s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 19:25:09,778 INFO COMMIT
+2026-09-01 19:25:09,781 INFO GET /api/v1/practice/me 200 2455.57ms
+2026-09-01 19:25:11,788 INFO OPTIONS /api/v1/appointments 200 4.48ms
+2026-09-01 19:25:11,789 ERROR Exception in callback _ProactorBasePipeTransport._call_connection_lost()
+handle: <Handle _ProactorBasePipeTransport._call_connection_lost()>
+Traceback (most recent call last):
+  File "C:\Python314\Lib\asyncio\events.py", line 94, in _run
+    self._context.run(self._callback, *self._args)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Python314\Lib\asyncio\proactor_events.py", line 165, in _call_connection_lost
+    self._sock.shutdown(socket.SHUT_RDWR)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+ConnectionResetError: [WinError 10054] An existing connection was forcibly closed by the remote host
+2026-09-01 19:25:11,887 INFO BEGIN (implicit)
+2026-09-01 19:25:11,888 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 19:25:11,889 INFO [cached since 4814s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 19:25:11,960 INFO BEGIN (implicit)
+2026-09-01 19:25:11,962 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 19:25:11,962 INFO [cached since 4815s ago] ('user_3IJjXjFLcG4qaagJWxQnHqHoXEr',)
+2026-09-01 19:25:11,965 INFO SELECT practices.id, practices.name, practices.email, practices.phone, practices.address, practices.timezone, practices.settings, practices.created_at, practices.updated_at 
+FROM practices 
+WHERE practices.id = $1::UUID
+2026-09-01 19:25:11,967 INFO [cached since 4795s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'),)
+2026-09-01 19:25:11,969 INFO SELECT doctors.id, doctors.practice_id, doctors.user_id, doctors.name, doctors.email, doctors.phone, doctors.specialty, doctors.license_number, doctors.bio, doctors.photo_url, doctors.capabilities, doctors.permissions, doctors.is_active, doctors.created_at, doctors.updated_at 
+FROM doctors 
+WHERE doctors.practice_id = $1::UUID AND doctors.user_id = $2::UUID
+2026-09-01 19:25:11,971 INFO [cached since 4722s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), UUID('7a8e4484-f378-4080-bd7f-e1a399b2254e'))
+2026-09-01 19:25:11,975 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 19:25:11,976 INFO [cached since 4795s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 19:25:11,978 INFO ROLLBACK
+2026-09-01 19:25:11,982 INFO SELECT subscriptions.id, subscriptions.practice_id, subscriptions.stripe_subscription_id, subscriptions.tier, subscriptions.status, subscriptions.price, subscriptions.start_date, subscriptions.end_date, subscriptions.auto_renew, subscriptions.created_at, subscriptions.updated_at 
+FROM subscriptions 
+WHERE subscriptions.practice_id = $1::UUID AND subscriptions.status IN ($2::subscriptionstatus, $3::subscriptionstatus) ORDER BY subscriptions.created_at DESC
+2026-09-01 19:25:11,982 INFO [cached since 4795s ago] (UUID('4d1123f3-3ba2-42f3-b584-a5009c7b3e39'), 'ACTIVE', 'TRIAL')
+2026-09-01 19:25:11,986 INFO COMMIT
+2026-09-01 19:25:11,988 INFO GET /api/v1/appointments 404 98.17ms
+2026-09-01 19:25:11,990 INFO GET /api/v1/practice/me 200 180.83ms
+2026-09-01 19:25:19,787 INFO OPTIONS /api/v1/practice/me 200 1.05ms
+2026-09-01 19:25:19,870 INFO BEGIN (implicit)
+2026-09-01 19:25:19,871 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 19:25:19,871 INFO [cached since 4822s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 19:25:19,874 INFO ROLLBACK
+2026-09-01 19:25:19,876 INFO GET /api/v1/practice/me 401 86.87ms
+2026-09-01 19:25:19,891 INFO OPTIONS /api/v1/doctor-applications/me 200 0.86ms
+2026-09-01 19:25:19,956 INFO BEGIN (implicit)
+2026-09-01 19:25:19,957 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 19:25:19,958 INFO [cached since 4823s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 19:25:19,960 INFO ROLLBACK
+2026-09-01 19:25:19,962 INFO GET /api/v1/doctor-applications/me 401 68.73ms
+2026-09-01 19:25:20,043 INFO OPTIONS /api/v1/patients 200 0.97ms
+2026-09-01 19:25:20,124 INFO BEGIN (implicit)
+2026-09-01 19:25:20,126 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 19:25:20,141 INFO [cached since 4823s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 19:25:20,224 INFO BEGIN (implicit)
+2026-09-01 19:25:20,226 INFO SELECT users.id, users.practice_id, users.clerk_id, users.email, users.name, users.role, users.phone, users.is_active, users.permissions, users.is_platform_admin, users.created_at, users.updated_at 
+FROM users 
+WHERE users.clerk_id = $1::VARCHAR
+2026-09-01 19:25:20,226 INFO [cached since 4823s ago] ('user_3IicvcuP58t66e3ZoMBDNMC3UnJ',)
+2026-09-01 19:25:20,229 INFO ROLLBACK
+2026-09-01 19:25:20,231 INFO ROLLBACK
+2026-09-01 19:25:20,233 INFO GET /api/v1/practice/me 401 187.70ms
+2026-09-01 19:25:20,234 INFO GET /api/v1/patients 401 89.44ms

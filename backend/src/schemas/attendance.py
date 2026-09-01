@@ -7,7 +7,8 @@ from datetime import datetime
 class AttendanceRecordResponse(BaseModel):
     id: UUID
     practice_id: UUID
-    doctor_id: UUID
+    user_id: UUID
+    doctor_id: UUID | None
     check_in_at: datetime
     check_out_at: datetime | None
 

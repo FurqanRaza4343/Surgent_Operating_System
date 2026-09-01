@@ -38,9 +38,8 @@ export function PatientFormPage() {
     setSaveError(null);
 
     const classification = classifyPatient(chiefComplaint, needsSurgery);
-    const id = `p${Date.now()}`;
     const patient: Patient = {
-      id,
+      id: `p${Date.now()}`,
       name: name.trim(),
       initial: name.trim()[0]?.toUpperCase() || "?",
       email: email.trim(),
@@ -61,13 +60,13 @@ export function PatientFormPage() {
       source: null
     };
 
-    const ok = await addPatient(patient);
-    if (!ok) {
+    const saved = await addPatient(patient);
+    if (!saved) {
       setSaveError("Couldn't save — this browser's storage is full or unavailable. Please try again.");
       setSaving(false);
       return;
     }
-    navigate(DASHBOARD_ROUTES.patientDetail(id));
+    navigate(DASHBOARD_ROUTES.patientDetail(saved.id));
   }
 
   const previewAgent = preview ? AGENTS_BY_SLUG[preview.agentSlug] : null;

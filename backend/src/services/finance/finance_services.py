@@ -16,13 +16,18 @@ class FinanceService:
     pending/overdue invoices aren't money in hand yet."""
 
     async def create_expense(self, db: AsyncSession, practice_id: UUID, user_id: UUID, data: CreateExpenseRequest) -> Expense:
+        import datetime as dt
         expense = Expense(
             practice_id=practice_id,
+            expense_type=data.expense_type,
+            status=data.status,
             category=data.category,
             amount=data.amount,
             vendor=data.vendor,
+            payee_name=data.payee_name,
             expense_date=data.expense_date,
             notes=data.notes,
+            paid_at=(dt.datetime.now(dt.timezone.utc) if data.status == "paid" else None),
             recorded_by=user_id,
         )
         db.add(expense)

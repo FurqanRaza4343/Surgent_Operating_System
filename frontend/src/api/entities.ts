@@ -174,6 +174,7 @@ export interface AppointmentResponse {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  patient_name: string | null;
 }
 
 export interface CreateAppointmentRequest {
@@ -825,30 +826,41 @@ export function updateInvoice(authedFetch: AuthedFetch, id: string, data: Update
 export interface ExpenseResponse {
   id: string;
   practice_id: string;
+  expense_type: string;
+  status: string;
   category: string;
   amount: number;
   vendor: string | null;
+  payee_name: string | null;
   expense_date: string;
   notes: string | null;
+  paid_at: string | null;
   recorded_by: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateExpenseRequest {
+  expense_type?: string;
+  status?: string;
   category: string;
   amount: number;
   vendor?: string | null;
+  payee_name?: string | null;
   expense_date: string;
   notes?: string | null;
 }
 
 export interface UpdateExpenseRequest {
+  expense_type?: string;
+  status?: string;
   category?: string;
   amount?: number;
   vendor?: string | null;
+  payee_name?: string | null;
   expense_date?: string;
   notes?: string | null;
+  paid_at?: string | null;
 }
 
 export interface FinanceOverviewResponse {
@@ -1062,4 +1074,138 @@ export function sendMessageTo(authedFetch: AuthedFetch, staffUserId: string, bod
 
 export function listMessageThreads(authedFetch: AuthedFetch) {
   return authedFetch<StaffMessageThreadSummary[]>("/api/v1/staff-messages/threads");
+}
+
+// --- patient portal ----------------------------------------------------------
+// Link-based demo portal — Owner generates / revokes a shareable /portal/:token
+// URL for a patient (backend/src/router/patient_portal/patient_portal_router.py),
+// and the patient opens that URL to read their own appointments/consents/invoices.
+export interface PortalLinkResponse {
+  portal_url: string | null;
+  enabled: boolean;
+}
+
+export interface PortalAppointment {
+  id: string;
+  appointment_type: string;
+  status: string;
+  start_time: string;
+  end_time: string;
+  notes: string | null;
+}
+
+export interface PortalConsentDocument {
+  id: string;
+  document_type: string;
+  status: string;
+  signed_at: string | null;
+  signed_by_name: string | null;
+}
+
+export interface PortalInvoice {
+  id: string;
+  description: string;
+  total_amount: number;
+  status: string;
+  due_date: string | null;
+  created_at: string;
+}
+
+export interface PortalPhoto {
+  id: string;
+  photo_type: string | null;
+  notes: string | null;
+  url: string;
+  taken_at: string;
+}
+
+export interface PortalPatientResponse {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  chief_complaint: string | null;
+  consent_status: boolean;
+  appointments: PortalAppointment[];
+  consent_documents: PortalConsentDocument[];
+  invoices: PortalInvoice[];
+  photos: PortalPhoto[];
+  invoice_total_pending: number;
+}
+
+export interface PortalBookingRequest {
+  appointment_type: string;
+  start_time: string;
+  end_time: string;
+  notes?: string | null;
+}
+
+export function generatePortalLink(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalLinkResponse>(`/api/v1/patient-portal/patients/${patientId}/link`, {
+    method: "POST"
+  });
+}
+
+export function revokePortalLink(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalLinkResponse>(`/api/v1/patient-portal/patients/${patientId}/link`, {
+    method: "DELETE"
+  });
+}
+
+export function getPortalLink(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalLinkResponse>(`/api/v1/patient-portal/patients/${patientId}/link`);
+}
+
+// Public self-serve booking — no authedFetch: the portal token IS the
+// credential, so this plain-fetches against the same origin as the page.
+export async function portalBookAppointment(token: string, data: PortalBookingRequest): Promise<PortalPatientResponse> {
+  const res = await fetch(`/api/v1/patient-portal/${encodeURIComponent(token)}/appointments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't book your appointment. Please try again.");
+  }
+  return res.json();
+}
+
+export interface ConsultationRequestPayload {
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  chief_complaint: string;
+  needs_surgery?: boolean;
+}
+
+export interface ConsultationRequestResponse {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  phone: string | null;
+  chief_complaint: string | null;
+  needs_surgery: boolean;
+  ai_agent_assigned: string | null;
+  source: string | null;
+  lifecycle_stage: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Public website "Book a consultation" lead — no authedFetch, same reason as
+// portalBookAppointment: the form is the funnel entry, no auth required.
+export async function submitConsultationRequest(data: ConsultationRequestPayload): Promise<ConsultationRequestResponse> {
+  const res = await fetch(`/api/v1/public/consultation-request`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't send your request. Please try again.");
+  }
+  return res.json();
 }

@@ -5,29 +5,40 @@ from datetime import datetime, date
 
 
 class CreateExpenseRequest(BaseModel):
+    expense_type: str = "expense"  # "expense" | "refund" | "salary"
+    status: str = "paid"           # "paid" | "pending"
     category: str
     amount: float
     vendor: str | None = None
+    payee_name: str | None = None  # staff name for salary payments
     expense_date: date
     notes: str | None = None
 
 
 class UpdateExpenseRequest(BaseModel):
+    expense_type: str | None = None
+    status: str | None = None
     category: str | None = None
     amount: float | None = None
     vendor: str | None = None
+    payee_name: str | None = None
     expense_date: date | None = None
     notes: str | None = None
+    paid_at: datetime | None = None
 
 
 class ExpenseResponse(BaseModel):
     id: UUID
     practice_id: UUID
+    expense_type: str
+    status: str
     category: str
     amount: float
     vendor: str | None
+    payee_name: str | None
     expense_date: date
     notes: str | None
+    paid_at: datetime | None
     recorded_by: UUID
     created_at: datetime
     updated_at: datetime
