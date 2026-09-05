@@ -1,0 +1,228 @@
+2026-09-03 13:48:59.768 PKT [13292] LOG:  starting PostgreSQL 18.4 on x86_64-windows, compiled by msvc-19.44.35226, 64-bit
+2026-09-03 13:48:59.778 PKT [13292] LOG:  listening on IPv6 address "::1", port 5432
+2026-09-03 13:48:59.778 PKT [13292] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-09-03 13:49:00.150 PKT [21352] LOG:  database system was interrupted; last known up at 2026-09-02 16:45:40 PKT
+2026-09-03 13:49:04.701 PKT [21352] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-09-03 13:49:04.707 PKT [21352] LOG:  redo starts at 0/238A020
+2026-09-03 13:49:04.707 PKT [21352] LOG:  invalid record length at 0/238A128: expected at least 24, got 0
+2026-09-03 13:49:04.707 PKT [21352] LOG:  redo done at 0/238A0F0 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-09-03 13:49:04.729 PKT [18872] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-09-03 13:49:04.760 PKT [18872] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 2 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.005 s, sync=0.003 s, total=0.046 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/238A128, redo lsn=0/238A128
+2026-09-03 13:49:04.790 PKT [13292] LOG:  database system is ready to accept connections
+2026-09-03 13:59:04.777 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 13:59:05.608 PKT [7172] ERROR:  update or delete on table "doctors" violates foreign key constraint "appointments_doctor_id_fkey" on table "appointments"
+2026-09-03 13:59:05.608 PKT [7172] DETAIL:  Key (id)=(9a71f00c-6cce-4b4a-9758-e54a9c64406f) is still referenced from table "appointments".
+2026-09-03 13:59:05.608 PKT [7172] STATEMENT:  DELETE FROM doctors WHERE doctors.id = $1::UUID
+2026-09-03 13:59:08.996 PKT [18872] LOG:  checkpoint complete: wrote 38 buffers (0.2%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=4.164 s, sync=0.047 s, total=4.220 s; sync files=37, longest=0.004 s, average=0.002 s; distance=121 kB, estimate=121 kB; lsn=0/23AAE60, redo lsn=0/23A8548
+2026-09-03 14:04:05.011 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 14:04:05.803 PKT [18872] LOG:  checkpoint complete: wrote 7 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.770 s, sync=0.007 s, total=0.793 s; sync files=8, longest=0.002 s, average=0.001 s; distance=20 kB, estimate=110 kB; lsn=0/23AD7E8, redo lsn=0/23AD790
+2026-09-03 14:18:39.566 PKT [17732] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 14:18:39.568 PKT [18516] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 14:18:39.567 PKT [8736] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 14:18:39.572 PKT [14956] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 17:46:39.742 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 17:46:40.760 PKT [18872] LOG:  checkpoint complete: wrote 8 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.982 s, sync=0.013 s, total=1.034 s; sync files=9, longest=0.003 s, average=0.002 s; distance=22 kB, estimate=102 kB; lsn=0/23B2FE8, redo lsn=0/23B2F90
+2026-09-03 17:46:56.059 PKT [4684] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 17:46:56.063 PKT [16088] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 17:46:56.067 PKT [14480] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 17:46:56.077 PKT [6528] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 17:46:56.096 PKT [780] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 17:51:39.771 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 17:51:40.262 PKT [18872] LOG:  checkpoint complete: wrote 4 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.462 s, sync=0.018 s, total=0.493 s; sync files=5, longest=0.015 s, average=0.004 s; distance=15 kB, estimate=93 kB; lsn=0/23B6D78, redo lsn=0/23B6D20
+2026-09-03 18:01:39.280 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 18:01:39.814 PKT [18872] LOG:  checkpoint complete: wrote 4 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.472 s, sync=0.021 s, total=0.534 s; sync files=5, longest=0.011 s, average=0.005 s; distance=15 kB, estimate=85 kB; lsn=0/23BABE0, redo lsn=0/23BAB88
+2026-09-03 18:09:32.102 PKT [4168] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:09:32.106 PKT [9300] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:09:32.107 PKT [13256] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:09:32.123 PKT [7864] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:11:39.844 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 18:11:48.048 PKT [18872] LOG:  checkpoint complete: wrote 72 buffers (0.4%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=8.063 s, sync=0.117 s, total=8.206 s; sync files=54, longest=0.012 s, average=0.003 s; distance=323 kB, estimate=323 kB; lsn=0/240BB20, redo lsn=0/240BAC8
+2026-09-03 18:16:39.054 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 18:16:39.938 PKT [18872] LOG:  checkpoint complete: wrote 8 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.862 s, sync=0.010 s, total=0.885 s; sync files=9, longest=0.002 s, average=0.002 s; distance=30 kB, estimate=294 kB; lsn=0/24136D8, redo lsn=0/2413680
+2026-09-03 18:20:15.068 PKT [18316] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:20:15.071 PKT [14548] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:20:15.072 PKT [8252] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:20:15.076 PKT [10432] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:20:15.076 PKT [14316] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 18:21:39.946 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 18:21:41.370 PKT [18872] LOG:  checkpoint complete: wrote 13 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.402 s, sync=0.015 s, total=1.424 s; sync files=14, longest=0.004 s, average=0.002 s; distance=30 kB, estimate=268 kB; lsn=0/241B1A8, redo lsn=0/241B150
+2026-09-03 18:31:39.394 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 18:31:39.550 PKT [18872] LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.117 s, sync=0.014 s, total=0.161 s; sync files=1, longest=0.014 s, average=0.014 s; distance=6 kB, estimate=242 kB; lsn=0/241CD50, redo lsn=0/241CCF8
+2026-09-03 18:41:39.577 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 18:41:40.172 PKT [18872] LOG:  checkpoint complete: wrote 5 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.559 s, sync=0.007 s, total=0.602 s; sync files=6, longest=0.002 s, average=0.002 s; distance=15 kB, estimate=219 kB; lsn=0/2420B90, redo lsn=0/2420B38
+2026-09-03 19:36:39.280 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 19:36:40.417 PKT [18872] LOG:  checkpoint complete: wrote 10 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.101 s, sync=0.021 s, total=1.141 s; sync files=11, longest=0.004 s, average=0.002 s; distance=31 kB, estimate=200 kB; lsn=0/24287A0, redo lsn=0/2428748
+2026-09-03 19:36:48.218 PKT [5172] ERROR:  column "whatsapp" does not exist at character 87
+2026-09-03 19:36:48.218 PKT [5172] STATEMENT:  SELECT id, patient_id, channel, status, created_at FROM conversations WHERE channel = WHATSAPP ORDER BY created_at DESC LIMIT 5
+2026-09-03 19:41:39.435 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 19:41:40.293 PKT [18872] LOG:  checkpoint complete: wrote 7 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.800 s, sync=0.016 s, total=0.859 s; sync files=8, longest=0.004 s, average=0.002 s; distance=29 kB, estimate=183 kB; lsn=0/242FE18, redo lsn=0/242FDC0
+2026-09-03 19:46:39.297 PKT [18872] LOG:  checkpoint starting: time
+2026-09-03 19:46:39.566 PKT [18872] LOG:  checkpoint complete: wrote 2 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.255 s, sync=0.004 s, total=0.270 s; sync files=2, longest=0.003 s, average=0.002 s; distance=15 kB, estimate=166 kB; lsn=0/2433CC8, redo lsn=0/2433C70
+2026-09-03 19:54:46.632 PKT [18780] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 19:54:46.653 PKT [17856] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 19:54:46.654 PKT [19992] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 19:54:46.654 PKT [15804] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 19:54:46.654 PKT [10972] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-03 19:54:46.654 PKT [9668] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 17:25:33.458 PKT [9404] LOG:  starting PostgreSQL 18.4 on x86_64-windows, compiled by msvc-19.44.35226, 64-bit
+2026-09-04 17:25:33.466 PKT [9404] LOG:  listening on IPv6 address "::1", port 5432
+2026-09-04 17:25:33.466 PKT [9404] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-09-04 17:25:33.687 PKT [7660] LOG:  database system was interrupted; last known up at 2026-09-03 19:46:39 PKT
+2026-09-04 17:25:37.523 PKT [7660] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-09-04 17:25:37.531 PKT [7660] LOG:  redo starts at 0/2433C70
+2026-09-04 17:25:37.532 PKT [7660] LOG:  invalid record length at 0/2433D78: expected at least 24, got 0
+2026-09-04 17:25:37.532 PKT [7660] LOG:  redo done at 0/2433D40 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-09-04 17:25:37.547 PKT [8860] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-09-04 17:25:37.577 PKT [8860] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 2 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.003 s, total=0.038 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/2433D78, redo lsn=0/2433D78
+2026-09-04 17:25:37.591 PKT [9404] LOG:  database system is ready to accept connections
+2026-09-04 18:25:37.738 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 18:25:49.032 PKT [8860] LOG:  checkpoint complete: wrote 72 buffers (0.4%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=10.939 s, sync=0.229 s, total=11.295 s; sync files=45, longest=0.025 s, average=0.006 s; distance=450 kB, estimate=450 kB; lsn=0/24A4668, redo lsn=0/24A45D8
+2026-09-04 18:28:15.170 PKT [7516] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 18:30:37.056 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 18:30:39.891 PKT [8860] LOG:  checkpoint complete: wrote 25 buffers (0.2%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.801 s, sync=0.026 s, total=2.836 s; sync files=23, longest=0.004 s, average=0.002 s; distance=82 kB, estimate=413 kB; lsn=0/24B9000, redo lsn=0/24B8FA8
+2026-09-04 18:58:38.989 PKT [12856] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 19:05:37.982 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 19:05:38.559 PKT [8860] LOG:  checkpoint complete: wrote 5 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.539 s, sync=0.013 s, total=0.582 s; sync files=6, longest=0.004 s, average=0.003 s; distance=17 kB, estimate=373 kB; lsn=0/24BD430, redo lsn=0/24BD3D8
+2026-09-04 19:08:08.347 PKT [13052] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 19:08:08.347 PKT [4032] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 19:08:08.349 PKT [10316] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 19:08:08.352 PKT [7748] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 19:10:37.571 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 19:10:38.204 PKT [8860] LOG:  checkpoint complete: wrote 5 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.584 s, sync=0.013 s, total=0.634 s; sync files=6, longest=0.007 s, average=0.003 s; distance=17 kB, estimate=338 kB; lsn=0/24C1990, redo lsn=0/24C1938
+2026-09-04 19:15:37.207 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 19:15:37.598 PKT [8860] LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.352 s, sync=0.011 s, total=0.392 s; sync files=4, longest=0.006 s, average=0.003 s; distance=6 kB, estimate=304 kB; lsn=0/24C3410, redo lsn=0/24C33B8
+2026-09-04 19:20:37.608 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 19:20:38.044 PKT [8860] LOG:  checkpoint complete: wrote 4 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.424 s, sync=0.005 s, total=0.437 s; sync files=5, longest=0.002 s, average=0.001 s; distance=12 kB, estimate=275 kB; lsn=0/24C6808, redo lsn=0/24C67B0
+2026-09-04 19:25:37.058 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 19:25:37.516 PKT [8860] LOG:  checkpoint complete: wrote 4 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.436 s, sync=0.013 s, total=0.459 s; sync files=5, longest=0.008 s, average=0.003 s; distance=8 kB, estimate=248 kB; lsn=0/24C88E0, redo lsn=0/24C8888
+2026-09-04 21:48:15.999 PKT [16948] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 21:48:15.999 PKT [7500] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 21:48:15.999 PKT [21444] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 21:48:16.000 PKT [21420] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 21:48:16.004 PKT [20620] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-04 21:52:52.644 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 21:52:53.784 PKT [8860] LOG:  checkpoint complete: wrote 10 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.099 s, sync=0.009 s, total=1.149 s; sync files=11, longest=0.002 s, average=0.001 s; distance=33 kB, estimate=227 kB; lsn=0/24D0D40, redo lsn=0/24D0CE8
+2026-09-04 22:02:52.812 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 22:02:54.155 PKT [8860] LOG:  checkpoint complete: wrote 12 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.306 s, sync=0.022 s, total=1.344 s; sync files=13, longest=0.003 s, average=0.002 s; distance=38 kB, estimate=208 kB; lsn=0/24DA870, redo lsn=0/24DA818
+2026-09-04 22:17:52.182 PKT [8860] LOG:  checkpoint starting: time
+2026-09-04 22:17:52.435 PKT [8860] LOG:  checkpoint complete: wrote 2 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.223 s, sync=0.017 s, total=0.254 s; sync files=3, longest=0.014 s, average=0.006 s; distance=11 kB, estimate=188 kB; lsn=0/24DD5B8, redo lsn=0/24DD560
+2026-09-05 11:24:52.228 PKT [12112] LOG:  starting PostgreSQL 18.4 on x86_64-windows, compiled by msvc-19.44.35226, 64-bit
+2026-09-05 11:24:52.234 PKT [12112] LOG:  listening on IPv6 address "::1", port 5432
+2026-09-05 11:24:52.235 PKT [12112] LOG:  listening on IPv4 address "127.0.0.1", port 5432
+2026-09-05 11:24:52.395 PKT [13528] LOG:  database system was interrupted; last known up at 2026-09-04 22:17:52 PKT
+2026-09-05 11:24:55.248 PKT [13528] LOG:  database system was not properly shut down; automatic recovery in progress
+2026-09-05 11:24:55.253 PKT [13528] LOG:  redo starts at 0/24DD560
+2026-09-05 11:24:55.253 PKT [13528] LOG:  invalid record length at 0/24DD668: expected at least 24, got 0
+2026-09-05 11:24:55.253 PKT [13528] LOG:  redo done at 0/24DD630 system usage: CPU: user: 0.00 s, system: 0.00 s, elapsed: 0.00 s
+2026-09-05 11:24:55.278 PKT [19744] LOG:  checkpoint starting: end-of-recovery immediate wait
+2026-09-05 11:24:55.305 PKT [19744] LOG:  checkpoint complete: wrote 0 buffers (0.0%), wrote 2 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.004 s, sync=0.003 s, total=0.040 s; sync files=2, longest=0.002 s, average=0.002 s; distance=0 kB, estimate=0 kB; lsn=0/24DD668, redo lsn=0/24DD668
+2026-09-05 11:24:55.317 PKT [12112] LOG:  database system is ready to accept connections
+2026-09-05 11:34:55.307 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 11:34:55.675 PKT [19744] LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.339 s, sync=0.005 s, total=0.369 s; sync files=3, longest=0.002 s, average=0.002 s; distance=16 kB, estimate=16 kB; lsn=0/24E1A78, redo lsn=0/24E1A20
+2026-09-05 11:44:55.692 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 11:44:55.821 PKT [19744] LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.109 s, sync=0.002 s, total=0.130 s; sync files=1, longest=0.002 s, average=0.002 s; distance=1 kB, estimate=15 kB; lsn=0/24E1F08, redo lsn=0/24E1EB0
+2026-09-05 11:45:39.517 PKT [21340] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 11:45:39.517 PKT [9592] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 11:45:39.517 PKT [21312] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 11:45:39.517 PKT [17804] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 11:45:39.519 PKT [7672] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:04:55.844 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:04:56.887 PKT [19744] LOG:  checkpoint complete: wrote 8 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.010 s, sync=0.007 s, total=1.044 s; sync files=9, longest=0.002 s, average=0.001 s; distance=40 kB, estimate=40 kB; lsn=0/24F00C8, redo lsn=0/24EC190
+2026-09-05 12:09:55.897 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:09:58.317 PKT [19744] LOG:  checkpoint complete: wrote 19 buffers (0.1%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=2.390 s, sync=0.012 s, total=2.420 s; sync files=15, longest=0.001 s, average=0.001 s; distance=72 kB, estimate=72 kB; lsn=0/250DA98, redo lsn=0/24FE568
+2026-09-05 12:11:44.275 PKT [1596] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:11:44.275 PKT [18820] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:11:44.276 PKT [18820] LOG:  unexpected EOF on client connection with an open transaction
+2026-09-05 12:11:44.275 PKT [6208] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:11:44.276 PKT [15196] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:11:44.276 PKT [16712] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:14:24.750 PKT [11892] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:14:55.318 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:14:58.697 PKT [19744] LOG:  checkpoint complete: wrote 30 buffers (0.2%), wrote 3 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=3.345 s, sync=0.023 s, total=3.379 s; sync files=22, longest=0.003 s, average=0.002 s; distance=248 kB, estimate=248 kB; lsn=0/254F950, redo lsn=0/253C8C8
+2026-09-05 12:16:06.964 PKT [11208] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:16:06.964 PKT [11208] LOG:  unexpected EOF on client connection with an open transaction
+2026-09-05 12:19:55.712 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:19:57.734 PKT [19744] LOG:  checkpoint complete: wrote 18 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.955 s, sync=0.057 s, total=2.022 s; sync files=12, longest=0.045 s, average=0.005 s; distance=112 kB, estimate=235 kB; lsn=0/2558970, redo lsn=0/2558918
+2026-09-05 12:24:55.746 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:24:56.429 PKT [19744] LOG:  checkpoint complete: wrote 6 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.667 s, sync=0.008 s, total=0.684 s; sync files=7, longest=0.002 s, average=0.002 s; distance=19 kB, estimate=213 kB; lsn=0/255D830, redo lsn=0/255D7D8
+2026-09-05 12:29:55.431 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:29:56.567 PKT [19744] LOG:  checkpoint complete: wrote 10 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.104 s, sync=0.016 s, total=1.136 s; sync files=10, longest=0.006 s, average=0.002 s; distance=38 kB, estimate=196 kB; lsn=0/2567238, redo lsn=0/25671A8
+2026-09-05 12:39:55.657 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:39:57.149 PKT [19744] LOG:  checkpoint complete: wrote 13 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.416 s, sync=0.017 s, total=1.493 s; sync files=12, longest=0.003 s, average=0.002 s; distance=56 kB, estimate=182 kB; lsn=0/25755F8, redo lsn=0/25755A0
+2026-09-05 12:44:55.151 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:44:55.979 PKT [19744] LOG:  checkpoint complete: wrote 7 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.797 s, sync=0.015 s, total=0.829 s; sync files=8, longest=0.004 s, average=0.002 s; distance=27 kB, estimate=166 kB; lsn=0/257C410, redo lsn=0/257C3B8
+2026-09-05 12:59:24.710 PKT [17204] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:59:24.711 PKT [1648] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:59:24.712 PKT [5724] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:59:24.715 PKT [10520] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:59:24.720 PKT [1576] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 12:59:56.007 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 12:59:57.115 PKT [19744] LOG:  checkpoint complete: wrote 10 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.088 s, sync=0.010 s, total=1.108 s; sync files=11, longest=0.002 s, average=0.001 s; distance=30 kB, estimate=153 kB; lsn=0/2583EA8, redo lsn=0/2583E50
+2026-09-05 13:04:56.122 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 13:04:56.247 PKT [19744] LOG:  checkpoint complete: wrote 1 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.113 s, sync=0.003 s, total=0.126 s; sync files=2, longest=0.002 s, average=0.002 s; distance=4 kB, estimate=138 kB; lsn=0/2584EE0, redo lsn=0/2584E88
+2026-09-05 13:06:08.442 PKT [1152] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 13:09:25.963 PKT [2416] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 13:09:56.258 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 13:09:57.802 PKT [19744] LOG:  checkpoint complete: wrote 14 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.527 s, sync=0.009 s, total=1.545 s; sync files=14, longest=0.002 s, average=0.001 s; distance=55 kB, estimate=129 kB; lsn=0/2592B38, redo lsn=0/2592AE0
+2026-09-05 13:13:14.876 PKT [17352] LOG:  could not receive data from client: An existing connection was forcibly closed by the remote host.
+	
+2026-09-05 13:14:56.808 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 13:14:58.310 PKT [19744] LOG:  checkpoint complete: wrote 13 buffers (0.1%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=1.446 s, sync=0.048 s, total=1.503 s; sync files=14, longest=0.019 s, average=0.004 s; distance=43 kB, estimate=121 kB; lsn=0/259D9E8, redo lsn=0/259D990
+2026-09-05 13:19:56.323 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 13:19:56.663 PKT [19744] LOG:  checkpoint complete: wrote 3 buffers (0.0%), wrote 0 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.324 s, sync=0.004 s, total=0.340 s; sync files=3, longest=0.003 s, average=0.002 s; distance=15 kB, estimate=110 kB; lsn=0/25A16D0, redo lsn=0/25A1678
+2026-09-05 13:24:56.663 PKT [19744] LOG:  checkpoint starting: time
+2026-09-05 13:24:57.351 PKT [19744] LOG:  checkpoint complete: wrote 6 buffers (0.0%), wrote 1 SLRU buffers; 0 WAL file(s) added, 0 removed, 0 recycled; write=0.665 s, sync=0.010 s, total=0.688 s; sync files=7, longest=0.003 s, average=0.002 s; distance=23 kB, estimate=101 kB; lsn=0/25A7378, redo lsn=0/25A7320

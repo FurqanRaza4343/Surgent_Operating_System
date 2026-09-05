@@ -27,13 +27,14 @@ import { DASHBOARD_ROUTES } from "../dashboard/constants/routes";
 // the picker prop types below.
 type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
 
-// A demo-only role switcher at root /portal (stands outside the dashboard
-// shell so you can jump into a Doctor, Receptionist, or Patient view from
-// one place). Each "switch" writes the same local role override that Plan &
-// Billing's "preview as" dev switcher uses, then sends you into /dashboard —
-// usePlanTier() re-reads the override on mount and the sidebar + router
-// re-adapt instantly. Real Clerk-backed sessions always win over this
-// override once usePlanTier re-runs against the API — see plan/plan.ts.
+// A demo-only role switcher + site map at /portal (stands outside the
+// dashboard shell so you can jump into a Doctor, Receptionist, or Patient
+// view from one place). Each "switch" writes the same local role override
+// that Plan & Billing's "preview as" dev switcher uses, then sends you into
+// /dashboard — usePlanTier() re-reads the override on mount and the sidebar
+// + router re-adapt instantly. Real Clerk-backed sessions always win over
+// this override once usePlanTier re-runs against the API — see plan/plan.ts.
+// The real patient-facing login lives separately at /user (PortalPage.tsx).
 export function PortalSwitchPage() {
   const navigate = useNavigate();
   const { authedFetch } = usePlan();
@@ -63,13 +64,13 @@ export function PortalSwitchPage() {
             </span>
             <span className="text-[15px] font-bold tracking-tight text-ink">Aiaceone</span>
           </Link>
-          <span className="text-sm text-ink-muted">Portal</span>
+          <span className="text-sm text-ink-muted">Site Map</span>
         </div>
       </header>
 
       <main className="mx-auto max-w-4xl px-6 py-10">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold tracking-tight text-ink">Portal</h1>
+          <h1 className="text-2xl font-bold tracking-tight text-ink">Site Map</h1>
           <p className="mt-1 text-sm text-ink-muted">
             Continue as an existing doctor or receptionist — or add a new one — and see the practice from their side. Jump back to your Owner view anytime.
           </p>

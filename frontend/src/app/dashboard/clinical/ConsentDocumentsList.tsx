@@ -1,8 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ShieldCheckIcon, PlusIcon, PenLineIcon, XIcon, CheckIcon } from "lucide-react";
 import { usePlan } from "../plan/PlanContext";
 import { useConsentDocuments } from "./useConsentDocuments";
-import type { ConsentDocumentResponse } from "../../../api/entities";
+import { listConsentTemplates, type ConsentDocumentResponse, type ConsentTemplateResponse } from "../../../api/entities";
 
 const STATUS_CLASS: Record<string, string> = {
   draft: "bg-sand-100 text-ink-soft",
@@ -54,35 +54,78 @@ export function ConsentDocumentsList({ patientId }: { patientId: string }) {
 
 }
 
-function NewDocumentForm({ onCreate, onDone }: { onCreate: (data: { document_type: string; content?: string | null }) => Promise<unknown>; onDone: () => void }) {
+function NewDocumentForm({
+  onCreate,
+  onDone
+}: {
+  onCreate: (data: { document_type: string; content?: string | null; template_id?: string | null }) => Promise<unknown>;
+  onDone: () => void;
+}) {
+  const { authedFetch } = usePlan();
+  const [templates, setTemplates] = useState<ConsentTemplateResponse[]>([]);
+  const [templateId, setTemplateId] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [content, setContent] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!authedFetch) return;
+    listConsentTemplates(authedFetch).then((data) => setTemplates(data.filter((t) => t.is_active))).catch(() => setTemplates([]));
+  }, [authedFetch]);
+
+  function pickTemplate(id: string) {
+    setTemplateId(id);
+    const template = templates.find((t) => t.id === id);
+    if (template) {
+      setDocumentType(template.document_type.replace(/_/g, " "));
+      setContent(template.body);
+    }
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!documentType.trim()) return;
     setSaving(true);
-    await onCreate({ document_type: documentType.trim(), content: content.trim() || null });
+    await onCreate({
+      document_type: documentType.trim(),
+      content: templateId ? undefined : content.trim() || null,
+      template_id: templateId || null
+    });
     setSaving(false);
     onDone();
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3 border-b border-sand-200 bg-sand-50/50 px-5 py-4">
+      {templates.length > 0 &&
+      <label className="block">
+          <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-muted">Use a template (optional)</span>
+          <select
+          value={templateId}
+          onChange={(e) => pickTemplate(e.target.value)}
+          className="w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40">
+            <option value="">None — write it manually</option>
+            {templates.map((t) => <option key={t.id} value={t.id}>{t.document_type.replace(/_/g, " ")} (v{t.version})</option>)}
+          </select>
+        </label>
+      }
+
       <input
         required
         value={documentType}
         onChange={(e) => setDocumentType(e.target.value)}
         placeholder="Document type, e.g. Surgical Consent"
-        className="w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40" />
+        disabled={!!templateId}
+        className="w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 disabled:bg-sand-100 disabled:text-ink-muted" />
 
       <textarea
         value={content}
         onChange={(e) => setContent(e.target.value)}
         rows={3}
         placeholder="The consent text the patient will read and sign, optional to fill in now"
-        className="w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40" />
+        disabled={!!templateId}
+        className="w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 disabled:bg-sand-100 disabled:text-ink-muted" />
+      {templateId && <p className="text-[11px] text-ink-muted">Wording locked to the template — this exact text is what gets signed.</p>}
 
       <div className="flex justify-end gap-2">
         <button type="button" onClick={onDone} className="rounded-lg px-3 py-1.5 text-xs font-semibold text-ink-muted hover:text-ink">Cancel</button>

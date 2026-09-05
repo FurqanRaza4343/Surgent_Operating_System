@@ -4,7 +4,7 @@ export type SessionStatus = "active" | "needs_attention" | "resolved";
 
 export interface SessionMessage {
   id: string;
-  from: "patient" | "agent" | "system";
+  from: "patient" | "agent" | "staff" | "system";
   text: string;
   at: string; // ISO timestamp
 }
@@ -14,6 +14,7 @@ export interface Session {
   patientId: string;
   patientName: string;
   patientInitial: string;
+  avatarUrl: string | null;
   channel: ChannelId;
   agentSlug: string;
   agentName: string;
@@ -21,5 +22,6 @@ export interface Session {
   status: SessionStatus;
   lastMessagePreview: string;
   updatedAt: string; // ISO timestamp
+  aiPaused: boolean;
   messages: SessionMessage[];
 }

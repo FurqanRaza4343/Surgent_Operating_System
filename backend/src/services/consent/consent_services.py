@@ -5,7 +5,7 @@ from uuid import UUID
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.models.consent_document import ConsentDocument, ConsentDocumentStatus
+from src.models.consent_document import ConsentDocument, ConsentDocumentStatus, ConsentTemplate
 from src.models.patient import Patient
 from src.schemas.consent_document import CreateConsentDocumentRequest
 from src.server.exceptions import NotFoundException, AppException
@@ -44,11 +44,30 @@ class ConsentService:
         self, db: AsyncSession, practice_id: UUID, patient_id: UUID, data: CreateConsentDocumentRequest
     ) -> ConsentDocument:
         await self._get_patient(db, practice_id, patient_id)
+
+        content = data.content
+        template_id = None
+        template_version = None
+        if data.template_id is not None:
+            result = await db.execute(
+                select(ConsentTemplate).where(ConsentTemplate.id == data.template_id, ConsentTemplate.practice_id == practice_id)
+            )
+            template = result.scalar_one_or_none()
+            if template is None:
+                raise NotFoundException("Consent template not found")
+            # Snapshot NOW — the whole point of versioning is that a later
+            # edit to this template never rewrites what gets signed here.
+            content = template.body
+            template_id = template.id
+            template_version = template.version
+
         document = ConsentDocument(
             practice_id=practice_id,
             patient_id=patient_id,
             document_type=data.document_type,
-            content=data.content,
+            content=content,
+            template_id=template_id,
+            template_version=template_version,
         )
         db.add(document)
         await db.flush()

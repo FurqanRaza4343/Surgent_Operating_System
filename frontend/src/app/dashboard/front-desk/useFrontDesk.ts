@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { listPracticeAppointments, checkInAppointment, type AppointmentResponse } from "../../../api/entities";
+import {
+  listPracticeAppointments,
+  checkInAppointment,
+  startWithDoctor,
+  markReadyForCheckout,
+  completeAppointment,
+  markNoShow,
+  type AppointmentResponse
+} from "../../../api/entities";
 import { usePatients } from "../patients/usePatients";
 import { useDoctors } from "../doctors/useDoctors";
 
@@ -53,6 +61,42 @@ export function useFrontDesk(authedFetch: AuthedFetch) {
     [authedFetch]
   );
 
+  const startDoctor = useCallback(
+    async (id: string) => {
+      if (!authedFetch) return;
+      const updated = await startWithDoctor(authedFetch, id);
+      setAppointments((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    },
+    [authedFetch]
+  );
+
+  const readyForCheckout = useCallback(
+    async (id: string) => {
+      if (!authedFetch) return;
+      const updated = await markReadyForCheckout(authedFetch, id);
+      setAppointments((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    },
+    [authedFetch]
+  );
+
+  const complete = useCallback(
+    async (id: string) => {
+      if (!authedFetch) return;
+      const updated = await completeAppointment(authedFetch, id);
+      setAppointments((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    },
+    [authedFetch]
+  );
+
+  const noShow = useCallback(
+    async (id: string) => {
+      if (!authedFetch) return;
+      const updated = await markNoShow(authedFetch, id);
+      setAppointments((prev) => prev.map((a) => (a.id === id ? updated : a)));
+    },
+    [authedFetch]
+  );
+
   const enriched: FrontDeskAppointment[] = appointments.map((a) => {
     const patient = patients.find((p) => p.id === a.patient_id);
     const doctor = doctors.find((d) => d.id === a.doctor_id);
@@ -68,5 +112,5 @@ export function useFrontDesk(authedFetch: AuthedFetch) {
     };
   });
 
-  return { appointments: enriched, loading, error, refetch: fetchAppointments, checkIn };
+  return { appointments: enriched, loading, error, refetch: fetchAppointments, checkIn, startDoctor, readyForCheckout, complete, noShow };
 }

@@ -2,8 +2,10 @@ import { useCallback, useEffect, useState } from "react";
 import {
   listPatientPhotos,
   uploadPatientPhoto,
+  updatePatientPhoto,
   deletePatientPhoto,
-  type PatientPhotoResponse
+  type PatientPhotoResponse,
+  type UpdatePatientPhotoRequest
 } from "../../../api/entities";
 
 type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
@@ -34,10 +36,10 @@ export function usePatientPhotos(authedFetch: AuthedFetch, patientId: string | u
   }, [refetch]);
 
   const upload = useCallback(
-    async (file: File, photoType?: string, notes?: string) => {
+    async (file: File, photoType?: string, notes?: string, stage?: string, bodyArea?: string) => {
       if (!authedFetch || !patientId) return false;
       try {
-        const photo = await uploadPatientPhoto(authedFetch, patientId, file, photoType, notes);
+        const photo = await uploadPatientPhoto(authedFetch, patientId, file, photoType, notes, stage, bodyArea);
         setPhotos((prev) => [photo, ...prev]);
         return true;
       } catch {
@@ -45,6 +47,20 @@ export function usePatientPhotos(authedFetch: AuthedFetch, patientId: string | u
       }
     },
     [authedFetch, patientId]
+  );
+
+  const update = useCallback(
+    async (photoId: string, data: UpdatePatientPhotoRequest) => {
+      if (!authedFetch) return false;
+      try {
+        const updated = await updatePatientPhoto(authedFetch, photoId, data);
+        setPhotos((prev) => prev.map((p) => (p.id === photoId ? updated : p)));
+        return true;
+      } catch {
+        return false;
+      }
+    },
+    [authedFetch]
   );
 
   const remove = useCallback(
@@ -61,5 +77,5 @@ export function usePatientPhotos(authedFetch: AuthedFetch, patientId: string | u
     [authedFetch]
   );
 
-  return { photos, loading, refetch, upload, remove };
+  return { photos, loading, refetch, upload, update, remove };
 }

@@ -1,6 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
-import { listConversations, resolveConversation, type ConversationListItem } from "../../../api/entities";
-import type { Session } from "./types";
+import {
+  listConversations,
+  getConversation,
+  resolveConversation,
+  sendConversationMessage,
+  toggleConversationAi,
+  type ConversationListItem,
+  type ConversationDetail
+} from "../../../api/entities";
+import { usePlan } from "../plan/PlanContext";
+import type { Session, SessionMessage } from "./types";
 
 const AGENT_DISPLAY_NAMES: Record<string, string> = {
   receptionist: "AI Receptionist",
@@ -77,6 +86,7 @@ function mapConversationToSession(c: ConversationListItem): Session {
     patientId: c.patient_id || "",
     patientName: name,
     patientInitial: name.charAt(0).toUpperCase(),
+    avatarUrl: c.avatar_url,
     channel: c.channel as Session["channel"],
     agentSlug: c.agent_type,
     agentName: AGENT_DISPLAY_NAMES[c.agent_type] || c.agent_type,
@@ -84,39 +94,160 @@ function mapConversationToSession(c: ConversationListItem): Session {
     status: c.status as Session["status"],
     lastMessagePreview: c.last_message_preview,
     updatedAt: c.updated_at,
+    aiPaused: c.ai_paused,
     messages: [],
   };
 }
 
+function mapRole(role: string): SessionMessage["from"] {
+  if (role === "agent") return "agent";
+  if (role === "patient") return "patient";
+  if (role === "staff") return "staff";
+  return "system";
+}
+
+function mapDetailMessages(detail: ConversationDetail): SessionMessage[] {
+  return detail.messages.map((m) => ({
+    id: m.id,
+    from: mapRole(m.role),
+    text: m.content,
+    at: m.created_at,
+  }));
+}
+
+// How often to quietly re-check for new messages/status changes — a real
+// WhatsApp reply from a patient, or the AI's own reply, previously only
+// ever showed up after a manual navigate-away-and-back. Short enough to
+// feel "live," long enough not to hammer the API for what's still a
+// polling-based (not websocket) inbox.
+const POLL_INTERVAL_MS = 4000;
+
 export function useSessions(statusFilter?: string) {
+  const { authedFetch } = usePlan();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const fetchSessions = useCallback(async () => {
-    try {
-      setLoading(true);
-      const data = await listConversations({ status: statusFilter, limit: 100 });
-      setSessions(data.map(mapConversationToSession));
-      setError(null);
-    } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Failed to load sessions";
-      setError(msg);
-    } finally {
-      setLoading(false);
-    }
-  }, [statusFilter]);
+  const fetchSessions = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      if (!authedFetch) {
+        setLoading(false);
+        return;
+      }
+      try {
+        if (!opts?.silent) setLoading(true);
+        const data = await listConversations(authedFetch, { status: statusFilter, limit: 100 });
+        setSessions((prev) => {
+          const next = data.map(mapConversationToSession);
+          // A background poll re-applies the server-side status filter, so
+          // a conversation whose status just changed (e.g. AI resumed and
+          // the patient's message got handled, no longer "needs attention")
+          // can legitimately drop out of a filtered list. If it's the one
+          // currently open, keep showing it — and keep whatever messages
+          // are already loaded for it — rather than yanking the reply box
+          // out from under whoever's mid-conversation with it.
+          if (selectedId && !next.some((s) => s.id === selectedId)) {
+            const stillOpen = prev.find((s) => s.id === selectedId);
+            if (stillOpen) return [...next, stillOpen];
+          }
+          // Preserve already-loaded messages for sessions that were open
+          // before this poll — the list endpoint doesn't return message
+          // bodies, only a preview.
+          return next.map((s) => {
+            const existing = prev.find((p) => p.id === s.id);
+            return existing && existing.messages.length > 0 ? { ...s, messages: existing.messages } : s;
+          });
+        });
+        setError(null);
+      } catch (e: unknown) {
+        if (!opts?.silent) {
+          const msg = e instanceof Error ? e.message : "Failed to load sessions";
+          setError(msg);
+        }
+      } finally {
+        if (!opts?.silent) setLoading(false);
+      }
+    },
+    [authedFetch, statusFilter, selectedId]
+  );
 
   useEffect(() => {
     fetchSessions();
   }, [fetchSessions]);
 
+  const loadMessages = useCallback(async (sessionId: string) => {
+    setSelectedId(sessionId);
+    if (!authedFetch) return;
+    try {
+      const detail = await getConversation(authedFetch, sessionId);
+      const messages = mapDetailMessages(detail);
+      setSessions((prev) =>
+        prev.map((s) => (s.id === sessionId ? { ...mapConversationToSession(detail), messages } : s))
+      );
+    } catch {
+      // Silently fail — messages stay empty
+    }
+  }, [authedFetch]);
+
+  // Quiet background refresh: re-fetches the list (so previews/status/new
+  // conversations show up) and, if a conversation is open, its messages —
+  // all without the loading spinner a manual fetchSessions() would show.
+  useEffect(() => {
+    if (!authedFetch) return;
+    const interval = setInterval(() => {
+      fetchSessions({ silent: true });
+      if (selectedId) {
+        getConversation(authedFetch, selectedId)
+          .then((detail) => {
+            const messages = mapDetailMessages(detail);
+            setSessions((prev) =>
+              prev.map((s) => (s.id === selectedId ? { ...mapConversationToSession(detail), messages } : s))
+            );
+          })
+          .catch(() => {
+            // Transient poll failure — next tick tries again.
+          });
+      }
+    }, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [authedFetch, selectedId, fetchSessions]);
+
   const resolve = useCallback(async (id: string) => {
-    await resolveConversation(id);
+    if (!authedFetch) return;
+    await resolveConversation(authedFetch, id);
     setSessions((prev) =>
       prev.map((s) => (s.id === id ? { ...s, status: "resolved" as const } : s))
     );
+  }, [authedFetch]);
+
+  const applyDetail = useCallback((id: string, detail: ConversationDetail) => {
+    setSessions((prev) =>
+      prev.map((s) =>
+        s.id === id
+          ? { ...mapConversationToSession(detail), messages: mapDetailMessages(detail) }
+          : s
+      )
+    );
   }, []);
 
-  return { sessions, loading, error, refetch: fetchSessions, resolve };
+  const sendMessage = useCallback(
+    async (id: string, body: string) => {
+      if (!authedFetch) return;
+      const detail = await sendConversationMessage(authedFetch, id, body);
+      applyDetail(id, detail);
+    },
+    [authedFetch, applyDetail]
+  );
+
+  const toggleAi = useCallback(
+    async (id: string, paused: boolean) => {
+      if (!authedFetch) return;
+      const detail = await toggleConversationAi(authedFetch, id, paused);
+      applyDetail(id, detail);
+    },
+    [authedFetch, applyDetail]
+  );
+
+  return { sessions, loading, error, refetch: fetchSessions, resolve, loadMessages, sendMessage, toggleAi };
 }

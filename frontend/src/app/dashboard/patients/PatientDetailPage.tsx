@@ -15,6 +15,7 @@ import { ConsentDocumentsList } from "../clinical/ConsentDocumentsList";
 import { InvoicesSection } from "../billing-invoices/InvoicesSection";
 import { FunnelStageBadge } from "../leads/FunnelStageBadge";
 import { PatientPortalLinkCard } from "./PatientPortalLinkCard";
+import { PatientMedicalProfile } from "./PatientMedicalProfile";
 
 const STATUS_CLASS: Record<Patient["status"], string> = {
   active: "bg-success/10 text-success",
@@ -155,6 +156,7 @@ export function PatientDetailPage() {
         </div>
       }
 
+      <PatientMedicalProfile patientId={patient.id} />
       <ClinicalSection patientId={patient.id} />
       <PatientPhotosGallery patientId={patient.id} />
       <ConsentDocumentsList patientId={patient.id} />

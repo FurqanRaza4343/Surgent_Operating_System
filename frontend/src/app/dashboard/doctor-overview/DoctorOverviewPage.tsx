@@ -7,13 +7,25 @@ import {
   PlusIcon,
   UserPlusIcon,
   CalendarDaysIcon,
-  FileTextIcon
+  FileTextIcon,
+  StethoscopeIcon,
+  ShieldAlertIcon,
+  AlertTriangleIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { KpiCard } from "../components/KpiCard";
 import { EmptyState } from "../components/EmptyState";
 import { usePlan } from "../plan/PlanContext";
-import { getMyDoctor, listMyAppointments, type AppointmentResponse } from "../../../api/entities";
+import {
+  getMyDoctor,
+  listMyAppointments,
+  getMyToday,
+  type AppointmentResponse,
+  type DoctorTodayResponse,
+  type WaitingRoomEntry,
+  type PendingNoteEntry,
+  type DoctorAlertEntry
+} from "../../../api/entities";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { TodayAgenda, buildMockTodayAgenda } from "./TodayAgenda";
 import { PatientQuickSearch } from "./PatientQuickSearch";
@@ -37,6 +49,7 @@ export function DoctorOverviewPage() {
   const { authedFetch, permissions } = usePlan();
   const [doctorName, setDoctorName] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+  const [today, setToday] = useState<DoctorTodayResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,13 +65,15 @@ export function DoctorOverviewPage() {
         return;
       }
       try {
-        const [doctor, appts] = await Promise.all([
+        const [doctor, appts, snapshot] = await Promise.all([
           getMyDoctor(authedFetch).catch(() => null),
-          listMyAppointments(authedFetch).catch(() => [])
+          listMyAppointments(authedFetch).catch(() => []),
+          getMyToday(authedFetch).catch(() => null)
         ]);
         if (!cancelled) {
           setDoctorName(doctor?.name ?? null);
           setAppointments(appts);
+          setToday(snapshot);
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -130,9 +145,22 @@ export function DoctorOverviewPage() {
         <PatientQuickSearch />
       </div>
 
+      {today && today.waiting_room.length > 0 &&
+      <div className="mt-6">
+          <WaitingRoomWidget entries={today.waiting_room} />
+        </div>
+      }
+
       <div className="mt-6">
         <TodayAgenda appointments={appointments} loading={loading} />
       </div>
+
+      {today && (today.pending_notes.length > 0 || today.pending_consent_count > 0 || today.alerts.length > 0) &&
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <PendingPaperworkWidget pendingNotes={today.pending_notes} pendingConsentCount={today.pending_consent_count} />
+          <AlertsWidget alerts={today.alerts} />
+        </div>
+      }
 
       <div className="mt-6">
         <AttendanceCalendar />
@@ -171,4 +199,113 @@ export function DoctorOverviewPage() {
         </div>
       }
     </>);
+}
+
+function elapsedMinutes(iso: string) {
+  const mins = Math.round((Date.now() - new Date(iso).getTime()) / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m`;
+  const hours = Math.round(mins / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.round(hours / 24)}d`;
+}
+
+function WaitingRoomWidget({ entries }: { entries: WaitingRoomEntry[] }) {
+  return (
+    <div className="rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <div className="flex items-center gap-2.5 border-b border-sand-100 px-5 py-4">
+        <StethoscopeIcon className="h-4 w-4 text-teal-600" />
+        <p className="text-sm font-bold text-ink">Waiting on you ({entries.length})</p>
+      </div>
+      <div className="divide-y divide-sand-100">
+        {entries.map((e) =>
+        <div key={e.appointment_id} className="flex items-center gap-3 px-5 py-3.5">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand-200 text-sm font-bold text-ink-soft">
+              {e.patient_name[0]?.toUpperCase() || "?"}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-ink">{e.patient_name}</p>
+              <p className="truncate text-xs text-ink-muted">{e.appointment_type}</p>
+            </div>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${e.status === "with_doctor" ? "bg-warning/10 text-warning" : "bg-teal-600/10 text-teal-600"}`}>
+              {e.status === "with_doctor" ? "With you" : `Waiting ${elapsedMinutes(e.checked_in_at!)}`}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>);
+
+}
+
+function PendingPaperworkWidget({ pendingNotes, pendingConsentCount }: { pendingNotes: PendingNoteEntry[]; pendingConsentCount: number }) {
+  const empty = pendingNotes.length === 0 && pendingConsentCount === 0;
+  return (
+    <div className="rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <div className="flex items-center gap-2.5 border-b border-sand-100 px-5 py-4">
+        <FileTextIcon className="h-4 w-4 text-ink-muted" />
+        <p className="text-sm font-bold text-ink">Pending paperwork</p>
+      </div>
+      {empty ?
+      <p className="px-5 py-6 text-sm text-ink-muted">Nothing outstanding — all caught up.</p> :
+
+      <div className="divide-y divide-sand-100">
+          {pendingConsentCount > 0 &&
+        <div className="flex items-center gap-3 px-5 py-3.5">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
+                <ShieldAlertIcon className="h-4 w-4" />
+              </span>
+              <p className="text-sm text-ink">
+                <span className="font-semibold">{pendingConsentCount}</span> consent{pendingConsentCount === 1 ? "" : "s"} still unsigned across your patients
+              </p>
+            </div>
+        }
+          {pendingNotes.map((n) =>
+        <Link
+          key={n.note_id}
+          to={n.appointment_id ? `${DASHBOARD_ROUTES.consultationNoteNew(n.patient_id)}?appointmentId=${n.appointment_id}` : DASHBOARD_ROUTES.patientDetail(n.patient_id)}
+          className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-sand-50">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand-100 text-ink-muted">
+                <FileTextIcon className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-ink">{n.patient_name}</p>
+                <p className="truncate text-xs text-ink-muted">Consultation note still in draft</p>
+              </div>
+            </Link>
+        )}
+        </div>
+      }
+    </div>);
+
+}
+
+function AlertsWidget({ alerts }: { alerts: DoctorAlertEntry[] }) {
+  return (
+    <div className="rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <div className="flex items-center gap-2.5 border-b border-sand-100 px-5 py-4">
+        <AlertTriangleIcon className="h-4 w-4 text-danger" />
+        <p className="text-sm font-bold text-ink">Alerts</p>
+      </div>
+      {alerts.length === 0 ?
+      <p className="px-5 py-6 text-sm text-ink-muted">Nothing overdue right now.</p> :
+
+      <div className="divide-y divide-sand-100">
+          {alerts.map((a, i) =>
+        <Link
+          key={i}
+          to={DASHBOARD_ROUTES.patientDetail(a.patient_id)}
+          className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-sand-50">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-danger/10 text-danger">
+                <AlertTriangleIcon className="h-4 w-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-ink">{a.patient_name}</p>
+                <p className="truncate text-xs text-ink-muted">{a.message} · {elapsedMinutes(a.since)} ago</p>
+              </div>
+            </Link>
+        )}
+        </div>
+      }
+    </div>);
+
 }

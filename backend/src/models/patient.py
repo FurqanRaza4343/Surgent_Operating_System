@@ -47,13 +47,44 @@ class Patient(Base):
     )
     lost_reason: Mapped[str] = mapped_column(String(255), nullable=True)
     source: Mapped[str] = mapped_column(String(100), nullable=True)  # e.g. "Instagram", "Referral", "Walk-in"
-    # Patient portal (link-based demo access). portal_token is the raw token
-    # used to open /portal/:token; portal_enabled gates it on/off. Storing the
-    # raw (high-entropy) token is acceptable for this demo surface, but this
-    # must move to a hashed value if the portal ever goes to production — see
-    # the security note in the patient_portal service.
-    portal_token: Mapped[str | None] = mapped_column(String(128), nullable=True, unique=True)
+    # Patient Portal login — a human-readable ID (e.g. "AP-2026-00042") the
+    # patient is meant to remember, verified against a bcrypt-hashed PIN.
+    # Replaces an earlier plaintext-link-token scheme entirely (see
+    # patient_portal_services.py) — portal_enabled still gates access on/off.
+    portal_id: Mapped[str | None] = mapped_column(String(32), nullable=True, unique=True)
+    portal_pin_hash: Mapped[str | None] = mapped_column(String(100), nullable=True)
     portal_enabled: Mapped[bool] = mapped_column(default=False)
+
+    # --- Patient profile depth (Week 2) ---------------------------------
+    gender: Mapped[str] = mapped_column(String(30), nullable=True)
+    emergency_contact_name: Mapped[str] = mapped_column(String(255), nullable=True)
+    emergency_contact_phone: Mapped[str] = mapped_column(String(50), nullable=True)
+    # List of {name, severity, reaction} — kept separate from the general
+    # medical_history blob above so it's the one thing every clinical screen
+    # can surface prominently without parsing free text.
+    allergies: Mapped[list] = mapped_column(JSONB, default=list)
+    # `medical_history` above stays as-is (general conditions); this is the
+    # patient's own surgical history specifically — list of {procedure,
+    # year, facility, notes}.
+    surgical_history: Mapped[list] = mapped_column(JSONB, default=list)
+    # List of {name, dosage, frequency} — current, not historical.
+    current_medications: Mapped[list] = mapped_column(JSONB, default=list)
+    smoking_status: Mapped[str] = mapped_column(String(30), nullable=True)
+    # List of {procedure, year, provider} — cosmetic work done elsewhere,
+    # before this practice; distinct from this practice's own TreatmentPlan
+    # records.
+    previous_cosmetic_procedures: Mapped[list] = mapped_column(JSONB, default=list)
+    # Who specifically referred this patient (a person's name — "Dr. Ahmed",
+    # "existing patient Sara Khan") — distinct from `source` above, which is
+    # the marketing CHANNEL ("Instagram", "Referral", "Walk-in"). A lead can
+    # have a channel of "Referral" and a referral_source naming exactly who.
+    referral_source: Mapped[str] = mapped_column(String(255), nullable=True)
+    preferred_language: Mapped[str] = mapped_column(String(50), nullable=True)
+    # {"sms": true, "email": true, "whatsapp": false, ...}
+    communication_preferences: Mapped[dict] = mapped_column(JSONB, default=dict)
+    insurance_provider: Mapped[str] = mapped_column(String(255), nullable=True)
+    insurance_number: Mapped[str] = mapped_column(String(100), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

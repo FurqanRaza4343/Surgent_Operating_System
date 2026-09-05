@@ -8,7 +8,7 @@ from src.database import get_db
 from src.server.dependencies import get_current_practice_user
 from src.models.user import User
 from src.models.conversation import ConversationStatus
-from src.schemas.conversation import ConversationListItem, ConversationDetail
+from src.schemas.conversation import ConversationListItem, ConversationDetail, CreateMessageRequest, ToggleAiRequest
 from src.controller.conversations.conversations_controllers import ConversationsController
 
 router = APIRouter(prefix="/conversations", tags=["Conversations"])
@@ -45,3 +45,25 @@ async def resolve_conversation(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.resolve_conversation(db, user, conversation_id)
+
+
+@router.post("/{conversation_id}/messages", response_model=ConversationDetail)
+async def send_message(
+    conversation_id: UUID,
+    data: CreateMessageRequest,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    # A staff member replying directly — sends over the real channel
+    # (WhatsApp today) and pauses AI auto-replies for this conversation.
+    return await controller.send_message(db, user, conversation_id, data.body)
+
+
+@router.post("/{conversation_id}/toggle-ai", response_model=ConversationDetail)
+async def toggle_ai(
+    conversation_id: UUID,
+    data: ToggleAiRequest,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.toggle_ai(db, user, conversation_id, data.paused)

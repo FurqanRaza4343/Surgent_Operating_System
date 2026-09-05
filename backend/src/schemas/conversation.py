@@ -41,7 +41,25 @@ class ConversationListItem(BaseModel):
     status: str
     last_message_preview: str
     updated_at: datetime
+    # WhatsApp (or other channel) contact photo — cached on Conversation.extra_data
+    # the first time it's fetched, not re-fetched on every message. None when
+    # the channel doesn't support avatars, the contact has none set, or it
+    # hasn't been fetched yet.
+    avatar_url: str | None = None
+    # True once a staff member has sent a manual reply in this conversation —
+    # the AI Receptionist stops auto-replying until a staff member (or the
+    # patient re-engaging) explicitly resumes it, so a human and the AI never
+    # talk over each other. See services/conversations/conversations_services.py.
+    ai_paused: bool = False
 
 
 class ConversationDetail(ConversationListItem):
     messages: list[MessageResponse]
+
+
+class CreateMessageRequest(BaseModel):
+    body: str
+
+
+class ToggleAiRequest(BaseModel):
+    paused: bool

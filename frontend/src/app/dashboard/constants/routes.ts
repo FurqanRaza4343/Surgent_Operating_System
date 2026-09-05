@@ -42,8 +42,12 @@ export const DASHBOARD_ROUTES = {
   leadsFunnel: "/dashboard/leads",
   inventory: "/dashboard/inventory",
   inventoryItemDetail: (id: string) => `/dashboard/inventory/${id}`,
+  surgeries: "/dashboard/surgeries",
+  surgeryNew: (patientId?: string) => (patientId ? `/dashboard/surgeries/new?patient_id=${patientId}` : "/dashboard/surgeries/new"),
+  surgeryDetail: (id: string) => `/dashboard/surgeries/${id}`,
   settingsAgents: "/dashboard/settings/agents",
   settingsProcedures: "/dashboard/settings/procedures",
   settingsProfile: "/dashboard/settings/profile",
-  settingsBilling: "/dashboard/settings/billing"
+  settingsBilling: "/dashboard/settings/billing",
+  settingsConsentTemplates: "/dashboard/settings/consent-templates"
 } as const;

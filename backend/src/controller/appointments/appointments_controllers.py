@@ -104,3 +104,39 @@ class AppointmentsController:
             performed_by=str(user.id),
         )
         return AppointmentResponse.model_validate(appointment)
+
+    async def start_with_doctor(self, db: AsyncSession, user: User, appointment_id: UUID) -> AppointmentResponse:
+        appointment = await self.service.start_with_doctor(db, user.practice_id, appointment_id)
+        await self.agent_log.log(
+            db,
+            user.practice_id,
+            agent_type="front_desk",
+            action="appointment_with_doctor",
+            details={"appointment_id": str(appointment.id)},
+            performed_by=str(user.id),
+        )
+        return AppointmentResponse.model_validate(appointment)
+
+    async def mark_ready_for_checkout(self, db: AsyncSession, user: User, appointment_id: UUID) -> AppointmentResponse:
+        appointment = await self.service.mark_ready_for_checkout(db, user.practice_id, appointment_id)
+        await self.agent_log.log(
+            db,
+            user.practice_id,
+            agent_type="front_desk",
+            action="appointment_ready_for_checkout",
+            details={"appointment_id": str(appointment.id)},
+            performed_by=str(user.id),
+        )
+        return AppointmentResponse.model_validate(appointment)
+
+    async def mark_no_show(self, db: AsyncSession, user: User, appointment_id: UUID) -> AppointmentResponse:
+        appointment = await self.service.mark_no_show(db, user.practice_id, appointment_id)
+        await self.agent_log.log(
+            db,
+            user.practice_id,
+            agent_type="front_desk",
+            action="appointment_no_show",
+            details={"appointment_id": str(appointment.id)},
+            performed_by=str(user.id),
+        )
+        return AppointmentResponse.model_validate(appointment)

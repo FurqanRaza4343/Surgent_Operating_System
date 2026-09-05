@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     openai_model: str = "gpt-4o"
 
     mistral_api_key: str = ""
+    mistral_api_key_2: str = ""
+    mistral_api_key_3: str = ""
     mistral_model: str = "mistral-small-latest"
 
     resend_api_key: str = ""
@@ -38,6 +40,13 @@ class Settings(BaseSettings):
 
     whatsapp_api_token: str = ""
     whatsapp_phone_number_id: str = ""
+
+    # GREEN-API (green-api.com) — unofficial WhatsApp API
+    # Each practice stores its own instance_id + api_token in Practice.settings
+    # under the "green_api" key.  These env vars are only for the platform-level
+    # default instance (used by the demo seed / testing).
+    green_api_instance_id: str = ""
+    green_api_token: str = ""
 
     instagram_api_token: str = ""
 
@@ -64,6 +73,14 @@ class Settings(BaseSettings):
     admin_password: str = "Aceone"
     admin_jwt_secret: str = "aiaceone-admin-jwt-dev-secret-change-in-production"
     admin_jwt_expires_minutes: int = 60 * 24 * 7  # 7 days
+
+    # Patient Portal login (ID + PIN) — deliberately separate from Clerk
+    # (patients aren't staff, Clerk's pricing model is per-staff-MAU) and
+    # from admin_jwt_secret above (a leaked patient-portal secret should
+    # never also compromise the admin panel). Shorter-lived than the admin
+    # token since it's PIN-based, not a verified-email login.
+    patient_portal_jwt_secret: str = "aiaceone-patient-portal-jwt-dev-secret-change-in-production"
+    patient_portal_jwt_expires_minutes: int = 60 * 24  # 24 hours
 
     google_client_id: str = ""
     google_client_secret: str = ""

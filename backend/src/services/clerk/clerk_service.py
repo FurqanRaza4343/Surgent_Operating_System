@@ -26,6 +26,13 @@ class ClerkService:
                 algorithms=["RS256"],
                 audience=None,
                 options={"verify_exp": True},
+                # A few seconds of clock skew between this machine and
+                # Clerk's servers is normal, not a sign of a bad token — an
+                # exact iat/nbf check with zero tolerance was rejecting
+                # freshly-issued, genuinely valid tokens as "not yet valid"
+                # on every request (verified against real Clerk session
+                # tokens, not a hypothetical).
+                leeway=10,
             )
 
             return {
@@ -45,6 +52,51 @@ class ClerkService:
             if resp.status_code == 200:
                 return resp.json()
             return None
+
+    async def find_user_by_email(self, email: str) -> dict | None:
+        # Clerk's array-filter params take the bare key repeated, NOT the
+        # `email_address[]` bracket form (that's silently ignored and
+        # returns every user in the instance, unfiltered — verified against
+        # the real API before trusting this).
+        async with httpx.AsyncClient() as client:
+            resp = await client.get(
+                f"{self.base_url}/users",
+                params=[("email_address", email)],
+                headers={"Authorization": f"Bearer {self.secret_key}"},
+            )
+            if resp.status_code == 200:
+                results = resp.json()
+                return results[0] if results else None
+            return None
+
+    async def create_user(self, email: str, password: str, first_name: str, last_name: str) -> dict:
+        """Directly provisions a real Clerk account with an immediately-usable
+        password login — for seeding dev/demo staff accounts, as opposed to
+        invite_user's email-invite flow (which needs the invitee to complete
+        Clerk's own sign-up UI). Backend-API-created users' emails come back
+        already verified, so this account can sign in right away."""
+        async with httpx.AsyncClient() as client:
+            resp = await client.post(
+                f"{self.base_url}/users",
+                json={
+                    "email_address": [email],
+                    "password": password,
+                    "first_name": first_name,
+                    "last_name": last_name,
+                    "skip_password_checks": True,
+                },
+                headers={"Authorization": f"Bearer {self.secret_key}"},
+            )
+            if resp.status_code in (200, 201):
+                return resp.json()
+            detail = "Failed to create Clerk user"
+            try:
+                errors = resp.json().get("errors") or []
+                if errors and errors[0].get("message"):
+                    detail = errors[0]["message"]
+            except ValueError:
+                pass
+            raise AppException(detail)
 
     async def invite_user(self, email: str, redirect_url: str, public_metadata: dict) -> dict:
         async with httpx.AsyncClient() as client:

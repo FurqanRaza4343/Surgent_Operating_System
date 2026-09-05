@@ -169,3 +169,37 @@ class AppointmentsService:
         await db.flush()
         await db.refresh(appointment)
         return appointment
+
+    async def start_with_doctor(self, db: AsyncSession, practice_id: UUID, appointment_id: UUID) -> Appointment:
+        appointment = await self.get_appointment(db, practice_id, appointment_id)
+        if appointment.status != AppointmentStatus.CHECKED_IN:
+            raise AppException(f"Cannot move a {appointment.status.value} appointment to with-doctor — check in first")
+
+        appointment.status = AppointmentStatus.WITH_DOCTOR
+        appointment.with_doctor_at = datetime.now(timezone.utc)
+        await db.flush()
+        await db.refresh(appointment)
+        return appointment
+
+    async def mark_ready_for_checkout(self, db: AsyncSession, practice_id: UUID, appointment_id: UUID) -> Appointment:
+        appointment = await self.get_appointment(db, practice_id, appointment_id)
+        if appointment.status != AppointmentStatus.WITH_DOCTOR:
+            raise AppException(f"Cannot move a {appointment.status.value} appointment to checkout — they must be with the doctor first")
+
+        appointment.status = AppointmentStatus.READY_FOR_CHECKOUT
+        appointment.ready_for_checkout_at = datetime.now(timezone.utc)
+        await db.flush()
+        await db.refresh(appointment)
+        return appointment
+
+    async def mark_no_show(self, db: AsyncSession, practice_id: UUID, appointment_id: UUID) -> Appointment:
+        appointment = await self.get_appointment(db, practice_id, appointment_id)
+        if appointment.status in (AppointmentStatus.CANCELLED, AppointmentStatus.COMPLETED, AppointmentStatus.NO_SHOW):
+            raise AppException(f"Cannot mark a {appointment.status.value} appointment as no-show")
+        if appointment.checked_in_at is not None:
+            raise AppException("This patient already checked in — no-show no longer applies")
+
+        appointment.status = AppointmentStatus.NO_SHOW
+        await db.flush()
+        await db.refresh(appointment)
+        return appointment

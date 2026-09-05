@@ -7,6 +7,11 @@ from datetime import datetime
 class CreateConsentDocumentRequest(BaseModel):
     document_type: str
     content: str | None = None
+    # When set, the service looks up that template's CURRENT active body and
+    # snapshots it (+ its version) onto the new document — `content` above is
+    # ignored in that case. Omit to raise an ad-hoc document with free-text
+    # content instead (no template involved).
+    template_id: UUID | None = None
 
 
 class SignConsentDocumentRequest(BaseModel):
@@ -28,6 +33,8 @@ class ConsentDocumentResponse(BaseModel):
     document_type: str
     content: str | None
     version: int
+    template_id: UUID | None = None
+    template_version: int | None = None
     status: str
     signed_at: datetime | None
     signed_by_name: str | None

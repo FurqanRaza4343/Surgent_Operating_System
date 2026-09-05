@@ -46,6 +46,10 @@ import { InventoryPage } from "./inventory/InventoryPage";
 import { InventoryItemDetailPage } from "./inventory/InventoryItemDetailPage";
 import { MessagesPage } from "./messages/MessagesPage";
 import { MessageThreadPage } from "./messages/MessageThreadPage";
+import { SurgeryListPage } from "./surgery/SurgeryListPage";
+import { SurgeryFormPage } from "./surgery/SurgeryFormPage";
+import { SurgeryDetailPage } from "./surgery/SurgeryDetailPage";
+import { ConsentTemplatesPage } from "./settings/ConsentTemplatesPage";
 
 // Doctor's real landing page is /dashboard/doctor, not root — root's
 // OverviewPage is Owner-flavored practice-wide data (greeting, KPIs,
@@ -134,6 +138,9 @@ export function DashboardRouter() {
         <Route path="leads" element={<FunnelPage />} />
         <Route path="inventory" element={<RequireReceptionist><InventoryPage /></RequireReceptionist>} />
         <Route path="inventory/:id" element={<RequireReceptionist><InventoryItemDetailPage /></RequireReceptionist>} />
+        <Route path="surgeries" element={<RequireOwnerOrDoctor><SurgeryListPage /></RequireOwnerOrDoctor>} />
+        <Route path="surgeries/new" element={<RequireOwnerOrDoctor><SurgeryFormPage /></RequireOwnerOrDoctor>} />
+        <Route path="surgeries/:id" element={<RequireOwnerOrDoctor><SurgeryDetailPage /></RequireOwnerOrDoctor>} />
         <Route path="messages" element={<MessagesPage />} />
         <Route path="messages/:staffUserId" element={<RequireOwner><MessageThreadPage /></RequireOwner>} />
         <Route path="agents/:categoryId" element={<AgentCategoryPage />} />
@@ -151,6 +158,7 @@ export function DashboardRouter() {
         <Route path="settings/agents" element={<AgentSettingsPage />} />
         <Route path="settings/profile" element={<ProfilePage />} />
         <Route path="settings/billing" element={<PlanBillingPage />} />
+        <Route path="settings/consent-templates" element={<RequireOwner><ConsentTemplatesPage /></RequireOwner>} />
       </Route>
     </Routes>);
 

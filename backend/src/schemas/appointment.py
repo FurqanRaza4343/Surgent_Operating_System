@@ -14,6 +14,8 @@ class AppointmentResponse(BaseModel):
     start_time: datetime
     end_time: datetime
     checked_in_at: datetime | None = None
+    with_doctor_at: datetime | None = None
+    ready_for_checkout_at: datetime | None = None
     notes: str | None
     created_at: datetime
     updated_at: datetime

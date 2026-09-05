@@ -14,6 +14,12 @@ class AppointmentStatus(str, enum.Enum):
     SCHEDULED = "scheduled"
     CONFIRMED = "confirmed"
     CHECKED_IN = "checked_in"
+    # The two middle front-desk stages that were missing — before this, a
+    # checked-in patient jumped straight to "completed" with no way to
+    # reflect that they were actually with the doctor, or done clinically
+    # but still waiting on billing/checkout at the front desk.
+    WITH_DOCTOR = "with_doctor"
+    READY_FOR_CHECKOUT = "ready_for_checkout"
     CANCELLED = "cancelled"
     COMPLETED = "completed"
     NO_SHOW = "no_show"
@@ -34,6 +40,11 @@ class Appointment(Base):
     # check_in_appointment) — null until then. Drives the waiting room's sort
     # order (earliest-checked-in-first).
     checked_in_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Mirror checked_in_at's pattern for the two new middle stages — lets the
+    # Doctor's waiting-room widget sort by "been with me since" and the
+    # front desk show how long someone's been waiting on checkout/billing.
+    with_doctor_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    ready_for_checkout_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     notes: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

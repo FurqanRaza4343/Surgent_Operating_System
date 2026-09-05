@@ -82,3 +82,30 @@ async def complete_appointment(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.complete_appointment(db, user, appointment_id)
+
+
+@router.patch("/{appointment_id}/start-with-doctor", response_model=AppointmentResponse)
+async def start_with_doctor(
+    appointment_id: UUID,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.start_with_doctor(db, user, appointment_id)
+
+
+@router.patch("/{appointment_id}/ready-for-checkout", response_model=AppointmentResponse)
+async def ready_for_checkout(
+    appointment_id: UUID,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.mark_ready_for_checkout(db, user, appointment_id)
+
+
+@router.patch("/{appointment_id}/no-show", response_model=AppointmentResponse)
+async def mark_no_show(
+    appointment_id: UUID,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.mark_no_show(db, user, appointment_id)

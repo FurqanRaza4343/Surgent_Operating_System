@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { PanelLeftIcon, PanelLeftOpenIcon } from "lucide-react";
 import { CommandPalette } from "./CommandPalette";
 import { PlanBadge } from "../plan/PlanBadge";
+import { MessagesBell } from "./MessagesBell";
 
 // The scroll-guide avatar's photo doubles as the dashboard's account/agent
 // identity — one consistent character across the marketing site and the
@@ -21,6 +22,7 @@ export function Topbar({ collapsed, onToggleCollapse }: { collapsed: boolean; on
         <CommandPalette />
       </div>
       <div className="flex items-center gap-3">
+        <MessagesBell />
         <PlanBadge />
         <Link
           to="/"

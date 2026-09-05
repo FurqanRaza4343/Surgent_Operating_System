@@ -50,8 +50,12 @@ export function App() {
         <Route path="/onboarding/setup" element={<SetupWizardPage />} />
         <Route path="/dashboard/*" element={<DashboardRouter />} />
         <Route path="/admin/*" element={<AdminRouter />} />
+        {/* Real patient-facing login + dashboard (portal ID + PIN) — see
+            PatientPortalLinkCard.tsx for how staff issue access. */}
+        <Route path="/user" element={<PortalPage />} />
+        {/* Internal/dev-only "preview as a role" switcher + site map — jump
+            into any Doctor/Receptionist/Patient view from one place. */}
         <Route path="/portal" element={<PlanProvider><PortalSwitchPage /></PlanProvider>} />
-        <Route path="/portal/:token" element={<PortalPage />} />
       </Routes>
     </>);
 

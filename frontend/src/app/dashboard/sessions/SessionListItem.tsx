@@ -33,9 +33,13 @@ export function SessionListItem({
       }>
 
       <span className="relative mt-0.5">
+        {session.avatarUrl ?
+        <img src={session.avatarUrl} alt="" className="h-9 w-9 rounded-full object-cover" /> :
+
         <span className="flex h-9 w-9 items-center justify-center rounded-full bg-sand-200 text-sm font-bold text-ink-soft">
-          {session.patientInitial}
-        </span>
+            {session.patientInitial}
+          </span>
+        }
         <span className={`absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white ${STATUS_DOT[session.status]}`} />
       </span>
       <span className="min-w-0 flex-1">

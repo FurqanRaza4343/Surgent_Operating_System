@@ -14,7 +14,7 @@ class LLMService:
 
     def __init__(self):
         self._openai_client = None
-        self._mistral_client = None
+        self._mistral_clients = None
         self.openai_model = settings.openai_model
         self.mistral_model = settings.mistral_model
 
@@ -25,20 +25,45 @@ class LLMService:
         return self._openai_client
 
     @property
-    def mistral_client(self):
-        if self._mistral_client is None:
-            self._mistral_client = AsyncOpenAI(
-                api_key=settings.mistral_api_key, base_url=self.MISTRAL_BASE_URL
-            )
-        return self._mistral_client
+    def mistral_clients(self) -> list:
+        # Free-tier Mistral rate limits are tight enough to hit during
+        # normal dev/testing — several separate free accounts' keys are
+        # tried in order on a 429 before ever falling back to OpenAI.
+        if self._mistral_clients is None:
+            keys = [k for k in (settings.mistral_api_key, settings.mistral_api_key_2, settings.mistral_api_key_3) if k]
+            self._mistral_clients = [
+                AsyncOpenAI(api_key=key, base_url=self.MISTRAL_BASE_URL) for key in keys
+            ]
+        return self._mistral_clients
+
+    async def _call_with_fallback(self, call):
+        """Runs `call(client, model)` against each configured Mistral key in
+        turn, falling through to the next only on a rate limit; falls back
+        to OpenAI only once every Mistral key is exhausted. Raises the last
+        error if everything fails, rather than silently swallowing it."""
+        last_error: Exception | None = None
+        for client in self.mistral_clients:
+            try:
+                return await call(client, self.mistral_model)
+            except RateLimitError as e:
+                last_error = e
+                continue
+        try:
+            return await call(self.openai_client, self.openai_model)
+        except Exception:
+            if last_error is not None:
+                raise last_error
+            raise
 
     def _client_and_model(self, tier: str):
         # Matches the tiered strategy documented in system.md: low-stakes
         # traffic (FAQ, translation, general chat) rides Mistral's free tier;
         # high/critical-stakes traffic (risk assessment, payments, clinical
-        # notes) always goes straight to OpenAI.
-        if tier == "low" and settings.mistral_api_key:
-            return self.mistral_client, self.mistral_model
+        # notes) always goes straight to OpenAI. Kept for callers that only
+        # need a single client (not the multi-key fallback in chat()/
+        # chat_with_tools()).
+        if tier == "low" and self.mistral_clients:
+            return self.mistral_clients[0], self.mistral_model
         return self.openai_client, self.openai_model
 
     async def chat(
@@ -49,28 +74,18 @@ class LLMService:
             full_messages.append({"role": "system", "content": system_prompt})
         full_messages.extend(messages)
 
-        client, model = self._client_and_model(tier)
-        try:
+        async def call(client, model):
             response = await client.chat.completions.create(
                 model=model,
                 messages=full_messages,
                 temperature=0.7,
                 max_tokens=1024,
             )
-        except RateLimitError:
-            if client is not self.openai_client:
-                # Mistral free-tier limit hit — fall back to OpenAI rather
-                # than surface an error for a low-stakes request.
-                response = await self.openai_client.chat.completions.create(
-                    model=self.openai_model,
-                    messages=full_messages,
-                    temperature=0.7,
-                    max_tokens=1024,
-                )
-            else:
-                raise
+            return response.choices[0].message.content or ""
 
-        return response.choices[0].message.content or ""
+        if tier == "low" and self.mistral_clients:
+            return await self._call_with_fallback(call)
+        return await call(self.openai_client, self.openai_model)
 
     async def chat_with_tools(
         self, messages: list[dict], tools: list[dict], system_prompt: str | None = None, tier: str = "high"
@@ -86,27 +101,19 @@ class LLMService:
             full_messages.append({"role": "system", "content": system_prompt})
         full_messages.extend(messages)
 
-        client, model = self._client_and_model(tier)
-        try:
+        async def call(client, model):
             response = await client.chat.completions.create(
                 model=model,
                 messages=full_messages,
                 tools=tools,
                 temperature=0.7,
             )
-        except RateLimitError:
-            if client is not self.openai_client:
-                response = await self.openai_client.chat.completions.create(
-                    model=self.openai_model,
-                    messages=full_messages,
-                    tools=tools,
-                    temperature=0.7,
-                )
-            else:
-                raise
+            choice = response.choices[0]
+            return {
+                "content": choice.message.content or "",
+                "tool_calls": choice.message.tool_calls,
+            }
 
-        choice = response.choices[0]
-        return {
-            "content": choice.message.content or "",
-            "tool_calls": choice.message.tool_calls,
-        }
+        if tier == "low" and self.mistral_clients:
+            return await self._call_with_fallback(call)
+        return await call(self.openai_client, self.openai_model)

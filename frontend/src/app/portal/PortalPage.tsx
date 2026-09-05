@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   CalendarIcon,
   ShieldCheckIcon,
@@ -13,15 +13,23 @@ import {
   CameraIcon,
   CalendarPlusIcon,
   DollarSignIcon,
-  CheckCircle2Icon
+  CheckCircle2Icon,
+  StethoscopeIcon,
+  ClipboardListIcon,
+  KeyIcon,
+  LogOutIcon
 } from "lucide-react";
 import { Logo } from "../../components/ui";
 import {
+  portalLogin,
+  getMyPortalData,
   portalBookAppointment,
   type PortalPatientResponse
 } from "../../api/entities";
 
-type Tab = "book" | "appointments" | "photos" | "consent" | "invoices";
+type Tab = "book" | "appointments" | "doctor" | "treatment" | "photos" | "consent" | "invoices";
+
+const SESSION_KEY = "aiaceone_portal_token";
 
 function formatDateTime(iso: string): string {
   return new Date(iso).toLocaleString(undefined, {
@@ -49,11 +57,20 @@ const STATUS_STYLES: Record<string, string> = {
   void: "bg-ink-muted/10 text-ink-muted",
   paid: "bg-success/10 text-success",
   pending: "bg-warning/10 text-warning",
-  overdue: "bg-danger/10 text-danger"
+  overdue: "bg-danger/10 text-danger",
+  proposed: "bg-warning/10 text-warning",
+  accepted: "bg-teal-600/10 text-teal-600",
+  planned: "bg-sand-100 text-ink-soft"
 };
 
 export function PortalPage() {
-  const { token } = useParams<{ token: string }>();
+  const [token, setToken] = useState<string | null>(() => {
+    try {
+      return sessionStorage.getItem(SESSION_KEY);
+    } catch {
+      return null;
+    }
+  });
   const [data, setData] = useState<PortalPatientResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,16 +78,19 @@ export function PortalPage() {
 
   const load = async (tok: string) => {
     try {
-      const res = await fetch(`/api/v1/patient-portal/${encodeURIComponent(tok)}`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        setError(typeof body?.detail === "string" ? body.detail : "This portal link is invalid or no longer active.");
-        return;
-      }
-      const json: PortalPatientResponse = await res.json();
+      const json = await getMyPortalData(tok);
       setData(json);
-    } catch {
-      setError("Couldn't load your portal. Please try again.");
+      setError(null);
+    } catch (e) {
+      // Expired/invalid session — drop it and fall back to the login screen
+      // rather than showing a dead-end error with no way forward.
+      setToken(null);
+      try {
+        sessionStorage.removeItem(SESSION_KEY);
+      } catch {
+        // private browsing / storage disabled — nothing to clear
+      }
+      setError(e instanceof Error ? e.message : "Your session expired — please log in again.");
     }
   };
 
@@ -78,7 +98,6 @@ export function PortalPage() {
     let cancelled = false;
     (async () => {
       if (!token) {
-        if (!cancelled) setError("This portal link is invalid.");
         setLoading(false);
         return;
       }
@@ -88,11 +107,35 @@ export function PortalPage() {
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  async function handleBooked(newData: PortalPatientResponse) {
+  function handleLoggedIn(newToken: string) {
+    try {
+      sessionStorage.setItem(SESSION_KEY, newToken);
+    } catch {
+      // private browsing / storage disabled — session just won't survive a refresh
+    }
+    setLoading(true);
+    setToken(newToken);
+  }
+
+  function handleLogout() {
+    try {
+      sessionStorage.removeItem(SESSION_KEY);
+    } catch {
+      // ignore
+    }
+    setToken(null);
+    setData(null);
+  }
+
+  function handleBooked(newData: PortalPatientResponse) {
+    // Refresh the data (so Appointments already shows the new request) but
+    // stay on the Book tab so BookTab's own "Request sent" confirmation is
+    // actually visible — switching away immediately would unmount it before
+    // the patient ever saw it.
     setData(newData);
-    setTab("appointments");
   }
 
   return (
@@ -105,7 +148,17 @@ export function PortalPage() {
             </span>
             <span className="text-[15px] font-bold tracking-tight text-ink">Aiaceone</span>
           </Link>
-          {data && <span className="text-sm text-ink-muted">Patient Portal</span>}
+          <div className="flex items-center gap-3">
+            {data && <span className="text-sm text-ink-muted">Patient Portal</span>}
+            {data &&
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="flex items-center gap-1.5 rounded-lg border border-sand-200 px-3 py-1.5 text-xs font-semibold text-ink-soft transition-colors hover:border-danger/40 hover:text-danger">
+                <LogOutIcon className="h-3.5 w-3.5" /> Log out
+              </button>
+            }
+          </div>
         </div>
       </header>
 
@@ -116,20 +169,21 @@ export function PortalPage() {
           </div>
         }
 
-        {!loading && error &&
+        {!loading && !token && <LoginForm error={error} onLoggedIn={handleLoggedIn} />}
+
+        {!loading && token && !data && error &&
         <div className="flex flex-col items-center gap-4 rounded-3xl border border-sand-200 bg-white p-10 text-center shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-danger/10 text-danger">
               <ShieldAlertIcon className="h-6 w-6" />
             </span>
             <div>
-              <p className="text-sm font-bold text-ink">Portal unavailable</p>
+              <p className="text-sm font-bold text-ink">Couldn&apos;t load your portal</p>
               <p className="mt-1 text-sm text-ink-muted">{error}</p>
             </div>
-            <Link to="/" className="text-sm font-semibold text-teal-600 hover:underline">Back to Aiaceone</Link>
           </div>
         }
 
-        {!loading && !error && data &&
+        {!loading && data &&
         <>
             <div className="mb-4 rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
               <div className="flex flex-wrap items-center justify-between gap-4">
@@ -188,19 +242,97 @@ export function PortalPage() {
             <div className="mb-6 flex flex-wrap gap-2">
               <TabButton active={tab === "book"} onClick={() => setTab("book")} icon={<CalendarPlusIcon className="h-3.5 w-3.5" />} label="Book appointment" />
               <TabButton active={tab === "appointments"} onClick={() => setTab("appointments")} icon={<CalendarIcon className="h-3.5 w-3.5" />} label={`Appointments (${data.appointments.length})`} />
+              <TabButton active={tab === "doctor"} onClick={() => setTab("doctor")} icon={<StethoscopeIcon className="h-3.5 w-3.5" />} label="My doctor" />
+              <TabButton active={tab === "treatment"} onClick={() => setTab("treatment")} icon={<ClipboardListIcon className="h-3.5 w-3.5" />} label={`Treatment plan (${data.treatment_plans.length})`} />
               <TabButton active={tab === "photos"} onClick={() => setTab("photos")} icon={<CameraIcon className="h-3.5 w-3.5" />} label={`Photos (${data.photos.length})`} />
               <TabButton active={tab === "consent"} onClick={() => setTab("consent")} icon={<FileTextIcon className="h-3.5 w-3.5" />} label={`Consent (${data.consent_documents.length})`} />
               <TabButton active={tab === "invoices"} onClick={() => setTab("invoices")} icon={<ReceiptIcon className="h-3.5 w-3.5" />} label={`Invoices (${data.invoices.length})`} />
             </div>
 
-            {tab === "book" && token && <BookTab token={token} onBooked={handleBooked} patientName={`${data.first_name} ${data.last_name}`} />}
+            {tab === "book" && token && (
+            <BookTab
+              token={token}
+              onBooked={handleBooked}
+              onViewAppointments={() => setTab("appointments")}
+              patientName={`${data.first_name} ${data.last_name}`}
+            />
+            )}
             {tab === "appointments" && <AppointmentsTab appointments={data.appointments} />}
+            {tab === "doctor" && <DoctorTab doctor={data.doctor} />}
+            {tab === "treatment" && <TreatmentTab plans={data.treatment_plans} />}
             {tab === "photos" && <PhotosTab photos={data.photos} />}
             {tab === "consent" && <ConsentTab documents={data.consent_documents} />}
             {tab === "invoices" && <InvoicesTab invoices={data.invoices} />}
           </>
         }
       </main>
+    </div>);
+}
+
+function LoginForm({ error, onLoggedIn }: { error: string | null; onLoggedIn: (token: string) => void }) {
+  const [portalId, setPortalId] = useState("");
+  const [pin, setPin] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!portalId.trim() || !pin.trim()) return;
+    setBusy(true);
+    setLoginError(null);
+    try {
+      const res = await portalLogin(portalId.trim().toUpperCase(), pin.trim());
+      onLoggedIn(res.access_token);
+    } catch (err: unknown) {
+      setLoginError(err instanceof Error && err.message ? err.message : "Couldn't log in — try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mx-auto max-w-sm rounded-3xl border border-sand-200 bg-white p-8 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-teal-600/10 text-teal-600">
+        <KeyIcon className="h-6 w-6" />
+      </span>
+      <p className="mt-4 text-lg font-bold text-ink">Patient login</p>
+      <p className="mt-1 text-sm text-ink-muted">
+        Enter the portal ID and PIN your clinic gave you.
+      </p>
+
+      <form onSubmit={submit} className="mt-6 space-y-4">
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Portal ID</span>
+          <input
+            required
+            autoFocus
+            value={portalId}
+            onChange={(e) => setPortalId(e.target.value)}
+            placeholder="AP-2026-00042"
+            className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-600/40 focus:bg-white" />
+        </label>
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">PIN</span>
+          <input
+            required
+            type="password"
+            inputMode="numeric"
+            maxLength={6}
+            value={pin}
+            onChange={(e) => setPin(e.target.value)}
+            placeholder="••••••"
+            className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-600/40 focus:bg-white" />
+        </label>
+
+        {(loginError || error) && <p className="text-sm font-medium text-danger">{loginError || error}</p>}
+
+        <button
+          type="submit"
+          disabled={busy || !portalId.trim() || !pin.trim()}
+          className="w-full rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40">
+          {busy ? "Logging in…" : "Log in"}
+        </button>
+      </form>
     </div>);
 }
 
@@ -234,7 +366,17 @@ const APPOINTMENT_TYPES = [
   "Other"
 ];
 
-function BookTab({ token, onBooked, patientName }: { token: string; onBooked: (d: PortalPatientResponse) => void; patientName: string }) {
+function BookTab({
+  token,
+  onBooked,
+  onViewAppointments,
+  patientName
+}: {
+  token: string;
+  onBooked: (d: PortalPatientResponse) => void;
+  onViewAppointments: () => void;
+  patientName: string;
+}) {
   const [appointmentType, setAppointmentType] = useState(APPOINTMENT_TYPES[0]);
   const [day, setDay] = useState(() => {
     const d = new Date(Date.now() + 24 * 60 * 60 * 1000);
@@ -279,8 +421,14 @@ function BookTab({ token, onBooked, patientName }: { token: string; onBooked: (d
         <CheckCircle2Icon className="h-10 w-10 text-success" />
         <p className="text-sm font-bold text-ink">Request sent</p>
         <p className="max-w-sm text-sm text-ink-muted">
-          Your appointment request for {appointmentType} is in — the clinic&apos;s front desk will confirm it. Check the Appointments tab.
+          Your appointment request for {appointmentType} is in — the clinic&apos;s front desk will confirm it.
         </p>
+        <button
+          type="button"
+          onClick={onViewAppointments}
+          className="mt-2 flex items-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+          <CalendarIcon className="h-4 w-4" /> View my appointments
+        </button>
       </div>);
   }
 
@@ -364,6 +512,60 @@ function AppointmentsTab({ appointments }: { appointments: PortalPatientResponse
           <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLES[a.status] || "bg-ink-muted/10 text-ink-muted"}`}>
             {a.status}
           </span>
+        </div>
+      )}
+    </div>);
+}
+
+function DoctorTab({ doctor }: { doctor: PortalPatientResponse["doctor"] }) {
+  if (!doctor) {
+    return <EmptyState icon={<StethoscopeIcon className="h-5 w-5" />} message="No doctor assigned yet — once you're booked with one, they'll show up here." />;
+  }
+  return (
+    <div className="rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <div className="flex items-center gap-4">
+        {doctor.photo_url ?
+        <img src={doctor.photo_url} alt={doctor.name} className="h-16 w-16 shrink-0 rounded-full object-cover" /> :
+        <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-teal-600/10 text-xl font-bold text-teal-600">
+            {doctor.name[0]?.toUpperCase() || "?"}
+          </span>
+        }
+        <div>
+          <p className="text-lg font-bold text-ink">{doctor.name}</p>
+          <p className="text-sm text-ink-muted">{doctor.specialty || "Your care provider"}</p>
+        </div>
+      </div>
+      {doctor.bio && <p className="mt-4 text-sm leading-relaxed text-ink-soft">{doctor.bio}</p>}
+    </div>);
+}
+
+function TreatmentTab({ plans }: { plans: PortalPatientResponse["treatment_plans"] }) {
+  if (plans.length === 0) {
+    return <EmptyState icon={<ClipboardListIcon className="h-5 w-5" />} message="No treatment plan yet — your doctor will build one with you after a consultation." />;
+  }
+  return (
+    <div className="space-y-4">
+      {plans.map((plan) =>
+      <div key={plan.id} className="rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center justify-between gap-3 border-b border-sand-100 px-5 py-4">
+            <p className="text-sm font-bold text-ink">{plan.title}</p>
+            <span className={`rounded-full px-2.5 py-1 text-xs font-semibold capitalize ${STATUS_STYLES[plan.status] || "bg-ink-muted/10 text-ink-muted"}`}>
+              {plan.status}
+            </span>
+          </div>
+          <div className="divide-y divide-sand-100">
+            {plan.items.map((item) =>
+          <div key={item.id} className="flex items-center justify-between gap-3 px-5 py-3.5">
+                <div>
+                  <p className="text-sm font-medium text-ink">{item.procedure_name}</p>
+                  <p className="text-xs text-ink-muted capitalize">{item.status}</p>
+                </div>
+                {(item.actual_price ?? item.estimated_price) != null &&
+            <p className="text-sm font-semibold text-ink">${(item.actual_price ?? item.estimated_price)?.toFixed(2)}</p>
+            }
+              </div>
+          )}
+          </div>
         </div>
       )}
     </div>);

@@ -1,0 +1,228 @@
+import React, { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeftIcon, PlusIcon, XIcon } from "lucide-react";
+import { PageHeader } from "../components/PageHeader";
+import { usePlan } from "../plan/PlanContext";
+import { usePatients } from "../patients/usePatients";
+import { useDoctors } from "../doctors/useDoctors";
+import { useProcedures } from "../clinical/useProcedures";
+import { useSurgeries } from "./useSurgeries";
+import { DASHBOARD_ROUTES } from "../constants/routes";
+
+export function SurgeryFormPage() {
+  const { authedFetch } = usePlan();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const preselectedPatientId = searchParams.get("patient_id") || "";
+
+  const { patients, loading: patientsLoading } = usePatients(authedFetch);
+  const { doctors, loading: doctorsLoading } = useDoctors(authedFetch);
+  const { procedures } = useProcedures(authedFetch);
+  const { create } = useSurgeries(authedFetch);
+
+  const [patientId, setPatientId] = useState(preselectedPatientId);
+  const [doctorId, setDoctorId] = useState("");
+  const [assistantDoctorId, setAssistantDoctorId] = useState("");
+  const [procedureId, setProcedureId] = useState("");
+  const [date, setDate] = useState("");
+  const [time, setTime] = useState("09:00");
+  const [durationMinutes, setDurationMinutes] = useState("");
+  const [anesthesiaType, setAnesthesiaType] = useState("");
+  const [facilityNote, setFacilityNote] = useState("");
+  const [checklist, setChecklist] = useState<string[]>(["Consent signed", "Labs cleared", "Fasting confirmed"]);
+  const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const activeDoctors = doctors.filter((d) => d.isActive);
+
+  function addChecklistItem() {
+    if (!newChecklistItem.trim()) return;
+    setChecklist((prev) => [...prev, newChecklistItem.trim()]);
+    setNewChecklistItem("");
+  }
+
+  function removeChecklistItem(idx: number) {
+    setChecklist((prev) => prev.filter((_, i) => i !== idx));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!patientId || !doctorId || !date) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const [y, mo, d] = date.split("-").map(Number);
+      const [hh, mm] = time.split(":").map(Number);
+      const scheduledDate = new Date(y, mo - 1, d, hh, mm).toISOString();
+      const created = await create({
+        patient_id: patientId,
+        doctor_id: doctorId,
+        assistant_doctor_id: assistantDoctorId || null,
+        procedure_id: procedureId || null,
+        scheduled_date: scheduledDate,
+        duration_estimate_minutes: durationMinutes ? Number(durationMinutes) : null,
+        anesthesia_type: anesthesiaType.trim() || null,
+        facility_note: facilityNote.trim() || null,
+        pre_op_checklist: checklist.map((item) => ({ item, checked: false }))
+      });
+      navigate(DASHBOARD_ROUTES.surgeryDetail(created!.id));
+    } catch (err: unknown) {
+      setError(err instanceof Error && err.message ? err.message : "Couldn't schedule this surgery — try again.");
+      setSaving(false);
+    }
+  }
+
+  return (
+    <>
+      <Link to={DASHBOARD_ROUTES.surgeries} className="mb-4 inline-flex items-center gap-1.5 text-sm font-medium text-ink-muted transition-colors hover:text-ink">
+        <ArrowLeftIcon className="h-4 w-4" /> Back to Surgery
+      </Link>
+      <PageHeader title="Schedule surgery" subtitle="Real, working single-surgery record — who, what, when, and the pre-op checklist." />
+
+      <form onSubmit={handleSubmit} className="mt-6 max-w-2xl space-y-5 rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Patient *</span>
+            <select
+              required
+              disabled={patientsLoading}
+              value={patientId}
+              onChange={(e) => setPatientId(e.target.value)}
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white">
+              <option value="">Select a patient…</option>
+              {patients.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Procedure</span>
+            <select
+              value={procedureId}
+              onChange={(e) => setProcedureId(e.target.value)}
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white">
+              <option value="">Not specified</option>
+              {procedures.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Surgeon *</span>
+            <select
+              required
+              disabled={doctorsLoading}
+              value={doctorId}
+              onChange={(e) => setDoctorId(e.target.value)}
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white">
+              <option value="">Select a surgeon…</option>
+              {activeDoctors.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Assistant surgeon</span>
+            <select
+              value={assistantDoctorId}
+              onChange={(e) => setAssistantDoctorId(e.target.value)}
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white">
+              <option value="">None</option>
+              {activeDoctors.filter((d) => d.id !== doctorId).map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
+            </select>
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Date *</span>
+            <input
+              required
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white" />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Time *</span>
+            <input
+              required
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white" />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Est. duration (min)</span>
+            <input
+              type="number"
+              min="0"
+              value={durationMinutes}
+              onChange={(e) => setDurationMinutes(e.target.value)}
+              placeholder="90"
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white" />
+          </label>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Anesthesia type</span>
+            <input
+              value={anesthesiaType}
+              onChange={(e) => setAnesthesiaType(e.target.value)}
+              placeholder="General"
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white" />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Facility / OT note</span>
+            <input
+              value={facilityNote}
+              onChange={(e) => setFacilityNote(e.target.value)}
+              placeholder="OR 1"
+              className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white" />
+          </label>
+        </div>
+
+        <div>
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Pre-op checklist</span>
+          <div className="space-y-2">
+            {checklist.map((item, i) =>
+            <div key={i} className="flex items-center gap-2 rounded-xl border border-sand-200 bg-canvas px-3.5 py-2 text-sm text-ink-soft">
+                <span className="flex-1">{item}</span>
+                <button type="button" onClick={() => removeChecklistItem(i)} className="text-ink-muted hover:text-danger">
+                  <XIcon className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <input
+              value={newChecklistItem}
+              onChange={(e) => setNewChecklistItem(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); addChecklistItem(); } }}
+              placeholder="Add a checklist item…"
+              className="flex-1 rounded-xl border border-sand-200 bg-canvas px-3.5 py-2 text-sm text-ink outline-none focus:border-teal-600/40 focus:bg-white" />
+            <button
+              type="button"
+              onClick={addChecklistItem}
+              className="flex items-center gap-1 rounded-xl border border-sand-200 px-3 py-2 text-xs font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
+              <PlusIcon className="h-3.5 w-3.5" /> Add
+            </button>
+          </div>
+        </div>
+
+        {error && <p className="text-sm font-medium text-danger">{error}</p>}
+
+        <div className="flex items-center justify-end gap-3 border-t border-sand-100 pt-5">
+          <Link to={DASHBOARD_ROUTES.surgeries} className="rounded-xl border border-sand-200 px-5 py-2.5 text-sm font-semibold text-ink-soft transition-colors hover:border-ink-muted/40">
+            Cancel
+          </Link>
+          <button
+            type="submit"
+            disabled={saving || !patientId || !doctorId || !date}
+            className="rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40">
+            {saving ? "Scheduling…" : "Schedule surgery"}
+          </button>
+        </div>
+      </form>
+    </>);
+
+}

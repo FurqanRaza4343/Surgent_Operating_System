@@ -4,35 +4,58 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.user import User
+from src.models.patient import Patient
 from src.schemas.patient_portal import (
-    PortalLinkResponse,
+    PortalAccessResponse,
+    PortalPinIssuedResponse,
     PortalPatientResponse,
     PortalBookingRequest,
+    PatientPortalLoginRequest,
+    PatientPortalLoginResponse,
 )
 from src.services.patient_portal.patient_portal_services import PatientPortalService
+from src.services.patient_portal.patient_portal_auth_service import PatientPortalAuthService
+from src.config import get_settings
+
+settings = get_settings()
 
 
 class PatientPortalController:
     def __init__(self):
         self.service = PatientPortalService()
+        self.auth = PatientPortalAuthService()
 
-    async def generate_link(self, db: AsyncSession, user: User, patient_id: UUID) -> PortalLinkResponse:
-        url = await self.service.generate_link(db, user.practice_id, patient_id)
-        return PortalLinkResponse(portal_url=url, enabled=True)
+    # --- Owner/staff-side management ---
 
-    async def revoke_link(self, db: AsyncSession, user: User, patient_id: UUID) -> PortalLinkResponse:
-        await self.service.revoke_link(db, user.practice_id, patient_id)
-        return PortalLinkResponse(portal_url=None, enabled=False)
+    async def enable_portal(self, db: AsyncSession, user: User, patient_id: UUID) -> PortalPinIssuedResponse:
+        portal_id, pin = await self.auth.enable_portal(db, user.practice_id, patient_id)
+        return PortalPinIssuedResponse(portal_id=portal_id, pin=pin)
 
-    async def get_link_state(self, db: AsyncSession, user: User, patient_id: UUID) -> PortalLinkResponse:
-        url, enabled = await self.service.get_link_state(db, user.practice_id, patient_id)
-        return PortalLinkResponse(portal_url=url, enabled=enabled)
+    async def reset_pin(self, db: AsyncSession, user: User, patient_id: UUID) -> PortalPinIssuedResponse:
+        pin = await self.auth.reset_pin(db, user.practice_id, patient_id)
+        portal_id, _ = await self.auth.get_portal_state(db, user.practice_id, patient_id)
+        return PortalPinIssuedResponse(portal_id=portal_id, pin=pin)
 
-    async def resolve_token(self, db: AsyncSession, token: str) -> PortalPatientResponse:
-        return await self.service.resolve_token(db, token)
+    async def disable_portal(self, db: AsyncSession, user: User, patient_id: UUID) -> PortalAccessResponse:
+        await self.auth.disable_portal(db, user.practice_id, patient_id)
+        portal_id, enabled = await self.auth.get_portal_state(db, user.practice_id, patient_id)
+        return PortalAccessResponse(portal_id=portal_id, enabled=enabled)
 
-    async def book_appointment(
-        self, db: AsyncSession, token: str, data: PortalBookingRequest
-    ) -> PortalPatientResponse:
-        await self.service.book_appointment(db, token, data)
-        return await self.service.resolve_token(db, token)
+    async def get_access_state(self, db: AsyncSession, user: User, patient_id: UUID) -> PortalAccessResponse:
+        portal_id, enabled = await self.auth.get_portal_state(db, user.practice_id, patient_id)
+        return PortalAccessResponse(portal_id=portal_id, enabled=enabled)
+
+    # --- Patient-side login ---
+
+    async def login(self, db: AsyncSession, data: PatientPortalLoginRequest, client_key: str) -> PatientPortalLoginResponse:
+        token, _patient = await self.auth.login(db, data.portal_id, data.pin, client_key)
+        return PatientPortalLoginResponse(access_token=token, expires_in_minutes=settings.patient_portal_jwt_expires_minutes)
+
+    # --- Patient-side data ---
+
+    async def get_my_data(self, db: AsyncSession, patient: Patient) -> PortalPatientResponse:
+        return await self.service.get_my_portal_data(db, patient)
+
+    async def book_appointment(self, db: AsyncSession, patient: Patient, data: PortalBookingRequest) -> PortalPatientResponse:
+        await self.service.book_appointment(db, patient, data)
+        return await self.service.get_my_portal_data(db, patient)

@@ -19,7 +19,25 @@ class CreatePatientRequest(BaseModel):
     source: str | None = None
 
 
-class UpdatePatientRequest(BaseModel):
+# Shared by Update and the profile-depth section of Response — every field
+# here is optional to fill in over time, not required at intake.
+class PatientProfileFields(BaseModel):
+    gender: str | None = None
+    emergency_contact_name: str | None = None
+    emergency_contact_phone: str | None = None
+    allergies: list[dict] | None = None
+    surgical_history: list[dict] | None = None
+    current_medications: list[dict] | None = None
+    smoking_status: str | None = None
+    previous_cosmetic_procedures: list[dict] | None = None
+    referral_source: str | None = None
+    preferred_language: str | None = None
+    communication_preferences: dict | None = None
+    insurance_provider: str | None = None
+    insurance_number: str | None = None
+
+
+class UpdatePatientRequest(PatientProfileFields):
     first_name: str | None = None
     last_name: str | None = None
     email: str | None = None
@@ -62,6 +80,20 @@ class PatientResponse(BaseModel):
     # covers a freshly created patient with no appointments yet.
     has_upcoming_appointment: bool = False
     has_completed_appointment: bool = False
+    # --- profile depth (Week 2) ---
+    gender: str | None = None
+    emergency_contact_name: str | None = None
+    emergency_contact_phone: str | None = None
+    allergies: list[dict] = []
+    surgical_history: list[dict] = []
+    current_medications: list[dict] = []
+    smoking_status: str | None = None
+    previous_cosmetic_procedures: list[dict] = []
+    referral_source: str | None = None
+    preferred_language: str | None = None
+    communication_preferences: dict = {}
+    insurance_provider: str | None = None
+    insurance_number: str | None = None
     created_at: datetime
     updated_at: datetime
 

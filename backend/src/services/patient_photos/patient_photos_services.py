@@ -28,6 +28,7 @@ class PatientPhotosService:
     async def upload_photo(
         self, db: AsyncSession, practice_id: UUID, patient_id: UUID,
         file_bytes: bytes, filename: str, photo_type: str | None, notes: str | None,
+        stage: str | None = None, body_area: str | None = None, procedure_id: UUID | None = None,
     ) -> PatientPhoto:
         await self._verify_patient(db, practice_id, patient_id)
 
@@ -38,8 +39,43 @@ class PatientPhotosService:
             cloudinary_url=result["url"],
             photo_type=photo_type,
             notes=notes,
+            stage=stage,
+            body_area=body_area,
+            procedure_id=procedure_id,
         )
         db.add(photo)
+        await db.flush()
+        await db.refresh(photo)
+        return photo
+
+    async def update_photo(
+        self, db: AsyncSession, practice_id: UUID, photo_id: UUID,
+        stage: str | None, body_area: str | None, procedure_id: UUID | None,
+        is_marketing_approved: bool | None, notes: str | None,
+    ) -> PatientPhoto:
+        # Tagging a photo into the timeline (or approving it for marketing)
+        # usually happens after the fact, not at the moment of a quick
+        # upload — this is the "edit" side of that.
+        query = (
+            select(PatientPhoto)
+            .join(Patient, PatientPhoto.patient_id == Patient.id)
+            .where(PatientPhoto.id == photo_id, Patient.practice_id == practice_id)
+        )
+        result = await db.execute(query)
+        photo = result.scalar_one_or_none()
+        if photo is None:
+            raise NotFoundException("Photo not found")
+
+        if stage is not None:
+            photo.stage = stage
+        if body_area is not None:
+            photo.body_area = body_area
+        if procedure_id is not None:
+            photo.procedure_id = procedure_id
+        if is_marketing_approved is not None:
+            photo.is_marketing_approved = is_marketing_approved
+        if notes is not None:
+            photo.notes = notes
         await db.flush()
         await db.refresh(photo)
         return photo

@@ -4,7 +4,11 @@ import type { Session } from "../sessions/types";
 // built yet — see app/dashboard/README.md, Phase 1). Shaped exactly like the
 // real `Conversation`/`Message` models so swapping this for a real fetch
 // later is a data-source change, not a UI rewrite.
-export const MOCK_SESSIONS: Session[] = [
+// avatarUrl/aiPaused are filled in by the .map() below so this file doesn't
+// need every entry touched whenever Session gains a new required field —
+// still typed against Session (minus those two) so the literal unions
+// (channel/status/message.from) stay checked.
+const RAW_SESSIONS: Omit<Session, "avatarUrl" | "aiPaused">[] = [
 {
   id: "s1",
   patientId: "p1",
@@ -113,6 +117,7 @@ export const MOCK_SESSIONS: Session[] = [
 
 }];
 
+export const MOCK_SESSIONS: Session[] = RAW_SESSIONS.map((s) => ({ ...s, avatarUrl: null, aiPaused: false }));
 
 export const MOCK_OVERVIEW_STATS = {
   sessionsToday: 24,

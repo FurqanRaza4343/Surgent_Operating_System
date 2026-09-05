@@ -20,7 +20,9 @@ import {
   WalletIcon,
   TrendingUpIcon,
   PackageIcon,
-  MessageCircleIcon
+  MessageCircleIcon,
+  SparklesIcon,
+  FileTextIcon
 } from "lucide-react";
 import { AGENT_CATEGORIES } from "../../../data/agents";
 import { DASHBOARD_ROUTES } from "../constants/routes";
@@ -69,9 +71,15 @@ const SIMPLE_ITEMS_TOP: NavItem[] = [
 
 
 const SIMPLE_ITEMS_MID: NavItem[] = [
-{ label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["owner", "doctor", "receptionist"] },
+// Owner already has Main Agent front-and-center on their Overview page
+// (AIInsightsPanel's embedded compact chat) — a second sidebar entry for
+// them duplicated it. Doctor/Receptionist have no such widget anywhere, so
+// the sidebar stays their only way in.
+{ label: "Main Agent", to: DASHBOARD_ROUTES.commandCenter, icon: SparklesIcon, allowedRoles: ["doctor", "receptionist"] },
+{ label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["doctor", "receptionist"] },
 { label: "Patients", to: DASHBOARD_ROUTES.patients, icon: UsersIcon, allowedRoles: ["owner", "doctor", "receptionist"], requiresPermission: "view_patients" },
 { label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon, allowedRoles: ["owner", "doctor"], requiresPermission: "view_doctors_crm" },
+{ label: "Surgery", to: DASHBOARD_ROUTES.surgeries, icon: ScissorsIcon, allowedRoles: ["owner", "doctor"] },
 { label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "receptionist"], requiresPermission: "view_ai_receptionist" },
 { label: "My Calendar", to: DASHBOARD_ROUTES.myCalendar, icon: CalendarIcon, allowedRoles: ["doctor"], requiresPermission: "view_own_calendar" },
 { label: "Front Desk", to: DASHBOARD_ROUTES.frontDesk, icon: LayoutDashboardIcon, allowedRoles: ["owner"] },
@@ -85,6 +93,7 @@ const SETTINGS_ITEMS: NavItem[] = [
 { label: "Agent settings", to: DASHBOARD_ROUTES.settingsAgents, icon: SettingsIcon, allowedRoles: ["owner", "doctor"] },
 { label: "Profile", to: DASHBOARD_ROUTES.settingsProfile, icon: UserCircleIcon, allowedRoles: ["owner", "doctor"] },
 { label: "Procedures", to: DASHBOARD_ROUTES.settingsProcedures, icon: ScissorsIcon, allowedRoles: ["owner", "doctor"] },
+{ label: "Consent templates", to: DASHBOARD_ROUTES.settingsConsentTemplates, icon: FileTextIcon, allowedRoles: ["owner"] },
 { label: "Plan & billing", to: DASHBOARD_ROUTES.settingsBilling, icon: CreditCardIcon, allowedRoles: ["owner"] }];
 
 

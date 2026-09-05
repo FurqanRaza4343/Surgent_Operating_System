@@ -31,6 +31,10 @@ class DoctorsService:
             license_number=data.license_number,
             bio=data.bio,
             capabilities=data.capabilities,
+            qualifications=[q.model_dump() for q in data.qualifications],
+            specializations=data.specializations,
+            working_hours=data.working_hours,
+            commission_percent=data.commission_percent,
         )
         db.add(doctor)
         await db.flush()

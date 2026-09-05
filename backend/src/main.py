@@ -1,4 +1,5 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -7,17 +8,33 @@ from src.config import get_settings
 from src.server.middleware import setup_middleware, ALLOWED_ORIGINS
 from src.server.exceptions import AppException
 from src.router.agents import register_routes
+from src.services.channels.green_api_poller import GreenAPIPoller
 
 settings = get_settings()
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 logger = logging.getLogger("aesthetixai")
 
+poller = GreenAPIPoller()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    poller.start()
+    logger.info("Green API poller started on app startup")
+    try:
+        yield
+    finally:
+        poller.stop()
+        logger.info("Green API poller stopped")
+
+
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
+    lifespan=lifespan,
 )
 
 setup_middleware(app)

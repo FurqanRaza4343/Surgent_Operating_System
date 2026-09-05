@@ -12,10 +12,17 @@ from src.schemas.consent_document import (
     SignConsentDocumentRequest,
     ConsentDocumentResponse,
 )
+from src.schemas.consent_template import (
+    CreateConsentTemplateRequest,
+    UpdateConsentTemplateRequest,
+    ConsentTemplateResponse,
+)
 from src.controller.consent.consent_controllers import ConsentController
+from src.controller.consent.consent_template_controllers import ConsentTemplateController
 
 router = APIRouter(tags=["Consent Documents"])
 controller = ConsentController()
+template_controller = ConsentTemplateController()
 
 # Administrative/legal, not clinical judgment — open to any active practice
 # member (front desk routinely collects consent at intake), unlike
@@ -58,3 +65,36 @@ async def void_consent_document(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.void_document(db, user, document_id)
+
+
+# --- Consent templates -------------------------------------------------
+# The editable wording behind each consent type — see
+# models/consent_document.py's ConsentTemplate docstring. Same open-to-any-
+# staff-role reasoning as the documents above.
+
+
+@router.post("/consent-templates", response_model=ConsentTemplateResponse)
+async def create_consent_template(
+    data: CreateConsentTemplateRequest,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await template_controller.create_template(db, user, data)
+
+
+@router.get("/consent-templates", response_model=list[ConsentTemplateResponse])
+async def list_consent_templates(
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await template_controller.list_templates(db, user)
+
+
+@router.patch("/consent-templates/{template_id}", response_model=ConsentTemplateResponse)
+async def update_consent_template(
+    template_id: UUID,
+    data: UpdateConsentTemplateRequest,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await template_controller.update_template(db, user, template_id, data)

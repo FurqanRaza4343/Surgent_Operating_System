@@ -27,12 +27,18 @@ export function RequirePractice({ children }: { children: React.ReactNode }) {
 type CheckState = "loading" | "ok" | "pending-doctor" | "no-practice";
 
 function RealPracticeGate({ children }: { children: React.ReactNode }) {
-  const { authedFetch, isSignedIn } = useAuthedFetch();
+  const { authedFetch, isSignedIn, isLoaded } = useAuthedFetch();
   const [state, setState] = useState<CheckState>("loading");
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Clerk's isSignedIn is undefined while it's still figuring out the
+      // session (e.g. right after a fresh page load/reload) — `!isSignedIn`
+      // alone can't tell "still loading" apart from "actually signed out",
+      // so it was racing into the "no active plan" screen on every reload
+      // even for a genuinely signed-in user. Wait for isLoaded first.
+      if (!isLoaded) return;
       if (!isSignedIn) {
         if (!cancelled) setState(readPlanOverride() ? "ok" : "no-practice");
         return;
@@ -56,7 +62,7 @@ function RealPracticeGate({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [authedFetch, isSignedIn]);
+  }, [authedFetch, isSignedIn, isLoaded]);
 
   if (state === "loading") return null;
   if (state === "ok") return <>{children}</>;

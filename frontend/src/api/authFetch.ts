@@ -15,7 +15,11 @@ import { apiFetch, ApiError } from "./client";
 // re-fetched the REAL plan from the backend and immediately overwrote the
 // switch, making it look like the change "redirected" back to the old plan.
 export function useAuthedFetch() {
-  const { getToken, isSignedIn } = useAuth();
+  // isSignedIn is a tri-state while Clerk initializes: undefined (still
+  // loading) / false (signed out) / true. Callers that only check
+  // `!isSignedIn` treat "still loading" as "signed out" — see
+  // RequirePractice.tsx's isLoaded fix for why that matters.
+  const { getToken, isSignedIn, isLoaded } = useAuth();
 
   const authedFetch = useCallback(
     async function authedFetch<T>(path: string, init?: RequestInit): Promise<T> {
@@ -29,5 +33,5 @@ export function useAuthedFetch() {
     [getToken, isSignedIn]
   );
 
-  return { authedFetch, isSignedIn };
+  return { authedFetch, isSignedIn, isLoaded };
 }

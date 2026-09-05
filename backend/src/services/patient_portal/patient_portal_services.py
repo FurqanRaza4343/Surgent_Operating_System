@@ -1,6 +1,5 @@
 from __future__ import annotations
-import secrets
-from datetime import date, datetime, timezone
+from datetime import datetime, timezone
 from uuid import UUID
 
 from sqlalchemy import select
@@ -12,6 +11,8 @@ from src.models.appointment import Appointment, AppointmentStatus
 from src.models.consent_document import ConsentDocument
 from src.models.invoice import Invoice, InvoiceStatus
 from src.models.patient_photo import PatientPhoto
+from src.models.doctor import Doctor
+from src.models.treatment_plan import TreatmentPlan, TreatmentPlanItem
 from src.schemas.patient_portal import (
     PortalAppointment,
     PortalBookingRequest,
@@ -19,90 +20,42 @@ from src.schemas.patient_portal import (
     PortalInvoice,
     PortalPatientResponse,
     PortalPhoto,
+    PortalDoctorInfo,
+    PortalTreatmentPlan,
+    PortalTreatmentPlanItem,
 )
-from src.server.exceptions import NotFoundException, ForbiddenException, AppException
-
-# Frontend origin used to build the shareable portal URL. Kept in lockstep
-# with the frontend's /portal/:token route (see frontend/src/App.tsx).
-PORTAL_BASE_URL = "http://localhost:5173/portal"
+from src.server.exceptions import AppException
 
 
 class PatientPortalService:
-    """Backs the link-based patient portal (Raasta B demo).
+    """Read/write data access for a *logged-in* patient (see
+    patient_portal_auth_service.py for the login itself — everything here
+    takes an already-verified Patient, resolved by the
+    get_current_portal_patient dependency, never a raw token)."""
 
-    Two distinct surfaces live here:
-
-    1. Owner-side link generation — practice-scoped, called with the owner's
-       practice_id, returns a shareable /portal/:token URL.
-
-    2. Public token lookup — deliberately has NO practice-member dependency.
-       The high-entropy `portal_token` IS the credential: anyone who possesses
-       the token may read that patient's read-only view. This is fine for a
-       demo (the token is unguessable), but the portal must move to real
-       per-patient auth (Clerk) before production — see the phase note.
-
-    Security note: the raw token is stored on the Patient row. For a demo
-    this is acceptable (secrets.token_urlsafe(32) is unguessable), but a
-    production portal must store only a hash of the token.
-    """
-
-    # --- Owner-side: generate / manage a link ---------------------------
-
-    async def generate_link(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> str:
-        patient = await self._get_practice_patient(db, practice_id, patient_id)
-        if not patient.portal_token:
-            patient.portal_token = secrets.token_urlsafe(32)
-        patient.portal_enabled = True
-        await db.flush()
-        return f"{PORTAL_BASE_URL}/{patient.portal_token}"
-
-    async def revoke_link(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> None:
-        patient = await self._get_practice_patient(db, practice_id, patient_id)
-        patient.portal_token = None
-        patient.portal_enabled = False
-        await db.flush()
-
-    async def get_link_state(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> tuple[str | None, bool]:
-        patient = await self._get_practice_patient(db, practice_id, patient_id)
-        url = f"{PORTAL_BASE_URL}/{patient.portal_token}" if patient.portal_token else None
-        return url, patient.portal_enabled
-
-    # --- Public side: resolve a token to read-only data -----------------
-
-    async def resolve_token(self, db: AsyncSession, token: str) -> PortalPatientResponse:
-        if not token:
-            raise NotFoundException("Portal not found")
-        result = await db.execute(select(Patient).where(Patient.portal_token == token))
-        patient = result.scalar_one_or_none()
-        if patient is None or not patient.portal_enabled:
-            raise NotFoundException("Portal not found")
-
+    async def get_my_portal_data(self, db: AsyncSession, patient: Patient) -> PortalPatientResponse:
         appointments, consents, invoices, photos, pending = await self._load_related(db, patient.id)
+        doctor = await self._resolve_assigned_doctor(db, patient)
+        treatment_plans = await self._load_treatment_plans(db, patient.id)
         return PortalPatientResponse(
             id=patient.id,
+            portal_id=patient.portal_id,
             first_name=patient.first_name,
             last_name=patient.last_name,
             email=patient.email,
             phone=patient.phone,
             chief_complaint=patient.chief_complaint,
             consent_status=patient.consent_status,
+            doctor=doctor,
             appointments=appointments,
             consent_documents=consents,
             invoices=invoices,
             photos=photos,
+            treatment_plans=treatment_plans,
             invoice_total_pending=pending,
         )
 
-    # --- Public side: self-serve booking --------------------------------
-
-    async def book_appointment(self, db: AsyncSession, token: str, data: PortalBookingRequest) -> Appointment:
-        if not token:
-            raise NotFoundException("Portal not found")
-        result = await db.execute(select(Patient).where(Patient.portal_token == token))
-        patient = result.scalar_one_or_none()
-        if patient is None or not patient.portal_enabled:
-            raise NotFoundException("Portal not found")
-
+    async def book_appointment(self, db: AsyncSession, patient: Patient, data: PortalBookingRequest) -> Appointment:
         if data.end_time <= data.start_time:
             raise AppException("Appointment end time must be after start time")
         if data.start_time < datetime.now(timezone.utc):
@@ -123,16 +76,61 @@ class PatientPortalService:
         await db.refresh(appointment)
         return appointment
 
-    # --- Helpers --------------------------------------------------------
+    # --- Helpers ----------------------------------------------------------
 
-    async def _get_practice_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> Patient:
-        result = await db.execute(
-            select(Patient).where(Patient.id == patient_id, Patient.practice_id == practice_id)
+    async def _resolve_assigned_doctor(self, db: AsyncSession, patient: Patient) -> PortalDoctorInfo | None:
+        # "Assigned doctor" = whoever the patient's most recent
+        # doctor-carrying appointment points at; falls back to the most
+        # recent treatment plan's doctor if no appointment has one yet.
+        apt_result = await db.execute(
+            select(Doctor)
+            .join(Appointment, Appointment.doctor_id == Doctor.id)
+            .where(Appointment.patient_id == patient.id, Appointment.doctor_id.isnot(None))
+            .order_by(Appointment.start_time.desc())
+            .limit(1)
         )
-        patient = result.scalar_one_or_none()
-        if patient is None:
-            raise NotFoundException("Patient not found")
-        return patient
+        doctor = apt_result.scalar_one_or_none()
+        if doctor is None:
+            plan_result = await db.execute(
+                select(Doctor)
+                .join(TreatmentPlan, TreatmentPlan.doctor_id == Doctor.id)
+                .where(TreatmentPlan.patient_id == patient.id)
+                .order_by(TreatmentPlan.created_at.desc())
+                .limit(1)
+            )
+            doctor = plan_result.scalar_one_or_none()
+        if doctor is None:
+            return None
+        return PortalDoctorInfo(id=doctor.id, name=doctor.name, specialty=doctor.specialty, bio=doctor.bio, photo_url=doctor.photo_url)
+
+    async def _load_treatment_plans(self, db: AsyncSession, patient_id: UUID) -> list[PortalTreatmentPlan]:
+        result = await db.execute(
+            select(TreatmentPlan)
+            .options(selectinload(TreatmentPlan.items).selectinload(TreatmentPlanItem.procedure))
+            .where(TreatmentPlan.patient_id == patient_id)
+            .order_by(TreatmentPlan.created_at.desc())
+        )
+        plans = []
+        for plan in result.scalars().all():
+            plans.append(
+                PortalTreatmentPlan(
+                    id=plan.id,
+                    title=plan.title,
+                    status=plan.status.value if hasattr(plan.status, "value") else str(plan.status),
+                    items=[
+                        PortalTreatmentPlanItem(
+                            id=item.id,
+                            procedure_name=item.procedure.name if item.procedure else "Procedure",
+                            status=item.status.value if hasattr(item.status, "value") else str(item.status),
+                            estimated_price=float(item.estimated_price) if item.estimated_price is not None else None,
+                            actual_price=float(item.actual_price) if item.actual_price is not None else None,
+                        )
+                        for item in plan.items
+                    ],
+                    created_at=plan.created_at,
+                )
+            )
+        return plans
 
     async def _load_related(
         self, db: AsyncSession, patient_id: UUID

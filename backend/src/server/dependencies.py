@@ -11,8 +11,10 @@ from src.services.clerk.clerk_service import ClerkService
 from src.services.practice.practice_services import PracticeService
 from src.services.admin.plan_services import PlanService
 from src.services.admin.admin_auth_service import verify_admin_token
+from src.services.patient_portal.patient_portal_auth_service import PatientPortalAuthService
 from src.models.user import User, UserRole
 from src.models.practice import Practice
+from src.models.patient import Patient
 from src.models.subscription import SubscriptionTier
 
 plan_service = PlanService()
@@ -66,7 +68,15 @@ async def get_current_practice_user(
     # the sub, re-link by email so the existing practice account keeps working
     # instead of 401-ing until manually re-provisioned.
     if local_user is None:
+        # Clerk's default session JWT often omits `email` (only sub/sid are
+        # guaranteed) — fall back to the Backend API when the claim is
+        # missing, same pattern as PracticeController.claim does for checkout.
         email = (user.get("email") or "").strip().lower()
+        if not email:
+            full_user = await ClerkService().get_user(user.get("sub"))
+            if full_user:
+                addrs = full_user.get("email_addresses") or []
+                email = addrs[0]["email_address"].strip().lower() if addrs else ""
         if email:
             result = await db.execute(select(User).where(func.lower(User.email) == email))
             local_user = result.scalar_one_or_none()
@@ -125,6 +135,29 @@ def require_role(*roles: UserRole):
         return local_user
 
     return _check
+
+
+portal_auth_service = PatientPortalAuthService()
+
+
+async def get_current_portal_patient(
+    authorization: str = Header(default=""),
+    db: AsyncSession = Depends(get_db),
+) -> Patient:
+    # The Patient Portal's own auth surface — a self-issued JWT from a
+    # portal_id+PIN login (see patient_portal_auth_service.py), completely
+    # separate from Clerk. Every /patient-portal/me* endpoint depends on
+    # this instead of get_current_practice_user.
+    if not authorization.startswith("Bearer "):
+        raise UnauthorizedException("Missing or invalid authorization header")
+    token = authorization.replace("Bearer ", "")
+    patient_id = portal_auth_service.verify_token(token)
+
+    result = await db.execute(select(Patient).where(Patient.id == patient_id))
+    patient = result.scalar_one_or_none()
+    if patient is None or not patient.portal_enabled:
+        raise UnauthorizedException("Invalid or expired session — please log in again")
+    return patient
 
 
 @dataclass

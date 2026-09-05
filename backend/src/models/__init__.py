@@ -2,7 +2,7 @@ from src.models.practice import Practice
 from src.models.user import User
 from src.models.patient import Patient
 from src.models.patient_photo import PatientPhoto
-from src.models.doctor import Doctor
+from src.models.doctor import Doctor, DoctorProcedure, DoctorAvailability
 from src.models.appointment import Appointment
 from src.models.review_request import ReviewRequest
 from src.models.pending_doctor_request import PendingDoctorRequest
@@ -20,12 +20,14 @@ from src.models.subscription import Subscription
 from src.models.procedure import Procedure
 from src.models.consultation_note import ConsultationNote
 from src.models.treatment_plan import TreatmentPlan, TreatmentPlanItem
-from src.models.consent_document import ConsentDocument
+from src.models.consent_document import ConsentDocument, ConsentTemplate
 from src.models.recovery_journal import RecoveryJournal
 from src.models.pending_signup import PendingSignup
 from src.models.demo_request import DemoRequest
 from src.models.agent_costing import AgentCosting
 from src.models.plan import Plan
+from src.models.waitlist_entry import WaitlistEntry
+from src.models.surgery import Surgery
 
 __all__ = [
     "Practice",
@@ -33,6 +35,8 @@ __all__ = [
     "Patient",
     "PatientPhoto",
     "Doctor",
+    "DoctorProcedure",
+    "DoctorAvailability",
     "Appointment",
     "ReviewRequest",
     "PendingDoctorRequest",
@@ -53,9 +57,12 @@ __all__ = [
     "TreatmentPlan",
     "TreatmentPlanItem",
     "ConsentDocument",
+    "ConsentTemplate",
     "RecoveryJournal",
     "PendingSignup",
     "DemoRequest",
     "AgentCosting",
     "Plan",
+    "WaitlistEntry",
+    "Surgery",
 ]

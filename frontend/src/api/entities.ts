@@ -5,6 +5,8 @@
 // get_current_practice_user like every other domain here.
 // ============================================================================
 
+import { BASE_URL, ApiError } from "./client";
+
 type AuthedFetch = <T>(path: string, init?: RequestInit) => Promise<T>;
 
 // --- patients ---------------------------------------------------------------
@@ -26,6 +28,20 @@ export interface PatientResponse {
   lifecycle_stage: string;
   lost_reason: string | null;
   source: string | null;
+  // --- profile depth (Week 2) ---
+  gender: string | null;
+  emergency_contact_name: string | null;
+  emergency_contact_phone: string | null;
+  allergies: Array<{ name?: string; severity?: string; reaction?: string }>;
+  surgical_history: Array<{ procedure?: string; year?: number; facility?: string; notes?: string }>;
+  current_medications: Array<{ name?: string; dosage?: string; frequency?: string }>;
+  smoking_status: string | null;
+  previous_cosmetic_procedures: Array<{ procedure?: string; year?: number; provider?: string }>;
+  referral_source: string | null;
+  preferred_language: string | null;
+  communication_preferences: Record<string, boolean>;
+  insurance_provider: string | null;
+  insurance_number: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -54,6 +70,15 @@ export function listPatients(authedFetch: AuthedFetch) {
   return authedFetch<PatientResponse[]>("/api/v1/patients");
 }
 
+// The raw, un-cached single-patient fetch — used by sections that need the
+// full profile-depth fields (Week 2) that usePatients()'s mapped client-side
+// Patient type doesn't carry, same reasoning as ClinicalSection/
+// PatientPhotosGallery being self-fetching rather than reading the parent's
+// cached list.
+export function getPatientById(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<PatientResponse>(`/api/v1/patients/${id}`);
+}
+
 export interface UpdatePatientRequest {
   first_name?: string;
   last_name?: string;
@@ -62,6 +87,19 @@ export interface UpdatePatientRequest {
   chief_complaint?: string | null;
   needs_surgery?: boolean;
   source?: string | null;
+  gender?: string | null;
+  emergency_contact_name?: string | null;
+  emergency_contact_phone?: string | null;
+  allergies?: Array<{ name?: string; severity?: string; reaction?: string }>;
+  surgical_history?: Array<{ procedure?: string; year?: number; facility?: string; notes?: string }>;
+  current_medications?: Array<{ name?: string; dosage?: string; frequency?: string }>;
+  smoking_status?: string | null;
+  previous_cosmetic_procedures?: Array<{ procedure?: string; year?: number; provider?: string }>;
+  referral_source?: string | null;
+  preferred_language?: string | null;
+  communication_preferences?: Record<string, boolean>;
+  insurance_provider?: string | null;
+  insurance_number?: string | null;
 }
 
 export function updatePatient(authedFetch: AuthedFetch, id: string, data: UpdatePatientRequest) {
@@ -171,6 +209,8 @@ export interface AppointmentResponse {
   start_time: string;
   end_time: string;
   checked_in_at: string | null;
+  with_doctor_at: string | null;
+  ready_for_checkout_at: string | null;
   notes: string | null;
   created_at: string;
   updated_at: string;
@@ -209,6 +249,116 @@ export function checkInAppointment(authedFetch: AuthedFetch, id: string) {
   return authedFetch<AppointmentResponse>(`/api/v1/appointments/${id}/check-in`, {
     method: "PATCH"
   });
+}
+
+export function startWithDoctor(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<AppointmentResponse>(`/api/v1/appointments/${id}/start-with-doctor`, {
+    method: "PATCH"
+  });
+}
+
+export function markReadyForCheckout(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<AppointmentResponse>(`/api/v1/appointments/${id}/ready-for-checkout`, {
+    method: "PATCH"
+  });
+}
+
+export function completeAppointment(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<AppointmentResponse>(`/api/v1/appointments/${id}/complete`, {
+    method: "PATCH"
+  });
+}
+
+export function markNoShow(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<AppointmentResponse>(`/api/v1/appointments/${id}/no-show`, {
+    method: "PATCH"
+  });
+}
+
+// --- waitlist -----------------------------------------------------------
+export interface WaitlistEntryResponse {
+  id: string;
+  practice_id: string;
+  patient_id: string | null;
+  patient_name: string;
+  phone: string | null;
+  doctor_id: string | null;
+  doctor_name: string | null;
+  requested_date: string | null;
+  notes: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateWaitlistEntryRequest {
+  patient_id?: string | null;
+  patient_name: string;
+  phone?: string | null;
+  doctor_id?: string | null;
+  requested_date?: string | null;
+  notes?: string | null;
+}
+
+export function listWaitlist(authedFetch: AuthedFetch) {
+  return authedFetch<WaitlistEntryResponse[]>("/api/v1/waitlist");
+}
+
+export function addToWaitlist(authedFetch: AuthedFetch, data: CreateWaitlistEntryRequest) {
+  return authedFetch<WaitlistEntryResponse>("/api/v1/waitlist", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
+export function fulfillWaitlistEntry(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<WaitlistEntryResponse>(`/api/v1/waitlist/${id}/fulfill`, {
+    method: "PATCH"
+  });
+}
+
+export function cancelWaitlistEntry(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<WaitlistEntryResponse>(`/api/v1/waitlist/${id}/cancel`, {
+    method: "PATCH"
+  });
+}
+
+// --- doctor "today at a glance" ------------------------------------------
+export interface WaitingRoomEntry {
+  appointment_id: string;
+  patient_id: string;
+  patient_name: string;
+  appointment_type: string;
+  status: string;
+  checked_in_at: string | null;
+  with_doctor_at: string | null;
+}
+
+export interface PendingNoteEntry {
+  note_id: string;
+  patient_id: string;
+  patient_name: string;
+  appointment_id: string | null;
+  created_at: string;
+}
+
+export interface DoctorAlertEntry {
+  type: string;
+  patient_id: string;
+  patient_name: string;
+  message: string;
+  since: string;
+}
+
+export interface DoctorTodayResponse {
+  waiting_room: WaitingRoomEntry[];
+  pending_notes: PendingNoteEntry[];
+  pending_consent_count: number;
+  alerts: DoctorAlertEntry[];
+}
+
+export function getMyToday(authedFetch: AuthedFetch) {
+  return authedFetch<DoctorTodayResponse>("/api/v1/doctors/me/today");
 }
 
 // --- doctor applications ------------------------------------------------------
@@ -332,6 +482,8 @@ export interface ConversationListItem {
   status: string;
   last_message_preview: string;
   updated_at: string;
+  avatar_url: string | null;
+  ai_paused: boolean;
 }
 
 export interface MessageResponse {
@@ -376,6 +528,22 @@ export async function getConversation(authedFetch: AuthedFetch, id: string): Pro
 export async function resolveConversation(authedFetch: AuthedFetch, id: string): Promise<ConversationDetail> {
   return authedFetch<ConversationDetail>(`/api/v1/conversations/${id}/resolve`, {
     method: "POST",
+  });
+}
+
+// A staff member replying directly (sends over WhatsApp/etc. if the
+// conversation has a real channel, and pauses AI auto-reply for it).
+export async function sendConversationMessage(authedFetch: AuthedFetch, id: string, body: string): Promise<ConversationDetail> {
+  return authedFetch<ConversationDetail>(`/api/v1/conversations/${id}/messages`, {
+    method: "POST",
+    body: JSON.stringify({ body }),
+  });
+}
+
+export async function toggleConversationAi(authedFetch: AuthedFetch, id: string, paused: boolean): Promise<ConversationDetail> {
+  return authedFetch<ConversationDetail>(`/api/v1/conversations/${id}/toggle-ai`, {
+    method: "POST",
+    body: JSON.stringify({ paused }),
   });
 }
 
@@ -659,20 +827,48 @@ export function updateTreatmentPlanItem(authedFetch: AuthedFetch, id: string, da
 // --- patient photos -----------------------------------------------------------
 // Matches backend/src/router/patient_photos/patient_photos_router.py.
 // Owner/Doctor only (clinical photography), like clinical notes.
+export type PhotoStage = "before" | "day7" | "day14" | "1mo" | "3mo" | "6mo" | "1yr" | "other";
+export const PHOTO_STAGES: { value: PhotoStage; label: string }[] = [
+  { value: "before", label: "Before" },
+  { value: "day7", label: "Day 7" },
+  { value: "day14", label: "Day 14" },
+  { value: "1mo", label: "1 month" },
+  { value: "3mo", label: "3 months" },
+  { value: "6mo", label: "6 months" },
+  { value: "1yr", label: "1 year" },
+  { value: "other", label: "Other" }
+];
+
 export interface PatientPhotoResponse {
   id: string;
   patient_id: string;
   cloudinary_url: string;
   photo_type: string | null;
   notes: string | null;
+  stage: PhotoStage | null;
+  body_area: string | null;
+  procedure_id: string | null;
+  is_marketing_approved: boolean;
   created_at: string;
 }
 
-export function uploadPatientPhoto(authedFetch: AuthedFetch, patientId: string, file: File, photoType?: string, notes?: string) {
+export function uploadPatientPhoto(
+  authedFetch: AuthedFetch,
+  patientId: string,
+  file: File,
+  photoType?: string,
+  notes?: string,
+  stage?: string,
+  bodyArea?: string,
+  procedureId?: string
+) {
   const form = new FormData();
   form.append("file", file);
   if (photoType) form.append("photo_type", photoType);
   if (notes) form.append("notes", notes);
+  if (stage) form.append("stage", stage);
+  if (bodyArea) form.append("body_area", bodyArea);
+  if (procedureId) form.append("procedure_id", procedureId);
   return authedFetch<PatientPhotoResponse>(`/api/v1/patients/${patientId}/photos`, {
     method: "POST",
     body: form
@@ -681,6 +877,21 @@ export function uploadPatientPhoto(authedFetch: AuthedFetch, patientId: string, 
 
 export function listPatientPhotos(authedFetch: AuthedFetch, patientId: string) {
   return authedFetch<PatientPhotoResponse[]>(`/api/v1/patients/${patientId}/photos`);
+}
+
+export interface UpdatePatientPhotoRequest {
+  stage?: string | null;
+  body_area?: string | null;
+  procedure_id?: string | null;
+  is_marketing_approved?: boolean | null;
+  notes?: string | null;
+}
+
+export function updatePatientPhoto(authedFetch: AuthedFetch, photoId: string, data: UpdatePatientPhotoRequest) {
+  return authedFetch<PatientPhotoResponse>(`/api/v1/patient-photos/${photoId}`, {
+    method: "PATCH",
+    body: JSON.stringify(data)
+  });
 }
 
 export function deletePatientPhoto(authedFetch: AuthedFetch, photoId: string) {
@@ -693,6 +904,20 @@ export function deletePatientPhoto(authedFetch: AuthedFetch, photoId: string) {
 // Matches backend/src/router/consent/consent_router.py. Open to any active
 // practice role (Owner/Doctor/Receptionist) — administrative/legal, not
 // clinical judgment, unlike notes/photos.
+// The fixed set of consent types this practice can raise a document for —
+// matches backend/src/models/consent_document.py's own comment on the
+// intended real vocabulary (still free text server-side, but the frontend
+// only ever offers these).
+export const CONSENT_DOCUMENT_TYPES = [
+  "procedure",
+  "anesthesia",
+  "photo",
+  "marketing",
+  "financial",
+  "cancellation_policy",
+  "privacy_acknowledgement"
+] as const;
+
 export interface ConsentDocumentResponse {
   id: string;
   practice_id: string;
@@ -700,6 +925,8 @@ export interface ConsentDocumentResponse {
   document_type: string;
   content: string | null;
   version: number;
+  template_id: string | null;
+  template_version: number | null;
   status: "draft" | "sent" | "signed" | "void";
   signed_at: string | null;
   signed_by_name: string | null;
@@ -711,6 +938,47 @@ export interface ConsentDocumentResponse {
 export interface CreateConsentDocumentRequest {
   document_type: string;
   content?: string | null;
+  template_id?: string | null;
+}
+
+// --- consent templates ----------------------------------------------------
+export interface ConsentTemplateResponse {
+  id: string;
+  practice_id: string;
+  document_type: string;
+  version: number;
+  body: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateConsentTemplateRequest {
+  document_type: string;
+  body: string;
+}
+
+export interface UpdateConsentTemplateRequest {
+  body?: string | null;
+  is_active?: boolean | null;
+}
+
+export function createConsentTemplate(authedFetch: AuthedFetch, data: CreateConsentTemplateRequest) {
+  return authedFetch<ConsentTemplateResponse>("/api/v1/consent-templates", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
+export function listConsentTemplates(authedFetch: AuthedFetch) {
+  return authedFetch<ConsentTemplateResponse[]>("/api/v1/consent-templates");
+}
+
+export function updateConsentTemplate(authedFetch: AuthedFetch, id: string, data: UpdateConsentTemplateRequest) {
+  return authedFetch<ConsentTemplateResponse>(`/api/v1/consent-templates/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data)
+  });
 }
 
 export function createConsentDocument(authedFetch: AuthedFetch, patientId: string, data: CreateConsentDocumentRequest) {
@@ -733,6 +1001,98 @@ export function signConsentDocument(authedFetch: AuthedFetch, id: string, signed
 
 export function voidConsentDocument(authedFetch: AuthedFetch, id: string) {
   return authedFetch<ConsentDocumentResponse>(`/api/v1/consent-documents/${id}/void`, {
+    method: "POST"
+  });
+}
+
+// --- surgery ---------------------------------------------------------------
+// Matches backend/src/router/surgery/surgery_router.py. Owner/Doctor only,
+// same clinical-visibility boundary as consultation notes and photos.
+export interface SurgeryResponse {
+  id: string;
+  practice_id: string;
+  patient_id: string;
+  patient_name: string | null;
+  procedure_id: string | null;
+  procedure_name: string | null;
+  doctor_id: string;
+  doctor_name: string | null;
+  assistant_doctor_id: string | null;
+  assistant_doctor_name: string | null;
+  scheduled_appointment_id: string | null;
+  recovery_journal_id: string | null;
+  scheduled_date: string;
+  duration_estimate_minutes: number | null;
+  anesthesia_type: string | null;
+  facility_note: string | null;
+  pre_op_checklist: Array<{ item: string; checked: boolean; checked_by?: string | null; checked_at?: string | null }>;
+  implants_used: Array<{ type?: string; manufacturer?: string; lot_number?: string; size?: string }>;
+  operative_note: string | null;
+  status: "planned" | "completed" | "cancelled";
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSurgeryRequest {
+  patient_id: string;
+  procedure_id?: string | null;
+  doctor_id: string;
+  assistant_doctor_id?: string | null;
+  scheduled_appointment_id?: string | null;
+  scheduled_date: string;
+  duration_estimate_minutes?: number | null;
+  anesthesia_type?: string | null;
+  facility_note?: string | null;
+  pre_op_checklist?: Array<{ item: string; checked: boolean }>;
+}
+
+export interface UpdateSurgeryRequest {
+  scheduled_date?: string | null;
+  duration_estimate_minutes?: number | null;
+  anesthesia_type?: string | null;
+  facility_note?: string | null;
+  assistant_doctor_id?: string | null;
+  pre_op_checklist?: Array<{ item: string; checked: boolean }> | null;
+  implants_used?: Array<{ type?: string; manufacturer?: string; lot_number?: string; size?: string }> | null;
+  operative_note?: string | null;
+}
+
+export interface CompleteSurgeryRequest {
+  operative_note: string;
+  implants_used?: Array<{ type?: string; manufacturer?: string; lot_number?: string; size?: string }>;
+}
+
+export function createSurgery(authedFetch: AuthedFetch, data: CreateSurgeryRequest) {
+  return authedFetch<SurgeryResponse>("/api/v1/surgeries", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
+export function listSurgeries(authedFetch: AuthedFetch, patientId?: string) {
+  return authedFetch<SurgeryResponse[]>(`/api/v1/surgeries${patientId ? `?patient_id=${patientId}` : ""}`);
+}
+
+export function getSurgery(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<SurgeryResponse>(`/api/v1/surgeries/${id}`);
+}
+
+export function updateSurgery(authedFetch: AuthedFetch, id: string, data: UpdateSurgeryRequest) {
+  return authedFetch<SurgeryResponse>(`/api/v1/surgeries/${id}`, {
+    method: "PATCH",
+    body: JSON.stringify(data)
+  });
+}
+
+export function completeSurgery(authedFetch: AuthedFetch, id: string, data: CompleteSurgeryRequest) {
+  return authedFetch<SurgeryResponse>(`/api/v1/surgeries/${id}/complete`, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
+export function cancelSurgery(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<SurgeryResponse>(`/api/v1/surgeries/${id}/cancel`, {
     method: "POST"
   });
 }
@@ -1077,12 +1437,19 @@ export function listMessageThreads(authedFetch: AuthedFetch) {
 }
 
 // --- patient portal ----------------------------------------------------------
-// Link-based demo portal — Owner generates / revokes a shareable /portal/:token
-// URL for a patient (backend/src/router/patient_portal/patient_portal_router.py),
-// and the patient opens that URL to read their own appointments/consents/invoices.
-export interface PortalLinkResponse {
-  portal_url: string | null;
+// Real ID+PIN login (backend/src/router/patient_portal/patient_portal_router.py) —
+// replaces the earlier plaintext-link-token scheme entirely. Owner/staff manage
+// access (enable/reset-PIN/disable) via authedFetch (Clerk); the patient's own
+// session is a separate, short-lived JWT from POST /login, sent as a Bearer
+// token by portalFetch below — never Clerk, never the practice's authedFetch.
+export interface PortalAccessResponse {
+  portal_id: string | null;
   enabled: boolean;
+}
+
+export interface PortalPinIssuedResponse {
+  portal_id: string;
+  pin: string;
 }
 
 export interface PortalAppointment {
@@ -1119,18 +1486,45 @@ export interface PortalPhoto {
   taken_at: string;
 }
 
+export interface PortalDoctorInfo {
+  id: string;
+  name: string;
+  specialty: string | null;
+  bio: string | null;
+  photo_url: string | null;
+}
+
+export interface PortalTreatmentPlanItem {
+  id: string;
+  procedure_name: string;
+  status: string;
+  estimated_price: number | null;
+  actual_price: number | null;
+}
+
+export interface PortalTreatmentPlan {
+  id: string;
+  title: string;
+  status: string;
+  items: PortalTreatmentPlanItem[];
+  created_at: string;
+}
+
 export interface PortalPatientResponse {
   id: string;
+  portal_id: string | null;
   first_name: string;
   last_name: string;
   email: string | null;
   phone: string | null;
   chief_complaint: string | null;
   consent_status: boolean;
+  doctor: PortalDoctorInfo | null;
   appointments: PortalAppointment[];
   consent_documents: PortalConsentDocument[];
   invoices: PortalInvoice[];
   photos: PortalPhoto[];
+  treatment_plans: PortalTreatmentPlan[];
   invoice_total_pending: number;
 }
 
@@ -1141,35 +1535,77 @@ export interface PortalBookingRequest {
   notes?: string | null;
 }
 
-export function generatePortalLink(authedFetch: AuthedFetch, patientId: string) {
-  return authedFetch<PortalLinkResponse>(`/api/v1/patient-portal/patients/${patientId}/link`, {
+// --- Owner/staff-side management (authedFetch, Clerk) ---
+
+export function enablePatientPortal(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalPinIssuedResponse>(`/api/v1/patient-portal/patients/${patientId}/enable`, {
     method: "POST"
   });
 }
 
-export function revokePortalLink(authedFetch: AuthedFetch, patientId: string) {
-  return authedFetch<PortalLinkResponse>(`/api/v1/patient-portal/patients/${patientId}/link`, {
-    method: "DELETE"
+export function resetPatientPortalPin(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalPinIssuedResponse>(`/api/v1/patient-portal/patients/${patientId}/reset-pin`, {
+    method: "POST"
   });
 }
 
-export function getPortalLink(authedFetch: AuthedFetch, patientId: string) {
-  return authedFetch<PortalLinkResponse>(`/api/v1/patient-portal/patients/${patientId}/link`);
+export function disablePatientPortal(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalAccessResponse>(`/api/v1/patient-portal/patients/${patientId}/disable`, {
+    method: "POST"
+  });
 }
 
-// Public self-serve booking — no authedFetch: the portal token IS the
-// credential, so this plain-fetches against the same origin as the page.
-export async function portalBookAppointment(token: string, data: PortalBookingRequest): Promise<PortalPatientResponse> {
-  const res = await fetch(`/api/v1/patient-portal/${encodeURIComponent(token)}/appointments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data)
+export function getPatientPortalAccess(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalAccessResponse>(`/api/v1/patient-portal/patients/${patientId}/access`);
+}
+
+// --- Patient-side (own JWT, not Clerk) ---
+
+// Thin fetch wrapper mirroring client.ts's apiFetch, but Bearer-authed with
+// the patient's own portal session token instead of a Clerk session.
+async function portalFetch<T>(path: string, portalToken: string | null, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${BASE_URL}${path}`, {
+    ...init,
+    headers: {
+      "Content-Type": "application/json",
+      ...(portalToken ? { Authorization: `Bearer ${portalToken}` } : {}),
+      ...init?.headers
+    }
   });
   if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't book your appointment. Please try again.");
+    let detail: string | null = null;
+    try {
+      const body = await res.clone().json();
+      if (body && typeof body.detail === "string") detail = body.detail;
+    } catch {
+      // Non-JSON or empty error body — fall through to the generic message.
+    }
+    throw new ApiError(res.status, detail || `${init?.method || "GET"} ${path} failed with ${res.status}`);
   }
-  return res.json();
+  return res.json() as Promise<T>;
+}
+
+export interface PortalLoginResponse {
+  access_token: string;
+  expires_in_minutes: number;
+}
+
+export function portalLogin(portalId: string, pin: string) {
+  return portalFetch<PortalLoginResponse>("/api/v1/patient-portal/login", null, {
+    method: "POST",
+    body: JSON.stringify({ portal_id: portalId, pin })
+  });
+}
+
+export function getMyPortalData(portalToken: string) {
+  return portalFetch<PortalPatientResponse>("/api/v1/patient-portal/me", portalToken);
+}
+
+export function portalBookAppointment(portalToken: string, data: PortalBookingRequest) {
+  return portalFetch<PortalPatientResponse>("/api/v1/patient-portal/me/appointments", portalToken, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
 }
 
 export interface ConsultationRequestPayload {

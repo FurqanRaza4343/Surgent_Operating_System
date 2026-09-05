@@ -5,10 +5,12 @@ from sqlalchemy import select, desc, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.models.conversation import Conversation, ConversationStatus
-from src.models.message import Message
+from src.models.conversation import Conversation, ConversationChannel, ConversationStatus
+from src.models.message import Message, MessageRole
 from src.models.patient import Patient
+from src.models.practice import Practice
 from src.server.exceptions import NotFoundException
+from src.services.channels.whatsapp_green_api import WhatsAppGreenAPI
 
 
 class ConversationsService:
@@ -31,7 +33,15 @@ class ConversationsService:
     ) -> list[Conversation]:
         query = (
             select(Conversation)
-            .where(Conversation.practice_id == practice_id)
+            .where(
+                Conversation.practice_id == practice_id,
+                # "Main Agent" (Command Center) sessions live in this same
+                # table (see command_center_services.py) but are a staff
+                # tool, not a patient conversation — they have no patient_id
+                # and don't belong in this patient-facing inbox. Command
+                # Center has its own dedicated history view already.
+                Conversation.agent_type != "command_center",
+            )
             .options(selectinload(Conversation.patient), selectinload(Conversation.messages))
             .order_by(desc(Conversation.updated_at))
             .limit(limit)
@@ -74,6 +84,44 @@ class ConversationsService:
         conversation = await self.get_conversation(db, practice_id, conversation_id)
         conversation.status = ConversationStatus.RESOLVED
         conversation.is_active = False
+        await db.flush()
+        return conversation
+
+    async def send_staff_message(
+        self, db: AsyncSession, practice_id: UUID, conversation_id: UUID, body: str
+    ) -> Conversation:
+        """A staff member replying directly in a conversation — sends over
+        the real channel (WhatsApp today) if the conversation has one, and
+        pauses AI auto-replies so the AI Receptionist doesn't talk over a
+        human who's already taken over. See InboundService._generate_reply's
+        ai_paused check for the other half of this."""
+        conversation = await self.get_conversation(db, practice_id, conversation_id)
+
+        message = Message(conversation_id=conversation.id, role=MessageRole.STAFF, content=body, content_type="text")
+        db.add(message)
+        conversation.messages.append(message)
+
+        conversation.extra_data = {**(conversation.extra_data or {}), "ai_paused": True}
+        conversation.status = ConversationStatus.ACTIVE
+        await db.flush()
+
+        if conversation.channel == ConversationChannel.WHATSAPP and conversation.patient is not None and conversation.patient.phone:
+            practice = await db.get(Practice, practice_id)
+            wa = WhatsAppGreenAPI.from_practice_settings((practice.settings if practice else None) or {})
+            if wa is not None:
+                try:
+                    await wa.send_text(conversation.patient.phone, body)
+                except Exception:
+                    # The message is already saved either way — a failed send
+                    # doesn't lose the staff member's reply, it just means the
+                    # patient won't see it over WhatsApp this time.
+                    pass
+
+        return conversation
+
+    async def toggle_ai(self, db: AsyncSession, practice_id: UUID, conversation_id: UUID, paused: bool) -> Conversation:
+        conversation = await self.get_conversation(db, practice_id, conversation_id)
+        conversation.extra_data = {**(conversation.extra_data or {}), "ai_paused": paused}
         await db.flush()
         return conversation
 
