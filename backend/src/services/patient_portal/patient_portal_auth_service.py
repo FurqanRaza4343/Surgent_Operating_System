@@ -1,7 +1,6 @@
 from __future__ import annotations
 import random
 import secrets
-import time
 from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
@@ -13,41 +12,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.config import get_settings
 from src.models.patient import Patient
 from src.server.exceptions import NotFoundException, UnauthorizedException, AppException
+from src.services.audit.audit_log_service import AuditLogService
+from src.services.security.rate_limiter import RedisRateLimiter
 
 settings = get_settings()
+audit_log_service = AuditLogService()
 
 _PIN_LENGTH = 6
 
-
-class _InMemoryRateLimiter:
-    """Per-process, in-memory only — fine for this month's local/dev-only
-    deployment target (see system_design.md's hosting decision). A real
-    multi-worker/production deployment must swap this for a shared store
-    (Redis is already in this project's stack, unused today) since each
-    worker process would otherwise track its own separate counts."""
-
-    def __init__(self, max_attempts: int, window_seconds: int):
-        self.max_attempts = max_attempts
-        self.window_seconds = window_seconds
-        self._attempts: dict[str, list[float]] = {}
-
-    def check(self, key: str) -> None:
-        now = time.time()
-        recent = [t for t in self._attempts.get(key, []) if now - t < self.window_seconds]
-        if len(recent) >= self.max_attempts:
-            raise AppException(
-                f"Too many attempts — try again in a few minutes.", status_code=429
-            )
-        recent.append(now)
-        self._attempts[key] = recent
-
-    def reset(self, key: str) -> None:
-        self._attempts.pop(key, None)
-
-
-# Module-level singleton — intentional, mirrors the "one process, one
-# in-memory cache" scope this limiter is designed for.
-login_rate_limiter = _InMemoryRateLimiter(max_attempts=5, window_seconds=15 * 60)
+# Module-level singleton — Redis-backed (see RedisRateLimiter's own
+# docstring for why this replaced an earlier per-process in-memory version).
+login_rate_limiter = RedisRateLimiter(max_attempts=5, window_seconds=15 * 60)
 
 
 class PatientPortalAuthService:
@@ -110,12 +85,15 @@ class PatientPortalAuthService:
         patient = await self._get_practice_patient(db, practice_id, patient_id)
         return patient.portal_id, patient.portal_enabled
 
-    async def login(self, db: AsyncSession, portal_id: str, pin: str, client_key: str) -> tuple[str, Patient]:
+    async def login(self, db: AsyncSession, portal_id: str, pin: str, client_key: str, ip_address: str | None = None) -> tuple[str, Patient]:
         """Verifies portal_id+pin and returns (jwt, patient). Rate-limited
         per client_key (caller passes something like the requester's IP +
         the portal_id being attempted) to slow both PIN brute-forcing and
-        portal_id enumeration."""
-        login_rate_limiter.check(client_key)
+        portal_id enumeration. Every attempt — success or failure — gets an
+        AuditLog row; this is the highest-risk unauthenticated surface in
+        the app, so it's worth a real trail even before rate-limiting kicks
+        in."""
+        await login_rate_limiter.check(client_key)
 
         result = await db.execute(select(Patient).where(Patient.portal_id == portal_id))
         patient = result.scalar_one_or_none()
@@ -123,11 +101,22 @@ class PatientPortalAuthService:
         # Same generic failure for "no such ID," "portal disabled," and
         # "wrong PIN" — never tell an attacker which part was wrong.
         if patient is None or not patient.portal_enabled or not patient.portal_pin_hash:
+            await audit_log_service.log(db, None, "patient_portal", "portal_login.failed", ip_address=ip_address)
+            await db.commit()
             raise UnauthorizedException("Invalid portal ID or PIN")
         if not bcrypt.checkpw(pin.encode(), patient.portal_pin_hash.encode()):
+            await audit_log_service.log(
+                db, patient.practice_id, "patient_portal", "portal_login.failed",
+                resource_type="patient", resource_id=patient.id, ip_address=ip_address,
+            )
+            await db.commit()
             raise UnauthorizedException("Invalid portal ID or PIN")
 
-        login_rate_limiter.reset(client_key)
+        await login_rate_limiter.reset(client_key)
+        await audit_log_service.log(
+            db, patient.practice_id, "patient_portal", "portal_login.success",
+            resource_type="patient", resource_id=patient.id, ip_address=ip_address,
+        )
         token = self._issue_token(patient)
         return token, patient
 

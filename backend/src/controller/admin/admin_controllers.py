@@ -22,8 +22,14 @@ from src.schemas.plan import PlanResponse, PlanCreateRequest, PlanUpdateRequest
 from src.services.admin.admin_services import AdminService
 from src.services.admin.plan_services import PlanService
 from src.services.admin import admin_auth_service
+from src.services.security.rate_limiter import RedisRateLimiter
 from src.server.dependencies import AdminPrincipal
 from src.server.exceptions import NotFoundException, UnauthorizedException
+
+# A single hardcoded platform-owner account (see admin_auth_service.py) is
+# still a real credential reachable over the network — same class of risk
+# as the Patient Portal PIN login, so it gets the same treatment.
+admin_login_rate_limiter = RedisRateLimiter(max_attempts=5, window_seconds=15 * 60)
 
 
 class AdminController:
@@ -31,9 +37,11 @@ class AdminController:
         self.service = AdminService()
         self.plans = PlanService()
 
-    async def login(self, body: AdminLoginRequest) -> AdminLoginResponse:
+    async def login(self, body: AdminLoginRequest, client_key: str) -> AdminLoginResponse:
+        await admin_login_rate_limiter.check(client_key)
         if not admin_auth_service.authenticate(body.username, body.password):
             raise UnauthorizedException("Invalid username or password.")
+        await admin_login_rate_limiter.reset(client_key)
         return AdminLoginResponse(access_token=admin_auth_service.create_admin_token())
 
     async def me(self, admin: AdminPrincipal) -> AdminMeResponse:

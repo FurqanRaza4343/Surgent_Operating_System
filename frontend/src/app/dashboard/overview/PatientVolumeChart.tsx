@@ -1,5 +1,6 @@
 import React from "react";
 import { TrendingUpIcon } from "lucide-react";
+import type { Session } from "../sessions/types";
 import { computeDailyVolume } from "./computeVolume";
 
 const WIDTH = 800;
@@ -7,10 +8,10 @@ const HEIGHT = 220;
 const PAD = 24;
 
 // Hand-rolled inline SVG — matches BarRow.tsx/ProgressRing.tsx's existing
-// no-charting-library convention. Fed by real MOCK_SESSIONS-derived data
-// (computeVolume.ts), same source every other Overview number reads from.
-export function PatientVolumeChart() {
-  const points = computeDailyVolume();
+// no-charting-library convention. Fed by the live sessions OverviewPage
+// passes in (same source every other Overview number reads from).
+export function PatientVolumeChart({ sessions }: { sessions: Session[] }) {
+  const points = computeDailyVolume(sessions);
   const total = points.reduce((sum, p) => sum + p.count, 0);
   const max = Math.max(...points.map((p) => p.count), 1);
 

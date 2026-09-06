@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { LockIcon, DollarSignIcon } from "lucide-react";
 import { AGENT_CATEGORIES } from "../../../data/agents";
@@ -10,7 +10,7 @@ import { usePlan } from "../plan/PlanContext";
 import { minTierForCategory, planFor } from "../plan/plan";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { useAgentCosting } from "./useAgentCosting";
-import { MOCK_SESSIONS } from "../data/mockSessions";
+import { listConversations } from "../../../api/entities";
 import { MarketingOffersEditor } from "./MarketingOffersEditor";
 
 const TONE_OPTIONS: { value: AgentTone; label: string }[] = [
@@ -25,14 +25,27 @@ const SENSITIVITY_OPTIONS: { value: EscalationSensitivity; label: string }[] = [
 { value: "high", label: "High — escalate anything uncertain" }];
 
 
-function sessionsHandledBy(agentSlug: string) {
-  return MOCK_SESSIONS.filter((s) => s.agentSlug === agentSlug).length;
-}
-
 export function AgentSettingsPage() {
   const { getSetting, updateSetting } = useAgentSettings();
-  const { allowsCategory } = usePlan();
+  const { allowsCategory, authedFetch } = usePlan();
   const { costFor } = useAgentCosting();
+  const [sessionsByAgent, setSessionsByAgent] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!authedFetch) return;
+    let cancelled = false;
+    listConversations(authedFetch, { limit: 100 })
+      .then((rows) => {
+        if (cancelled) return;
+        const counts: Record<string, number> = {};
+        for (const row of rows) counts[row.agent_type] = (counts[row.agent_type] ?? 0) + 1;
+        setSessionsByAgent(counts);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [authedFetch]);
 
   return (
     <>
@@ -65,7 +78,7 @@ export function AgentSettingsPage() {
                   const setting = getSetting(agent.slug);
                   const enabled = setting.enabled && !locked;
                   const perSession = costFor(agent.slug);
-                  const sessions = sessionsHandledBy(agent.slug);
+                  const sessions = sessionsByAgent[agent.slug] ?? 0;
                   const monthlyCost = perSession * sessions;
 
                   return (
@@ -129,9 +142,10 @@ export function AgentSettingsPage() {
       </div>
 
       <p className="mt-4 text-xs text-ink-muted">
-        Saved to this browser for now — a real per-practice settings API (backed by the existing{" "}
-        <code className="rounded bg-sand-100 px-1.5 py-0.5">AgentConfig</code> model) is a later phase. Costing comes
-        from <code className="rounded bg-sand-100 px-1.5 py-0.5">GET /api/v1/agent-costing</code> — real, platform-wide
+        Saved to your practice via <code className="rounded bg-sand-100 px-1.5 py-0.5">GET/PUT /api/v1/agent-config</code> (the{" "}
+        <code className="rounded bg-sand-100 px-1.5 py-0.5">AgentConfig</code> model) — enabled, tone, and escalation
+        sensitivity apply practice-wide and are Owner-editable. Costing comes from{" "}
+        <code className="rounded bg-sand-100 px-1.5 py-0.5">GET /api/v1/agent-costing</code> — real, platform-wide
         per-session pricing, not mock.
       </p>
     </>);

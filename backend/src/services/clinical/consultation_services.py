@@ -1,4 +1,6 @@
 from __future__ import annotations
+import json
+import logging
 from uuid import UUID
 
 from sqlalchemy import select
@@ -7,8 +9,24 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.consultation_note import ConsultationNote, ConsultationNoteStatus
 from src.models.doctor import Doctor
 from src.models.patient import Patient
-from src.schemas.clinical import CreateConsultationNoteRequest, UpdateConsultationNoteRequest
+from src.schemas.clinical import CreateConsultationNoteRequest, UpdateConsultationNoteRequest, AIConsultationDraftResponse
+from src.services.llm.llm_service import LLMService
 from src.server.exceptions import NotFoundException, AppException
+
+logger = logging.getLogger(__name__)
+
+_AI_DRAFT_SYSTEM_PROMPT = (
+    "You turn a plastic surgery doctor's raw, freeform consultation notes (often dictated, unstructured) into a "
+    "clean SOAP note plus a short follow-up task list. Respond with ONLY a JSON object, no other text, in exactly "
+    "this shape:\n"
+    '{"subjective": string, "objective": string, "assessment": string, "plan": string, '
+    '"follow_up_tasks": [string, ...]}\n\n'
+    "Subjective = what the patient reports in their own words/history. Objective = exam findings/measurements "
+    "mentioned. Assessment = clinical impression. Plan = next steps/treatment direction. follow_up_tasks = short "
+    "actionable items staff should do (e.g. \"Schedule pre-op bloodwork\", \"Send consent form for rhinoplasty\") "
+    "— empty list if none apply. Only use what's actually in the doctor's notes below — never invent findings, "
+    "diagnoses, or measurements that aren't there. If a section has nothing to go on, leave it as an empty string."
+)
 
 
 class ConsultationService:
@@ -17,6 +35,42 @@ class ConsultationService:
     optionally the appointment they were written during. Every method is
     practice-scoped; callers always pass the requesting user's own
     practice_id."""
+
+    def __init__(self):
+        self.llm = LLMService()
+
+    async def ai_draft(
+        self, db: AsyncSession, practice_id: UUID, patient_id: UUID, raw_notes: str
+    ) -> AIConsultationDraftResponse:
+        """Consultation Assistant (Week 4) — drafts a SOAP note + follow-up
+        tasks from a doctor's own freeform/dictated notes. Purely a drafting
+        aid: the doctor still reviews and edits before saving via the normal
+        create_note flow — this never writes a ConsultationNote itself."""
+        patient_result = await db.execute(
+            select(Patient).where(Patient.id == patient_id, Patient.practice_id == practice_id)
+        )
+        patient = patient_result.scalar_one_or_none()
+        if patient is None:
+            raise NotFoundException("Patient not found")
+
+        context = f"Chief complaint on file: {patient.chief_complaint or 'none recorded'}\n\nDoctor's raw notes:\n{raw_notes}"
+        try:
+            raw = await self.llm.chat(
+                messages=[{"role": "user", "content": context}],
+                system_prompt=_AI_DRAFT_SYSTEM_PROMPT,
+                tier="low",
+            )
+            data = json.loads(raw.strip().removeprefix("```json").removeprefix("```").removesuffix("```").strip())
+            return AIConsultationDraftResponse(
+                subjective=str(data.get("subjective") or ""),
+                objective=str(data.get("objective") or ""),
+                assessment=str(data.get("assessment") or ""),
+                plan=str(data.get("plan") or ""),
+                follow_up_tasks=[str(t) for t in (data.get("follow_up_tasks") or [])],
+            )
+        except Exception as exc:
+            logger.exception("Consultation AI draft failed for patient %s", patient_id)
+            raise AppException(f"AI draft generation failed: {exc}")
 
     async def _resolve_doctor(self, db: AsyncSession, practice_id: UUID, user_id: UUID) -> Doctor:
         result = await db.execute(select(Doctor).where(Doctor.practice_id == practice_id, Doctor.user_id == user_id))

@@ -44,7 +44,7 @@ export function Navbar() {
             <Logo className="h-6 w-6" />
           </span>
           <span className="text-lg font-bold tracking-tight text-ink">
-            Aesthetix<span className="text-teal-600">AI</span>
+            <span className="text-teal-600">Ai</span>aceone
           </span>
         </Link>
 

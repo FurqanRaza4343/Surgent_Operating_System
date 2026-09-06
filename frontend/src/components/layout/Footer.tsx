@@ -22,7 +22,7 @@ export function Footer() {
                 <Logo className="h-6 w-6" />
               </span>
               <span className="text-lg font-bold tracking-tight text-ink">
-                Aesthetix<span className="text-teal-500">AI</span>
+                <span className="text-teal-500">Ai</span>aceone
               </span>
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-muted">
@@ -47,7 +47,7 @@ export function Footer() {
 
         <div className="mt-14 flex flex-col items-center justify-between gap-4 border-t border-sand-200 pt-6 sm:flex-row">
           <p className="text-sm text-ink-muted">
-            © {new Date().getFullYear()} AesthetixAI. All rights reserved.
+            © {new Date().getFullYear()} Aiaceone. All rights reserved.
           </p>
           <a href="/#security" className="text-sm text-ink-muted hover:text-teal-600">HIPAA</a>
         </div>

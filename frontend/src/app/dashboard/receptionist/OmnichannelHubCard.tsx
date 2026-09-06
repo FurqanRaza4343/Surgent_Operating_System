@@ -2,20 +2,17 @@ import React from "react";
 import { CheckCircle2Icon, CircleDotIcon } from "lucide-react";
 import { CHANNELS, type ChannelId } from "../data/channels";
 
-interface ChannelStatus {
-  channel: ChannelId;
+export interface ChannelStatus {
+  channel: string;
   connected: boolean;
   detail: string;
 }
 
-const CHANNEL_STATUSES: ChannelStatus[] = [
-  { channel: "whatsapp", connected: true, detail: "Green API · Active" },
-  { channel: "facebook", connected: false, detail: "Not connected yet" },
-  { channel: "instagram", connected: false, detail: "Not connected yet" },
-  { channel: "phone", connected: false, detail: "Twilio · Coming soon" },
-];
-
-export function OmnichannelHubCard() {
+// Connection state comes from the backend (GET /ai-receptionist/overview →
+// `channels`) — WhatsApp is "connected" only when the practice actually has
+// Green API credentials in Practice.settings, the rest are honestly shown
+// as not yet wired up.
+export function OmnichannelHubCard({ statuses }: { statuses: ChannelStatus[] }) {
   return (
     <div className="rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
       <div className="flex items-center gap-2">
@@ -24,8 +21,11 @@ export function OmnichannelHubCard() {
       </div>
 
       <div className="mt-4 space-y-2">
-        {CHANNEL_STATUSES.map((s) => {
-          const meta = CHANNELS[s.channel];
+        {statuses.length === 0 ?
+        <p className="text-sm text-ink-muted">No channels configured yet.</p> :
+
+        statuses.map((s) => {
+          const meta = CHANNELS[s.channel as ChannelId] || CHANNELS.whatsapp;
           const Icon = meta.icon;
           return (
             <div key={s.channel} className="flex items-center gap-3 rounded-2xl bg-sand-50 px-4 py-3">
@@ -45,7 +45,8 @@ export function OmnichannelHubCard() {
               )}
             </div>
           );
-        })}
+        })
+        }
       </div>
     </div>
   );

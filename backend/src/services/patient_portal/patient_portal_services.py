@@ -53,6 +53,8 @@ class PatientPortalService:
             photos=photos,
             treatment_plans=treatment_plans,
             invoice_total_pending=pending,
+            intake_completed=patient.intake_summary is not None,
+            intake_summary=patient.intake_summary,
         )
 
     async def book_appointment(self, db: AsyncSession, patient: Patient, data: PortalBookingRequest) -> Appointment:

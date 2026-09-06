@@ -94,6 +94,9 @@ class PatientResponse(BaseModel):
     communication_preferences: dict = {}
     insurance_provider: str | None = None
     insurance_number: str | None = None
+    # --- AI workflows (Week 4) ---
+    qualification: dict | None = None
+    intake_summary: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.server.dependencies import get_current_practice_user
+from src.server.audit import audit_action
 from src.models.user import User
 from src.schemas.patient import CreatePatientRequest, UpdatePatientRequest, UpdatePatientStageRequest, PatientResponse, FunnelStageCount
 from src.controller.patients.patients_controllers import PatientsController
@@ -45,7 +46,7 @@ async def funnel_summary(
 @router.get("/{patient_id}", response_model=PatientResponse)
 async def get_patient(
     patient_id: UUID,
-    user: User = Depends(get_current_practice_user),
+    user: User = Depends(audit_action("patient.view", "patient", id_param="patient_id")),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.get_patient(db, user, patient_id)
@@ -55,7 +56,7 @@ async def get_patient(
 async def update_patient(
     patient_id: UUID,
     data: UpdatePatientRequest,
-    user: User = Depends(get_current_practice_user),
+    user: User = Depends(audit_action("patient.update", "patient", id_param="patient_id")),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.update_patient(db, user, patient_id, data)

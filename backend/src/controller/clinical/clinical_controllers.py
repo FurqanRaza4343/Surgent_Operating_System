@@ -8,6 +8,8 @@ from src.schemas.clinical import (
     CreateConsultationNoteRequest,
     UpdateConsultationNoteRequest,
     ConsultationNoteResponse,
+    AIConsultationDraftRequest,
+    AIConsultationDraftResponse,
     CreateTreatmentPlanRequest,
     UpdateTreatmentPlanRequest,
     UpdateTreatmentPlanItemRequest,
@@ -40,6 +42,9 @@ class ClinicalController:
     async def update_note(self, db: AsyncSession, user: User, note_id: UUID, data: UpdateConsultationNoteRequest) -> ConsultationNoteResponse:
         note = await self.consultations.update_note(db, user.practice_id, note_id, data)
         return ConsultationNoteResponse.model_validate(note)
+
+    async def ai_draft_note(self, db: AsyncSession, user: User, data: AIConsultationDraftRequest) -> AIConsultationDraftResponse:
+        return await self.consultations.ai_draft(db, user.practice_id, data.patient_id, data.raw_notes)
 
     # --- Treatment Plans ---
 

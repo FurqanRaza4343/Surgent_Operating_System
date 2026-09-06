@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { PlayIcon, StethoscopeIcon, Volume2Icon, VolumeXIcon } from "lucide-react";
+import { StethoscopeIcon } from "lucide-react";
 import { useMediaQuery } from "../../hooks";
 
 interface Stop {
@@ -13,7 +13,7 @@ interface Stop {
 const STOPS: Stop[] = [
 {
   sectionId: "how-it-works",
-  message: "Hey, I'm AesthetixAI's agent — I'll show you around.",
+  message: "Hey — I'll point out the highlights as you scroll.",
   corner: "bottom-right"
 },
 {
@@ -38,10 +38,9 @@ const STOPS: Stop[] = [
 }];
 
 
-const BADGE = 64; // avatar circle size, px
+const BADGE = 56; // avatar circle size, px
 const MARGIN = 28;
 const NAV_CLEARANCE = 116; // keeps top-anchored stops below the fixed Navbar
-const DWELL_MS = 5000; // minimum time the big intro holds before scroll is released
 // Focus ring shown for keyboard users only (`:focus-visible`), styled to match
 // the brand instead of the browser's default blue — a plain `:focus` ring was
 // flashing on click, which read as a stray colour glitch.
@@ -58,50 +57,24 @@ function cornerToPoint(corner: Stop["corner"]) {
   }
 }
 
-export function ScrollGuideAvatar() {
+// A lightweight, persistent scroll-companion — a small badge that tracks
+// down the right edge of the page and surfaces a one-line hint per section.
+// Deliberately NOT a talking-avatar intro anymore: this used to open with a
+// full-screen video modal that blocked scrolling for a forced 5-second
+// dwell, using a cartoon "chibi" doctor illustration whose tone clashed with
+// the rest of the site's editorial, video-led hero. Kept the section-aware
+// positioning logic (it's genuinely useful, low-cost wayfinding) and dropped
+// everything else — no video, no forced dwell, no character illustration.
+export function ScrollGuideAvatar({ onAskAria }: { onAskAria?: (message: string) => void }) {
   const [avatarActive, setAvatarActive] = useState(false);
-  const [phase, setPhase] = useState<"intro" | "guide">("intro");
   const [retreated, setRetreated] = useState(false);
   const [activeStop, setActiveStop] = useState(0);
-  const [imageFailed, setImageFailed] = useState(false);
-  const [videoFailed, setVideoFailed] = useState(false);
-  const [muted, setMuted] = useState(true);
-  const [videoPaused, setVideoPaused] = useState(false);
-  const [dwellDone, setDwellDone] = useState(false);
   const [moving, setMoving] = useState(false);
   const [target, setTarget] = useState(() => cornerToPoint(STOPS[0].corner));
-  const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // React's `muted` prop on <video> doesn't reliably sync to the live DOM
-  // property after the initial render (a long-standing React gotcha) — set it
-  // imperatively so the mute control actually works.
-  const toggleMuted = () => {
-    setMuted((m) => {
-      const next = !m;
-      if (videoRef.current) {
-        videoRef.current.muted = next;
-        videoRef.current.play().catch(() => {});
-      }
-      return next;
-    });
-  };
-
-  const togglePlay = () => {
-    const v = videoRef.current;
-    if (!v) return;
-    if (v.paused) v.play().catch(() => {});else v.pause();
-  };
-
-  // The track carries one extra viewport-height of scroll after the 4th scene
-  // ("so the last flight completes") — that's the trailing stretch where the
-  // ambient sky/particles keep showing with nothing new happening (see the
-  // matching comment in CinematicHero.tsx, which fades that scene's copy out
-  // just before this point so it never overlaps the avatar). The avatar's big
-  // talking-avatar "intro" appears right as that stretch begins — same place
-  // the particles are — and shrinks into the small guide badge once the
-  // visitor scrolls a further ~1.3 viewport-heights past that point. Both this
-  // and the pricing retreat below are bidirectional (scrolling back up
-  // reverts them).
+  // The guide becomes active once the visitor has scrolled past the
+  // cinematic hero's scroll-scrubbed track (same trailing stretch described
+  // in CinematicHero.tsx) — no separate "intro" phase, it just appears.
   useEffect(() => {
     let ticking = false;
     const update = () => {
@@ -110,16 +83,13 @@ export function ScrollGuideAvatar() {
       // `.sw-root` is only added once `mountLetsScroll` has actually run and set
       // the real (tall) track height — before that, the container only has its
       // CSS `min-height: 100vh` fallback (see index.css), which would make
-      // `padStart` read as ~0 and briefly fire the avatar at page load.
+      // `padStart` read as ~0 and briefly activate the guide at page load.
       if (hero && hero.classList.contains("sw-root")) {
         const rect = hero.getBoundingClientRect();
         const vh = window.innerHeight;
         const padStart = rect.height - vh;
         const distancePastPadStart = -rect.top - padStart;
-        setAvatarActive(distancePastPadStart >= 0);
-        if (distancePastPadStart >= 0) {
-          setPhase(distancePastPadStart >= vh * 1.3 ? "guide" : "intro");
-        }
+        setAvatarActive(distancePastPadStart >= vh * 1.3);
       }
       const pricingHeading = document.getElementById("pricing-heading");
       if (pricingHeading) setRetreated(pricingHeading.getBoundingClientRect().bottom <= 0);
@@ -136,44 +106,9 @@ export function ScrollGuideAvatar() {
 
   // Below `lg` there's no reliable empty gutter to jump around in — collapse to a
   // single static corner badge instead of risking an overlap on narrow screens.
-  // The big intro moment is desktop-only for the same reason (plus it's a lot of
-  // video weight to push to a phone) — mobile goes straight to the small badge.
   const isDesktop = useMediaQuery("(min-width: 1024px)");
 
-  const showIntro = avatarActive && isDesktop && phase === "intro";
-  const showGuide = avatarActive && !retreated && !showIntro;
-
-  // The intro holds the visitor for a minimum dwell before they can scroll
-  // past it — starts fresh each time the intro (re)appears (e.g. after
-  // scrolling back up into it).
-  useEffect(() => {
-    if (!showIntro) {
-      setDwellDone(false);
-      return;
-    }
-    const timer = setTimeout(() => setDwellDone(true), DWELL_MS);
-    return () => clearTimeout(timer);
-  }, [showIntro]);
-
-  // Block scroll input while the dwell is active — preventDefault on wheel/
-  // touch/scroll-key events stops the scroll from happening at all, rather
-  // than letting it happen and snapping back (which would jitter).
-  useEffect(() => {
-    if (!showIntro || dwellDone) return;
-    const blockWheelOrTouch = (e: Event) => e.preventDefault();
-    const SCROLL_KEYS = [" ", "PageDown", "PageUp", "ArrowDown", "ArrowUp", "Home", "End"];
-    const blockKeys = (e: KeyboardEvent) => {
-      if (SCROLL_KEYS.includes(e.key)) e.preventDefault();
-    };
-    window.addEventListener("wheel", blockWheelOrTouch, { passive: false });
-    window.addEventListener("touchmove", blockWheelOrTouch, { passive: false });
-    window.addEventListener("keydown", blockKeys);
-    return () => {
-      window.removeEventListener("wheel", blockWheelOrTouch);
-      window.removeEventListener("touchmove", blockWheelOrTouch);
-      window.removeEventListener("keydown", blockKeys);
-    };
-  }, [showIntro, dwellDone]);
+  const showGuide = avatarActive && !retreated;
 
   // Track which of the 4 tour-stop sections is currently near the middle of the
   // viewport, using a narrow rootMargin band so the "active" section only changes
@@ -223,71 +158,6 @@ export function ScrollGuideAvatar() {
 
   return (
     <AnimatePresence>
-      {showIntro &&
-      <motion.div
-        key="intro"
-        className="fixed inset-0 z-50 flex flex-col items-center justify-center">
-
-          <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-ink/50 backdrop-blur-sm" />
-
-          <div className="relative z-10">
-            <motion.button
-            layoutId="sw-avatar"
-            layout
-            transition={{ type: "spring", stiffness: 160, damping: 24 }}
-            onClick={videoFailed ? undefined : togglePlay}
-            aria-label={videoFailed ? "AesthetixAI guide" : videoPaused ? "Play the introduction" : "Pause the introduction"}
-            className={`relative block h-72 w-72 overflow-hidden rounded-full border-4 border-white shadow-lift ${
-            videoFailed ? "" : "cursor-pointer"} ${FOCUS_RING}`
-            }>
-
-              {!videoFailed ?
-            <video
-              ref={videoRef}
-              autoPlay
-              loop
-              muted={muted}
-              playsInline
-              src="/lets-scroll/avatar-intro.mp4"
-              onError={() => setVideoFailed(true)}
-              onPlay={() => setVideoPaused(false)}
-              onPause={() => setVideoPaused(true)}
-              className="h-full w-full object-cover" /> :
-
-
-            <img
-              src="/lets-scroll/avatar-doctor.png"
-              alt="AesthetixAI guide"
-              className="h-full w-full object-cover"
-              onError={(e) => {e.currentTarget.style.display = "none";}} />
-
-            }
-              {videoPaused && !videoFailed &&
-            <span className="pointer-events-none absolute inset-0 flex items-center justify-center bg-ink/20">
-                  <PlayIcon className="h-14 w-14 text-white drop-shadow-lg" />
-                </span>
-            }
-            </motion.button>
-            {!videoFailed &&
-          <button
-            onClick={toggleMuted}
-            aria-label={muted ? "Unmute" : "Mute"}
-            className={`absolute bottom-2 right-2 flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-ink/70 text-white backdrop-blur-sm transition-colors hover:bg-ink/90 ${FOCUS_RING}`}>
-
-                {muted ? <VolumeXIcon className="h-4.5 w-4.5" /> : <Volume2Icon className="h-4.5 w-4.5" />}
-              </button>
-          }
-          </div>
-          <p className="relative z-10 mt-6 text-sm font-medium text-white/80">
-            {dwellDone ? "Keep scrolling to continue" : "Give me just a second…"}
-          </p>
-        </motion.div>
-      }
-
       {showGuide && !isDesktop &&
       <motion.div
         key="mobile-guide"
@@ -299,15 +169,18 @@ export function ScrollGuideAvatar() {
 
           <AnimatePresence>
             {!bubbleCollapsed &&
-            <motion.div
+            <motion.button
               initial={{ opacity: 0, scale: 0.94 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.94 }}
               transition={{ duration: 0.18 }}
-              className="rounded-2xl border border-sand-200 bg-white px-4 py-2.5 text-sm font-medium text-ink shadow-lift">
+              type="button"
+              onClick={() => onAskAria?.(STOPS[activeStop].message)}
+              aria-label={`Ask Aria about: ${STOPS[activeStop].message}`}
+              className="cursor-pointer rounded-2xl border border-sand-200 bg-white px-4 py-2.5 text-left text-sm font-medium text-ink shadow-lift transition-colors hover:border-teal-500/60 hover:text-teal-700">
 
                 {STOPS[activeStop].message}
-              </motion.div>
+              </motion.button>
             }
           </AnimatePresence>
           <button
@@ -315,7 +188,7 @@ export function ScrollGuideAvatar() {
             aria-label={bubbleCollapsed ? "Show guide message" : "Hide guide message"}
             className={`shrink-0 rounded-full ${FOCUS_RING}`}>
 
-            <AvatarBadge imageFailed={imageFailed} setImageFailed={setImageFailed} small={bubbleCollapsed} />
+            <AvatarBadge small={bubbleCollapsed} />
           </button>
         </motion.div>
       }
@@ -323,31 +196,34 @@ export function ScrollGuideAvatar() {
       {showGuide && isDesktop &&
       <motion.div
         key="desktop-guide"
-        className="fixed z-50 h-16 w-16"
+        className="fixed z-50 h-14 w-14"
         animate={{ top: target.top, left: target.left }}
         exit={{ opacity: 0 }}
         transition={{ type: "spring", stiffness: 170, damping: 22 }}
         onAnimationStart={() => setMoving(true)}
         onAnimationComplete={() => setMoving(false)}>
 
-          <div className="relative h-16 w-16">
+          <div className="relative h-14 w-14">
             <AnimatePresence>
               {!moving &&
-            <motion.div
+            <motion.button
               key={activeStop}
               initial={{ opacity: 0, scale: 0.92 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.92 }}
               transition={{ duration: 0.2 }}
-              className={`absolute top-1/2 w-[240px] -translate-y-1/2 rounded-2xl border border-sand-200 bg-white px-4 py-2.5 text-sm font-medium text-ink shadow-lift ${
+              type="button"
+              onClick={() => onAskAria?.(STOPS[activeStop].message)}
+              aria-label={`Ask Aria about: ${STOPS[activeStop].message}`}
+              className={`absolute top-1/2 w-[240px] -translate-y-1/2 cursor-pointer rounded-2xl border border-sand-200 bg-white px-4 py-2.5 text-left text-sm font-medium text-ink shadow-lift transition-colors hover:border-teal-500/60 hover:text-teal-700 ${
               bubbleSide === "left" ? "right-[calc(100%+12px)]" : "left-[calc(100%+12px)]"}`
               }>
 
                   {STOPS[activeStop].message}
-                </motion.div>
+                </motion.button>
             }
             </AnimatePresence>
-            <AvatarBadge imageFailed={imageFailed} setImageFailed={setImageFailed} />
+            <AvatarBadge />
           </div>
         </motion.div>
       }
@@ -355,32 +231,14 @@ export function ScrollGuideAvatar() {
 
 }
 
-function AvatarBadge({
-  imageFailed,
-  setImageFailed,
-  small
-
-
-}: {imageFailed: boolean;setImageFailed: (v: boolean) => void;small?: boolean;}) {
+function AvatarBadge({ small }: { small?: boolean }) {
   return (
-    <motion.div
-      layoutId="sw-avatar"
-      layout
-      transition={{ type: "spring", stiffness: 160, damping: 24 }}
-      className={`flex shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-teal-600 shadow-lift ${
-      small ? "h-12 w-12" : "h-16 w-16"}`
+    <div
+      className={`flex shrink-0 items-center justify-center rounded-full border-2 border-white bg-teal-600 shadow-lift ${
+      small ? "h-11 w-11" : "h-14 w-14"}`
       }>
 
-      {!imageFailed ?
-      <img
-        src="/lets-scroll/avatar-doctor.png"
-        alt="AesthetixAI guide"
-        className="h-full w-full object-cover"
-        onError={() => setImageFailed(true)} /> :
-
-
-      <StethoscopeIcon className="h-7 w-7 text-white" />
-      }
-    </motion.div>);
+      <StethoscopeIcon className={small ? "h-5 w-5 text-white" : "h-6 w-6 text-white"} />
+    </div>);
 
 }

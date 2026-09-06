@@ -15,11 +15,15 @@ from src.schemas.patient_portal import (
     PortalBookingRequest,
     PatientPortalLoginRequest,
     PatientPortalLoginResponse,
+    PatientIntakeRequest,
 )
+from src.schemas.recovery import SubmitCheckInRequest, RecoveryCheckInResponse, RecoveryJournalResponse
 from src.controller.patient_portal.patient_portal_controllers import PatientPortalController
+from src.controller.recovery.recovery_controllers import RecoveryController
 
 router = APIRouter(prefix="/patient-portal", tags=["Patient Portal"])
 controller = PatientPortalController()
+recovery_controller = RecoveryController()
 
 
 # Three distinct auth surfaces on one router:
@@ -79,8 +83,9 @@ async def login(
 ):
     # Rate-limit key mixes the client IP and the portal_id being attempted —
     # slows both PIN brute-forcing against one ID and enumeration across IDs.
-    client_key = f"{request.client.host if request.client else 'unknown'}:{data.portal_id}"
-    return await controller.login(db, data, client_key)
+    ip = request.client.host if request.client else None
+    client_key = f"{ip or 'unknown'}:{data.portal_id}"
+    return await controller.login(db, data, client_key, ip)
 
 
 @router.get("/me", response_model=PortalPatientResponse)
@@ -98,3 +103,33 @@ async def book_appointment(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.book_appointment(db, patient, data)
+
+
+@router.post("/me/intake", response_model=PortalPatientResponse)
+async def submit_intake(
+    data: PatientIntakeRequest,
+    patient: Patient = Depends(get_current_portal_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    """One-time structured pre-consultation intake (allergies/surgical
+    history/medications/smoking) — writes onto the patient's real profile
+    fields and generates a doctor-facing AI summary flagging anything
+    clinically relevant. Re-submitting overwrites the previous summary."""
+    return await controller.submit_intake(db, patient, data)
+
+
+@router.get("/me/recovery", response_model=RecoveryJournalResponse | None)
+async def get_my_recovery(
+    patient: Patient = Depends(get_current_portal_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await recovery_controller.get_journal_for_portal_patient(db, patient)
+
+
+@router.post("/me/recovery/checkin", response_model=RecoveryCheckInResponse)
+async def submit_my_recovery_checkin(
+    data: SubmitCheckInRequest,
+    patient: Patient = Depends(get_current_portal_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await recovery_controller.submit_checkin_from_portal(db, patient, data)

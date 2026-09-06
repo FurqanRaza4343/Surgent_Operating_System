@@ -19,15 +19,17 @@ export function LiveTranscriptsList() {
   useEffect(() => {
     if (!authedFetch) return;
     let cancelled = false;
-    (async () => {
+    const load = async () => {
       try {
         const data = await listConversations(authedFetch, { limit: 10 });
         if (!cancelled) setConversations(data);
       } catch {
         // silent
       }
-    })();
-    return () => { cancelled = true; };
+    };
+    void load();
+    const t = setInterval(() => void load(), 30_000);
+    return () => { cancelled = true; clearInterval(t); };
   }, [authedFetch]);
 
   return (

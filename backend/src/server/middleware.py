@@ -14,6 +14,7 @@ logger = logging.getLogger("aesthetixai")
 # header themselves instead of relying on CORSMiddleware to do it.
 ALLOWED_ORIGINS = [
     "http://localhost:5173",
+    "http://127.0.0.1:5173",
     "http://localhost:5183",
     "http://localhost:3000",
 ]

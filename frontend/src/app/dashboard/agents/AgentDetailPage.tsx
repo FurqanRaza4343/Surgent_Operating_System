@@ -4,8 +4,8 @@ import { ArrowLeftIcon, ZapIcon, InboxIcon, UsersIcon, ScissorsIcon } from "luci
 import { AGENT_CATEGORIES, AGENTS_BY_SLUG } from "../../../data/agents";
 import { ComingSoon } from "../components/ComingSoon";
 import { EmptyState } from "../components/EmptyState";
-import { MOCK_SESSIONS } from "../data/mockSessions";
 import { SessionsView } from "../sessions/SessionsView";
+import { useSessions } from "../sessions/useSessions";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { usePlan } from "../plan/PlanContext";
 import { UpgradeRequired } from "../plan/UpgradeRequired";
@@ -32,6 +32,7 @@ export function AgentDetailPage() {
   const agent = agentSlug ? AGENTS_BY_SLUG[agentSlug] : undefined;
   const { allowsCategory, loading, authedFetch } = usePlan();
   const { patients } = usePatients(authedFetch);
+  const { sessions, loading: sessionsLoading, error: sessionsError, refetch } = useSessions();
 
   if (!category || !agent || agent.categoryId !== categoryId) {
     return <ComingSoon icon={ZapIcon} title="Agent not found" body="This agent doesn't exist in this category." phase="—" />;
@@ -46,7 +47,7 @@ export function AgentDetailPage() {
   }
 
   const isLive = LIVE_AGENT_SLUGS.has(agent.slug);
-  const sessions = MOCK_SESSIONS.filter((s) => s.agentSlug === agent.slug);
+  const agentSessions = sessions.filter((s) => s.agentSlug === agent.slug);
   const routedPatients = patients.filter((p) => p.assignedAgentSlug === agent.slug);
 
   return (
@@ -85,18 +86,18 @@ export function AgentDetailPage() {
 
         <div className="mt-6 grid gap-4 sm:grid-cols-3">
           <div className="rounded-xl bg-sand-100 px-4 py-3">
-            <p className="font-mono text-2xl font-bold tabular-nums text-ink">{sessions.length}</p>
+            <p className="font-mono text-2xl font-bold tabular-nums text-ink">{agentSessions.length}</p>
             <p className="text-xs text-ink-muted">Sessions on record</p>
           </div>
           <div className="rounded-xl bg-sand-100 px-4 py-3">
             <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-              {sessions.filter((s) => s.status === "needs_attention").length}
+              {agentSessions.filter((s) => s.status === "needs_attention").length}
             </p>
             <p className="text-xs text-ink-muted">Escalated to staff</p>
           </div>
           <div className="rounded-xl bg-sand-100 px-4 py-3">
             <p className="font-mono text-2xl font-bold tabular-nums text-ink">
-              {sessions.filter((s) => s.status === "resolved").length}
+              {agentSessions.filter((s) => s.status === "resolved").length}
             </p>
             <p className="text-xs text-ink-muted">Resolved</p>
           </div>
@@ -138,12 +139,21 @@ export function AgentDetailPage() {
       </div>
 
       <p className="mb-3 text-sm font-bold text-ink">Sessions handled by {agent.name}</p>
-      {sessions.length === 0 ?
+      {sessionsLoading ?
+      <div className="rounded-3xl border border-sand-200 bg-white p-12 text-center">
+          <p className="text-sm text-ink-muted">Loading sessions...</p>
+        </div> :
+      sessionsError ?
+      <div className="rounded-3xl border border-sand-200 bg-white p-12 text-center">
+          <p className="text-sm text-danger">{sessionsError}</p>
+          <button onClick={refetch} className="mt-3 text-sm text-teal-600 hover:underline">Retry</button>
+        </div> :
+      agentSessions.length === 0 ?
       <div className="rounded-3xl border border-sand-200 bg-white">
           <EmptyState icon={InboxIcon} title="No sessions yet" body={`Once ${agent.name} handles a conversation, it'll show up here.`} />
         </div> :
 
-      <SessionsView sessions={sessions} />
+      <SessionsView sessions={agentSessions} />
       }
     </>);
 

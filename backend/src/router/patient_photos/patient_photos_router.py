@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.server.dependencies import require_role
+from src.server.audit import audit_log_only
 from src.models.user import User, UserRole
 from src.schemas.patient_photo import PatientPhotoResponse, UpdatePatientPhotoRequest
 from src.controller.patient_photos.patient_photos_controllers import PatientPhotosController
@@ -40,6 +41,7 @@ async def upload_photo(
 async def list_photos(
     patient_id: UUID,
     user: User = Depends(require_role(*_ROLES)),
+    _audit: None = Depends(audit_log_only("photo.view", "patient", id_param="patient_id")),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.list_for_patient(db, user, patient_id)
@@ -59,6 +61,7 @@ async def update_photo(
 async def delete_photo(
     photo_id: UUID,
     user: User = Depends(require_role(*_ROLES)),
+    _audit: None = Depends(audit_log_only("photo.delete", "patient_photo", id_param="photo_id")),
     db: AsyncSession = Depends(get_db),
 ):
     await controller.delete_photo(db, user, photo_id)

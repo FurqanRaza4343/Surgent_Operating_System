@@ -26,10 +26,10 @@ import {
 } from "lucide-react";
 import { AGENT_CATEGORIES } from "../../../data/agents";
 import { DASHBOARD_ROUTES } from "../constants/routes";
-import { MOCK_SESSIONS } from "../data/mockSessions";
 import { usePlan } from "../plan/PlanContext";
 import type { Role } from "../../../data/roles";
 import { Logo } from "../../../components/ui";
+import { useOverview } from "../overview/useOverview";
 
 interface NavItem {
   label: string;
@@ -64,26 +64,40 @@ function visibleFor(items: NavItem[], role: Role, permissions: string[]): NavIte
   });
 }
 
-const SIMPLE_ITEMS_TOP: NavItem[] = [
+// Three top-level sections — Main / Management / Operations — mirroring the
+// grouping convention already used across this project's own dashboard
+// mockups (design-references/For.UI/*) rather than inventing a new one.
+// "Main" is the daily working surface (overview, inbox, patients, front
+// desk); "Management" is staff/patient/practice-relationship work (doctors,
+// surgery, staff, leads, inventory); "Operations" is the back-office layer
+// (money, analytics, the agent catalogue, settings). Every item below is
+// the exact same NavItem this sidebar already rendered — only which labeled
+// section it sits under, and the section headers themselves, are new.
+
+const MAIN_ITEMS_TOP: NavItem[] = [
 { label: "Overview", to: DASHBOARD_ROUTES.overview, icon: LayoutDashboardIcon, end: true, allowedRoles: ["owner"] },
 { label: "My Overview", to: DASHBOARD_ROUTES.doctorOverview, icon: LayoutDashboardIcon, end: true, allowedRoles: ["doctor"] },
 { label: "Front Desk", to: DASHBOARD_ROUTES.frontDesk, icon: LayoutDashboardIcon, end: true, allowedRoles: ["receptionist"], requiresPermission: "view_front_desk" }];
 
 
-const SIMPLE_ITEMS_MID: NavItem[] = [
-// Owner already has Main Agent front-and-center on their Overview page
-// (AIInsightsPanel's embedded compact chat) — a second sidebar entry for
-// them duplicated it. Doctor/Receptionist have no such widget anywhere, so
-// the sidebar stays their only way in.
-{ label: "Main Agent", to: DASHBOARD_ROUTES.commandCenter, icon: SparklesIcon, allowedRoles: ["doctor", "receptionist"] },
-{ label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["doctor", "receptionist"] },
+const MAIN_ITEMS: NavItem[] = [
 { label: "Patients", to: DASHBOARD_ROUTES.patients, icon: UsersIcon, allowedRoles: ["owner", "doctor", "receptionist"], requiresPermission: "view_patients" },
+// Front Desk is Owner's single entry point into today's clinic activity —
+// Waiting Room used to be a second, separate sidebar item pointing at a
+// page that just re-filtered the exact same appointment data Front Desk
+// already showed. Merged in as a tab inside Front Desk itself instead (see
+// FrontDeskPage.tsx) so there's one obvious place to go, not two competing
+// ones for the same real data.
+{ label: "Front Desk", to: DASHBOARD_ROUTES.frontDesk, icon: LayoutDashboardIcon, allowedRoles: ["owner"] },
+{ label: "My Calendar", to: DASHBOARD_ROUTES.myCalendar, icon: CalendarIcon, allowedRoles: ["doctor"], requiresPermission: "view_own_calendar" }];
+
+
+const MANAGEMENT_ITEMS: NavItem[] = [
 { label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon, allowedRoles: ["owner", "doctor"], requiresPermission: "view_doctors_crm" },
 { label: "Surgery", to: DASHBOARD_ROUTES.surgeries, icon: ScissorsIcon, allowedRoles: ["owner", "doctor"] },
 { label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "receptionist"], requiresPermission: "view_ai_receptionist" },
-{ label: "My Calendar", to: DASHBOARD_ROUTES.myCalendar, icon: CalendarIcon, allowedRoles: ["doctor"], requiresPermission: "view_own_calendar" },
-{ label: "Front Desk", to: DASHBOARD_ROUTES.frontDesk, icon: LayoutDashboardIcon, allowedRoles: ["owner"] },
-{ label: "Waiting Room", to: DASHBOARD_ROUTES.waitingRoom, icon: UsersIcon, allowedRoles: ["owner", "receptionist"], requiresPermission: "manage_waiting_room" },
+{ label: "Main Agent", to: DASHBOARD_ROUTES.commandCenter, icon: SparklesIcon, allowedRoles: ["doctor", "receptionist"] },
+{ label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["doctor", "receptionist"] },
 { label: "Staff", to: DASHBOARD_ROUTES.staff, icon: UsersIcon, allowedRoles: ["owner"] },
 { label: "Leads / Funnel", to: DASHBOARD_ROUTES.leadsFunnel, icon: TrendingUpIcon, allowedRoles: ["owner", "receptionist"] },
 { label: "Inventory", to: DASHBOARD_ROUTES.inventory, icon: PackageIcon, allowedRoles: ["owner", "receptionist"] }];
@@ -195,9 +209,25 @@ function CollapsibleNavGroup({
 
 }
 
+function SectionLabel({ collapsed, children }: { collapsed: boolean; children: React.ReactNode }) {
+  if (collapsed) return null;
+  return (
+    <p className="px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+      {children}
+    </p>
+  );
+}
+
 export function Sidebar({ collapsed }: { collapsed: boolean }) {
   const { allowsCategory, can, role, permissions } = usePlan();
-  const needsAttentionCount = MOCK_SESSIONS.filter((s) => s.status === "needs_attention").length;
+  const { summary, refetch: refetchOverview } = useOverview();
+  const needsAttentionCount = summary?.needs_attention ?? 0;
+
+  useEffect(() => {
+    if (!summary || summary.needs_attention === null) return;
+    const t = setInterval(refetchOverview, 30_000);
+    return () => clearInterval(t);
+  }, [summary, refetchOverview]);
 
   const sessionChildren: NavItem[] = [
   { label: "All conversations", to: DASHBOARD_ROUTES.sessionsAll, icon: InboxIcon },
@@ -227,9 +257,12 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
     locked: !allowsCategory(c.id)
   }));
 
-  const bottomItems: NavItem[] = [
+  const analyticsItem: NavItem[] = [
   { label: "Analytics", to: DASHBOARD_ROUTES.analytics, icon: BarChart3Icon, locked: !can("analytics"), allowedRoles: ["owner", "doctor"], requiresPermission: "view_analytics" }];
 
+
+  const visibleMoney = visibleFor(moneyChildren, role, permissions);
+  const visibleSettings = visibleFor(SETTINGS_ITEMS, role, permissions);
 
   return (
     <aside className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-sand-200/80 bg-white/70 backdrop-blur-md lg:flex ${collapsed ? "w-[72px]" : "w-[280px]"}`}>
@@ -243,41 +276,51 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
       </div>
 
       <nav className={`flex-1 overflow-y-auto py-5 ${collapsed ? "px-3" : "px-4"}`}>
-        <div className="space-y-0.5">
-          {visibleFor(SIMPLE_ITEMS_TOP, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
+        {/* MAIN — the daily working surface: overview, the AI receptionist
+            inbox, patients, front desk / calendar / waiting room. */}
+        <SectionLabel collapsed={collapsed}>Main</SectionLabel>
+        <div className={collapsed ? "space-y-0.5" : "mt-2 space-y-0.5"}>
+          {visibleFor(MAIN_ITEMS_TOP, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>
-
-        <div className="mt-4">
+        <div className="mt-2">
           <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} collapsed={collapsed} children={visibleFor(sessionChildren, role, permissions)} />
         </div>
-
-        <div className="mt-4 space-y-0.5">
-          {visibleFor(SIMPLE_ITEMS_MID, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
+        <div className="mt-2 space-y-0.5">
+          {visibleFor(MAIN_ITEMS, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>
 
-        {visibleFor(moneyChildren, role, permissions).length > 0 &&
-        <div className="mt-4">
-            <CollapsibleNavGroup label="Money" icon={WalletIcon} collapsed={collapsed} children={visibleFor(moneyChildren, role, permissions)} />
-          </div>
-        }
-
-        <div className="mt-4">
-          <CollapsibleNavGroup label="Agents" icon={LayersIcon} imgSrc="/agent-logos/agents.png" collapsed={collapsed} children={visibleFor(agentChildren, role, permissions)} />
-        </div>
-
-        <div className="mt-4 space-y-0.5">
-          {visibleFor(bottomItems, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
-        </div>
-
-        <div className="mt-6">
-          {!collapsed &&
-          <p className="px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
-            Settings
-          </p>
-          }
+        {/* MANAGEMENT — staff, patient-relationship, and practice-management
+            work: doctors, surgery, staff, leads, inventory. */}
+        <div className="mt-5">
+          <SectionLabel collapsed={collapsed}>Management</SectionLabel>
           <div className={collapsed ? "space-y-0.5" : "mt-2 space-y-0.5"}>
-            {visibleFor(SETTINGS_ITEMS, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
+            {visibleFor(MANAGEMENT_ITEMS, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
           </div>
+        </div>
+
+        {/* OPERATIONS — the back-office layer: money, analytics, the agent
+            catalogue, and settings. */}
+        <div className="mt-5">
+          <SectionLabel collapsed={collapsed}>Operations</SectionLabel>
+          <div className={collapsed ? "mt-0 space-y-0.5" : "mt-2 space-y-0.5"}>
+            {visibleMoney.length > 0 &&
+            <CollapsibleNavGroup label="Money" icon={WalletIcon} collapsed={collapsed} children={visibleMoney} />
+            }
+            {visibleFor(analyticsItem, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
+            <CollapsibleNavGroup label="Agents" icon={LayersIcon} imgSrc="/agent-logos/agents.png" collapsed={collapsed} children={visibleFor(agentChildren, role, permissions)} />
+          </div>
+          {visibleSettings.length > 0 &&
+          <div className="mt-4">
+            {!collapsed &&
+            <p className="px-2.5 text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-muted">
+              Settings
+            </p>
+            }
+            <div className={collapsed ? "space-y-0.5" : "mt-2 space-y-0.5"}>
+              {visibleSettings.map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
+            </div>
+          </div>
+          }
         </div>
       </nav>
     </aside>);

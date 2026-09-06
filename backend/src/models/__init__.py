@@ -28,6 +28,12 @@ from src.models.agent_costing import AgentCosting
 from src.models.plan import Plan
 from src.models.waitlist_entry import WaitlistEntry
 from src.models.surgery import Surgery
+from src.models.audit_log import AuditLog
+from src.models.recovery_checkin import RecoveryCheckIn
+from src.models.notification import Notification
+from src.models.inventory_adjustment import InventoryAdjustment
+from src.models.supplier import Supplier
+from src.models.purchase_order import PurchaseOrder, PurchaseOrderItem
 
 __all__ = [
     "Practice",
@@ -65,4 +71,11 @@ __all__ = [
     "Plan",
     "WaitlistEntry",
     "Surgery",
+    "AuditLog",
+    "RecoveryCheckIn",
+    "Notification",
+    "InventoryAdjustment",
+    "Supplier",
+    "PurchaseOrder",
+    "PurchaseOrderItem",
 ]

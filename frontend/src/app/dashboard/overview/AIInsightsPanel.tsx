@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { SparklesIcon, ArrowLeftIcon, MessageSquareIcon } from "lucide-react";
-import { MOCK_SESSIONS } from "../data/mockSessions";
+import type { Session } from "../sessions/types";
 import { AICommandCenterCompact } from "./AICommandCenterCompact";
 
 interface Insight {
@@ -8,11 +8,11 @@ interface Insight {
   value: string;
 }
 
-function computeInsights(): Insight[] {
-  const total = MOCK_SESSIONS.length;
-  const active = MOCK_SESSIONS.filter((s) => s.status === "active").length;
-  const needsAttention = MOCK_SESSIONS.filter((s) => s.status === "needs_attention").length;
-  const resolved = MOCK_SESSIONS.filter((s) => s.status === "resolved").length;
+function computeInsights(sessions: Session[]): Insight[] {
+  const total = sessions.length;
+  const active = sessions.filter((s) => s.status === "active").length;
+  const needsAttention = sessions.filter((s) => s.status === "needs_attention").length;
+  const resolved = sessions.filter((s) => s.status === "resolved").length;
   const resolvedRate = total > 0 ? Math.round((resolved / total) * 100) : 0;
 
   return [
@@ -33,8 +33,8 @@ function computeInsights(): Insight[] {
 // sibling column next to it.
 type PanelMode = "insights" | "chat";
 
-export function AIInsightsPanel() {
-  const insights = computeInsights();
+export function AIInsightsPanel({ sessions }: { sessions: Session[] }) {
+  const insights = computeInsights(sessions);
   const [mode, setMode] = useState<PanelMode>("insights");
 
   return (

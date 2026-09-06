@@ -63,6 +63,7 @@ development (not just "the code compiles"):
 | **Leads / Funnel** | The patient lifecycle stage above, visualized as a real funnel with a "lost" breakdown |
 | **Inventory** | SKU catalog + received-batch tracking (lot/quantity/expiry), FEFO (first-expiry-first-out) consumption, low-stock flagging |
 | **AI Receptionist** | Real LLM-driven call/chat handling (Twilio + Mistral), automated SMS appointment reminders, and real-time message translation — see below |
+| **Website chat (Aria)** | The marketing site's own AI chat: clickable hero copy opens a real FAQ + booking chat (Mistral), and every completed booking lands as a patient lead (source "Landing Chat") with an in-app notification + emailed to the practice for follow-up |
 | **Internal messaging** | A simple two-way message thread between the Owner and each Doctor/Receptionist |
 | **Practice subscription** | The practice's *own* SaaS plan (Solo/Practice/Enterprise) — pricing → Stripe checkout → claim → setup wizard |
 

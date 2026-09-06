@@ -15,6 +15,8 @@ from src.schemas.ai_receptionist import (
     TranslateResponse,
     SendReminderResponse,
     AIReceptionistOverviewResponse,
+    SystemPromptResponse,
+    UpdateSystemPromptRequest,
 )
 from src.controller.ai_receptionist.ai_receptionist_controllers import AIReceptionistController
 
@@ -57,13 +59,31 @@ async def send_reminder(
     return await controller.send_reminder(db, user, appointment_id)
 
 
-# Owner always sees this; Doctor sees it too if granted the existing
-# "view_ai_receptionist" permission (frontend-gated) — Receptionist isn't
-# in this list since monitoring the AI that partially covers their own job
-# isn't something the roadmap ever asked for.
+# Owner and Doctor always see this; Receptionist does too when granted the
+# existing "view_ai_receptionist" permission (frontend-gated) — the dashboard
+# sidebar exposes the monitor to Receptionists, so the backend must match.
 @router.get("/overview", response_model=AIReceptionistOverviewResponse)
 async def get_overview(
-    user: User = Depends(require_role(UserRole.OWNER, UserRole.DOCTOR)),
+    user: User = Depends(require_role(UserRole.OWNER, UserRole.DOCTOR, UserRole.RECEPTIONIST)),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.get_overview(db, user)
+
+
+# Anyone who can open the monitor can see what the AI is actually told to do;
+# only the Owner can change it (the prompt is the practice's front line).
+@router.get("/system-prompt", response_model=SystemPromptResponse)
+async def get_system_prompt(
+    user: User = Depends(require_role(UserRole.OWNER, UserRole.DOCTOR, UserRole.RECEPTIONIST)),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.get_system_prompt(db, user)
+
+
+@router.put("/system-prompt", response_model=SystemPromptResponse)
+async def update_system_prompt(
+    body: UpdateSystemPromptRequest,
+    user: User = Depends(require_role(UserRole.OWNER)),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.update_system_prompt(db, user, body.custom_instructions)

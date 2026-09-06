@@ -29,7 +29,6 @@ import { ProfilePage } from "./profile/ProfilePage";
 import { PlanBillingPage } from "./billing/PlanBillingPage";
 import { PlanGate } from "./plan/PlanGate";
 import { FrontDeskPage } from "./front-desk/FrontDeskPage";
-import { WaitingRoomPage } from "./front-desk/WaitingRoomPage";
 import { BookAppointmentPage } from "./front-desk/BookAppointmentPage";
 import { StaffPage } from "./staff/StaffPage";
 import { ProceduresPage } from "./clinical/ProceduresPage";
@@ -124,7 +123,6 @@ export function DashboardRouter() {
         <Route path="doctor-requests/:id" element={<RequireOwner><DoctorRequestDetailPage /></RequireOwner>} />
         <Route path="staff" element={<RequireOwner><StaffPage /></RequireOwner>} />
         <Route path="front-desk" element={<RequireReceptionist><FrontDeskPage /></RequireReceptionist>} />
-        <Route path="waiting-room" element={<RequireReceptionist><WaitingRoomPage /></RequireReceptionist>} />
         <Route path="book-appointment" element={<RequireReceptionist><BookAppointmentPage /></RequireReceptionist>} />
         <Route path="settings/procedures" element={<RequireOwnerOrDoctor><ProceduresPage /></RequireOwnerOrDoctor>} />
         <Route path="patients/:patientId/notes/new" element={<RequireDoctor><ConsultationNoteFormPage /></RequireDoctor>} />

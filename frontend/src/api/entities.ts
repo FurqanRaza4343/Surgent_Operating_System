@@ -42,6 +42,15 @@ export interface PatientResponse {
   communication_preferences: Record<string, boolean>;
   insurance_provider: string | null;
   insurance_number: string | null;
+  // --- AI workflows (Week 4) ---
+  qualification: {
+    interested_procedure: string | null;
+    budget_signal: string;
+    urgency: string;
+    score: number;
+    summary: string;
+  } | null;
+  intake_summary: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -552,6 +561,10 @@ export interface OverviewSummaryResponse {
   sessions_today: number;
   needs_attention: number;
   bookings_this_week: number;
+  // Sum of completed TreatmentPlanItems' actual/estimated price — real,
+  // clinically-linked revenue. null (not 0) when nothing is completed yet,
+  // so the UI can show an honest "not enough data" state.
+  revenue_estimate: number | null;
 }
 
 export interface ChannelCount {
@@ -736,6 +749,28 @@ export function listConsultationNotes(authedFetch: AuthedFetch, patientId: strin
 export function updateConsultationNote(authedFetch: AuthedFetch, id: string, data: UpdateConsultationNoteRequest) {
   return authedFetch<ConsultationNoteResponse>(`/api/v1/clinical/notes/${id}`, {
     method: "PATCH",
+    body: JSON.stringify(data)
+  });
+}
+
+// --- Consultation Assistant (Week 4 AI workflow) ---
+
+export interface AIConsultationDraftRequest {
+  patient_id: string;
+  raw_notes: string;
+}
+
+export interface AIConsultationDraftResponse {
+  subjective: string;
+  objective: string;
+  assessment: string;
+  plan: string;
+  follow_up_tasks: string[];
+}
+
+export function aiDraftConsultationNote(authedFetch: AuthedFetch, data: AIConsultationDraftRequest) {
+  return authedFetch<AIConsultationDraftResponse>("/api/v1/clinical/notes/ai-draft", {
+    method: "POST",
     body: JSON.stringify(data)
   });
 }
@@ -1358,6 +1393,33 @@ export function consumeInventoryStock(authedFetch: AuthedFetch, itemId: string, 
 // "agent" folders: receptionist_agent, appointment_reminder_agent,
 // multilingual_translation_agent). Owner always sees /overview; Doctor sees
 // it too if granted the "view_ai_receptionist" permission.
+export interface ReceptionistPipeline {
+  qualified_leads: number;
+  appointments_scheduled: number;
+  auto_followups_sent: number;
+}
+
+export interface ReceptionistChannelStatus {
+  channel: string;
+  connected: boolean;
+  detail: string;
+}
+
+export interface ReceptionistHealth {
+  status: string;
+  last_activity_at: string | null;
+  sessions_24h: number;
+  interactions_24h: number;
+}
+
+export interface ReceptionistActivityEntry {
+  id: string;
+  label: string;
+  channel: string | null;
+  summary: string | null;
+  created_at: string;
+}
+
 export interface AIReceptionistOverviewResponse {
   calls_handled: number;
   reminders_sent: number;
@@ -1365,10 +1427,64 @@ export interface AIReceptionistOverviewResponse {
   total_interactions: number;
   estimated_cost_total: number;
   estimated_cost_last_30_days: number;
+  // Optional so a stale/older backend payload (before the monitor widgets
+  // went real) degrades to fallback widgets instead of crashing the page.
+  pipeline?: ReceptionistPipeline;
+  channels?: ReceptionistChannelStatus[];
+  health?: ReceptionistHealth;
+  recent_activity?: ReceptionistActivityEntry[];
 }
 
 export function getAIReceptionistOverview(authedFetch: AuthedFetch) {
   return authedFetch<AIReceptionistOverviewResponse>("/api/v1/ai-receptionist/overview");
+}
+
+export interface SystemPromptResponse {
+  system_prompt: string;
+  custom_instructions: string;
+  updated_at: string | null;
+  updated_by: string | null;
+}
+
+export function getAIReceptionistSystemPrompt(authedFetch: AuthedFetch) {
+  return authedFetch<SystemPromptResponse>("/api/v1/ai-receptionist/system-prompt");
+}
+
+export function updateAIReceptionistSystemPrompt(authedFetch: AuthedFetch, customInstructions: string) {
+  return authedFetch<SystemPromptResponse>("/api/v1/ai-receptionist/system-prompt", {
+    method: "PUT",
+    body: JSON.stringify({ custom_instructions: customInstructions })
+  });
+}
+
+// --- agent config ------------------------------------------------------------
+// Backed by backend/src/router/agent_config/ — GET read for any practice user,
+// PUT write for the Owner only. `config` JSONB holds per-agent knobs (tone,
+// escalation sensitivity) that the Agent settings page edits.
+export interface AgentConfigResponse {
+  id: string;
+  practice_id: string;
+  agent_type: string;
+  enabled: boolean;
+  config: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgentConfigUpdate {
+  enabled?: boolean;
+  config?: Record<string, unknown>;
+}
+
+export function listAgentConfigs(authedFetch: AuthedFetch) {
+  return authedFetch<AgentConfigResponse[]>("/api/v1/agent-config");
+}
+
+export function updateAgentConfig(authedFetch: AuthedFetch, agentType: string, update: AgentConfigUpdate) {
+  return authedFetch<AgentConfigResponse>(`/api/v1/agent-config/${agentType}`, {
+    method: "PUT",
+    body: JSON.stringify(update)
+  });
 }
 
 export function translateText(authedFetch: AuthedFetch, text: string, targetLanguage: string) {
@@ -1526,6 +1642,8 @@ export interface PortalPatientResponse {
   photos: PortalPhoto[];
   treatment_plans: PortalTreatmentPlan[];
   invoice_total_pending: number;
+  intake_completed: boolean;
+  intake_summary: string | null;
 }
 
 export interface PortalBookingRequest {
@@ -1533,6 +1651,15 @@ export interface PortalBookingRequest {
   start_time: string;
   end_time: string;
   notes?: string | null;
+}
+
+export interface PatientIntakeRequest {
+  allergies: Array<{ name?: string; severity?: string; reaction?: string }>;
+  surgical_history: Array<{ procedure?: string; year?: number; facility?: string; notes?: string }>;
+  current_medications: Array<{ name?: string; dosage?: string; frequency?: string }>;
+  smoking_status?: string | null;
+  previous_cosmetic_procedures: Array<{ procedure?: string; year?: number; provider?: string }>;
+  additional_notes?: string | null;
 }
 
 // --- Owner/staff-side management (authedFetch, Clerk) ---
@@ -1608,6 +1735,13 @@ export function portalBookAppointment(portalToken: string, data: PortalBookingRe
   });
 }
 
+export function portalSubmitIntake(portalToken: string, data: PatientIntakeRequest) {
+  return portalFetch<PortalPatientResponse>("/api/v1/patient-portal/me/intake", portalToken, {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
 export interface ConsultationRequestPayload {
   full_name: string;
   email?: string | null;
@@ -1642,6 +1776,35 @@ export async function submitConsultationRequest(data: ConsultationRequestPayload
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't send your request. Please try again.");
+  }
+  return res.json();
+}
+
+// Public website AI chat (Aria) — no authedFetch, same reason as
+// submitConsultationRequest: the hero/chat IS the public funnel entry. The
+// client passes conversation_id back to continue the same thread.
+export interface LandingChatMessagePayload {
+  conversation_id?: string | null;
+  message: string;
+  context?: string | null;
+}
+
+export interface LandingChatMessageResponse {
+  conversation_id: string;
+  reply: string;
+  booking_created: boolean;
+  lead_name?: string | null;
+}
+
+export async function sendLandingChatMessage(data: LandingChatMessagePayload): Promise<LandingChatMessageResponse> {
+  const res = await fetch(`/api/v1/landing-chat/message`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(typeof body?.detail === "string" ? body.detail : "Couldn't reach the assistant. Please try again.");
   }
   return res.json();
 }

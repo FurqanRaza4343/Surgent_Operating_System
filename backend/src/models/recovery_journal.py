@@ -25,3 +25,4 @@ class RecoveryJournal(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     patient = relationship("Patient", back_populates="recovery_journals")
+    checkins = relationship("RecoveryCheckIn", back_populates="recovery_journal", cascade="all, delete-orphan")

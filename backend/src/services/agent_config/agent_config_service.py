@@ -13,6 +13,14 @@ class AgentConfigService:
     only ever set `enabled` (see provisioning_service.py). Practice-scoped;
     callers must always pass the requesting user's own practice_id."""
 
+    async def list_configs(self, db: AsyncSession, practice_id: UUID) -> list[AgentConfig]:
+        result = await db.execute(
+            select(AgentConfig)
+            .where(AgentConfig.practice_id == practice_id)
+            .order_by(AgentConfig.agent_type)
+        )
+        return list(result.scalars().all())
+
     async def get_config(self, db: AsyncSession, practice_id: UUID, agent_type: str) -> AgentConfig:
         result = await db.execute(
             select(AgentConfig).where(AgentConfig.practice_id == practice_id, AgentConfig.agent_type == agent_type)

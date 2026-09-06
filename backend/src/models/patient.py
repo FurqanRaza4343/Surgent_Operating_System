@@ -85,6 +85,17 @@ class Patient(Base):
     insurance_provider: Mapped[str] = mapped_column(String(255), nullable=True)
     insurance_number: Mapped[str] = mapped_column(String(100), nullable=True)
 
+    # --- AI workflows (Week 4) ------------------------------------------
+    # {interested_procedure, budget_signal, urgency, score (0-100), summary}
+    # — written once by LeadQualificationService after a few inbound
+    # WhatsApp messages, read-only from the frontend's perspective.
+    qualification: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # Doctor-facing risk-flag summary generated from the patient's own
+    # structured portal intake submission (allergies/history/medications
+    # above) — separate from chief_complaint, which is the patient's own
+    # words, not an AI-derived clinical summary.
+    intake_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

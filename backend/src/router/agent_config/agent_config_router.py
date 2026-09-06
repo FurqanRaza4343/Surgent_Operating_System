@@ -13,6 +13,17 @@ router = APIRouter(prefix="/agent-config", tags=["Agent Config"])
 controller = AgentConfigController()
 
 
+@router.get("", response_model=list[AgentConfigResponse])
+async def list_agent_configs(
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """All agent configs for this practice — the Agent settings page loads
+    these in one call instead of one request per agent. Any practice user
+    can read; writes are Owner-only (see PUT below)."""
+    return await controller.list_configs(db, user)
+
+
 @router.get("/{agent_type}", response_model=AgentConfigResponse)
 async def get_agent_config(
     agent_type: str,

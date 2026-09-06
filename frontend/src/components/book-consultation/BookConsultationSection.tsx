@@ -57,7 +57,7 @@ export function BookConsultationSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-10 max-w-2xl rounded-[2rem] border border-sand-200 bg-white p-8 shadow-[0_4px_24px_rgba(11,29,38,0.06)]">
+        <div className="mx-auto mt-10 max-w-2xl rounded-4xl border border-sand-200 bg-white p-8 shadow-lift">
           {done ?
           <div className="flex flex-col items-center py-8 text-center">
               <span className="flex h-14 w-14 items-center justify-center rounded-full bg-success/10 text-success">

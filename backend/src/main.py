@@ -9,6 +9,8 @@ from src.server.middleware import setup_middleware, ALLOWED_ORIGINS
 from src.server.exceptions import AppException
 from src.router.agents import register_routes
 from src.services.channels.green_api_poller import GreenAPIPoller
+from src.services.recovery.post_op_followup_poller import PostOpFollowUpPoller
+from src.services.leads.lead_nurturing_poller import LeadNurturingPoller
 
 settings = get_settings()
 
@@ -16,17 +18,27 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 logger = logging.getLogger("aesthetixai")
 
 poller = GreenAPIPoller()
+post_op_poller = PostOpFollowUpPoller()
+lead_nurturing_poller = LeadNurturingPoller()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     poller.start()
     logger.info("Green API poller started on app startup")
+    post_op_poller.start()
+    logger.info("Post-op follow-up poller started on app startup")
+    lead_nurturing_poller.start()
+    logger.info("Lead nurturing poller started on app startup")
     try:
         yield
     finally:
         poller.stop()
         logger.info("Green API poller stopped")
+        post_op_poller.stop()
+        logger.info("Post-op follow-up poller stopped")
+        lead_nurturing_poller.stop()
+        logger.info("Lead nurturing poller stopped")
 
 
 app = FastAPI(

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeftIcon, MailIcon, PhoneIcon, CalendarIcon, ShieldCheckIcon, ShieldAlertIcon, SparklesIcon, ScissorsIcon } from "lucide-react";
+import { ArrowLeftIcon, MailIcon, PhoneIcon, CalendarIcon, ShieldCheckIcon, ShieldAlertIcon, SparklesIcon, ScissorsIcon, TargetIcon, ClipboardListIcon } from "lucide-react";
 import { usePatients } from "./usePatients";
-import { MOCK_SESSIONS } from "../data/mockSessions";
 import { SessionsView } from "../sessions/SessionsView";
+import { useSessions } from "../sessions/useSessions";
 import { ComingSoon } from "../components/ComingSoon";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import type { Patient } from "./types";
@@ -32,6 +32,7 @@ export function PatientDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { authedFetch } = usePlan();
   const { getPatient, loading } = usePatients(authedFetch);
+  const { sessions, loading: sessionsLoading, error: sessionsError, refetch } = useSessions();
   const fetchedPatient = id ? getPatient(id) : undefined;
   // Local override for the funnel stage — usePatients()'s cache is
   // IndexedDB-backed and doesn't reflect a stage PATCH until the page's
@@ -46,7 +47,7 @@ export function PatientDetailPage() {
     return <ComingSoon icon={ShieldAlertIcon} title="Patient not found" body="This patient record doesn't exist." phase="—" />;
   }
 
-  const sessions = MOCK_SESSIONS.filter((s) => s.patientId === patient.id);
+  const patientSessions = sessions.filter((s) => s.patientId === patient.id);
   const agent = patient.assignedAgentSlug ? AGENTS_BY_SLUG[patient.assignedAgentSlug] : null;
 
   return (
@@ -122,6 +123,42 @@ export function PatientDetailPage() {
 
       <PatientPortalLinkCard patientId={patient.id} />
 
+      {patient.qualification &&
+      <div className="mb-6 rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center gap-2">
+            <TargetIcon className="h-4 w-4 text-teal-600" />
+            <p className="text-sm font-bold text-ink">AI lead qualification</p>
+            <span className="ml-auto rounded-full bg-teal-600/10 px-2.5 py-1 text-xs font-semibold text-teal-600">
+              Score: {patient.qualification.score}/100
+            </span>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-ink-soft">{patient.qualification.summary}</p>
+          <div className="mt-3 flex flex-wrap gap-2 text-xs">
+            {patient.qualification.interestedProcedure &&
+            <span className="rounded-full border border-sand-200 px-2.5 py-1 font-medium text-ink-soft">
+                Interested in: {patient.qualification.interestedProcedure}
+              </span>
+            }
+            <span className="rounded-full border border-sand-200 px-2.5 py-1 font-medium capitalize text-ink-soft">
+              Budget: {patient.qualification.budgetSignal}
+            </span>
+            <span className="rounded-full border border-sand-200 px-2.5 py-1 font-medium capitalize text-ink-soft">
+              Urgency: {patient.qualification.urgency.replace("_", " ")}
+            </span>
+          </div>
+        </div>
+      }
+
+      {patient.intakeSummary &&
+      <div className="mb-6 rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+          <div className="flex items-center gap-2">
+            <ClipboardListIcon className="h-4 w-4 text-teal-600" />
+            <p className="text-sm font-bold text-ink">AI intake summary</p>
+          </div>
+          <p className="mt-2 text-sm leading-relaxed text-ink-soft">{patient.intakeSummary}</p>
+        </div>
+      }
+
       {patient.chiefComplaint &&
       <div className="mb-6 rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
           <div className="flex items-center justify-between">
@@ -163,7 +200,18 @@ export function PatientDetailPage() {
       <InvoicesSection patientId={patient.id} />
 
       <p className="mb-3 text-sm font-bold text-ink">Session history</p>
-      <SessionsView sessions={sessions} />
+      {sessionsLoading ?
+      <div className="rounded-3xl border border-sand-200 bg-white p-12 text-center">
+          <p className="text-sm text-ink-muted">Loading sessions...</p>
+        </div> :
+      sessionsError ?
+      <div className="rounded-3xl border border-sand-200 bg-white p-12 text-center">
+          <p className="text-sm text-danger">{sessionsError}</p>
+          <button onClick={refetch} className="mt-3 text-sm text-teal-600 hover:underline">Retry</button>
+        </div> :
+
+      <SessionsView sessions={patientSessions} />
+      }
     </>);
 
 }

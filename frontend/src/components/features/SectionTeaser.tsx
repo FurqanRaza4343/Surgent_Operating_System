@@ -1,7 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import type { IconType } from "react-icons";
 import { Button } from "../ui";
+import ElasticMesh from "../elastic/ElasticMesh";
+import ClickSpark from "../elastic/ClickSpark";
 
 export type Chip = string | {label: string;icon: IconType;color?: string;};
 
@@ -30,8 +32,7 @@ export function SectionTeaser({
   dark,
   reverse
 }: SectionTeaserProps) {
-  const [imageFailed, setImageFailed] = useState(false);
-  const showImage = image && !imageFailed;
+  const showImage = Boolean(image);
   return (
     <section
       id={id}
@@ -50,12 +51,21 @@ export function SectionTeaser({
             }>
 
             {showImage &&
-            <img
-              src={image}
-              alt=""
-              className="h-full w-full object-cover"
-              onError={() => setImageFailed(true)} />
-
+            <ClickSpark
+              sparkColor={dark ? "#ffffff" : "#0d9488"}
+              sparkSize={9}
+              sparkRadius={18}
+              sparkCount={10}
+              duration={450}>
+              <ElasticMesh
+                image={image}
+                interaction="hover"
+                borderRadius={0}
+                showGrid={false}
+                shading={0.45}
+                tilt={12}
+                className="h-full w-full" />
+            </ClickSpark>
             }
           </motion.div>
 

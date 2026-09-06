@@ -38,7 +38,9 @@ export function Testimonials() {
                 “{t.quote}”
               </blockquote>
               <figcaption className="mt-6 flex items-center gap-3 border-t border-sand-200 pt-5">
-                <img src={t.img} alt={t.name} className="h-11 w-11 rounded-full object-cover" />
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-teal-50 text-sm font-bold text-teal-700">
+                  {t.initials}
+                </span>
                 <div>
                   <p className="font-bold text-ink">{t.name}</p>
                   <p className="text-sm text-ink-muted">{t.role}</p>

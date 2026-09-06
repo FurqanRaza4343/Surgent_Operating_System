@@ -58,6 +58,12 @@ from src.router.patient_portal.patient_portal_router import router as patient_po
 from src.router.public.consultation_request_router import router as public_router
 from src.router.waitlist.waitlist_router import router as waitlist_router
 from src.router.surgery.surgery_router import router as surgery_router
+from src.router.recovery.recovery_router import router as recovery_router
+from src.router.notifications.notification_router import router as notification_router
+from src.router.inventory.supplier_router import router as supplier_router
+from src.router.inventory.purchase_order_router import router as purchase_order_router
+from src.router.leads.leads_router import router as leads_router
+from src.router.landing_chat.landing_chat_router import router as landing_chat_router
 
 agent_routers = [
     patient_portal_router,
@@ -117,6 +123,12 @@ agent_routers = [
     inventory_router,
     waitlist_router,
     surgery_router,
+    recovery_router,
+    notification_router,
+    supplier_router,
+    purchase_order_router,
+    leads_router,
+    landing_chat_router,
 ]
 
 

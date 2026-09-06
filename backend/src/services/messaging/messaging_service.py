@@ -8,21 +8,32 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.conversation import Conversation, ConversationChannel
 from src.models.message import Message, MessageRole
 from src.models.patient import Patient
+from src.models.practice import Practice
 from src.server.exceptions import AppException, NotFoundException
 from src.services.twilio.twilio_service import TwilioService
-from src.services.whatsapp.whatsapp_service import WhatsAppService
+from src.services.channels.whatsapp_green_api import WhatsAppGreenAPI
 
 
 class MessagingService:
     """Shared outbound-messaging path for every agent that needs to reach a
-    patient (reminders, review requests, marketing offers) — resolves which
-    channel to use, sends via the real Twilio/WhatsApp clients, and records
-    the send as a real Conversation/Message so it shows up in the dashboard's
-    Agent Sessions inbox like any other conversation."""
+    patient (reminders, review requests, marketing offers, post-op
+    follow-ups) — resolves which channel to use, sends via the real
+    Twilio/WhatsApp clients, and records the send as a real
+    Conversation/Message so it shows up in the dashboard's Agent Sessions
+    inbox like any other conversation.
+
+    WhatsApp sends go through WhatsAppGreenAPI (per-practice instance_id/
+    api_token in Practice.settings["green_api"]) — the same integration
+    already proven live for inbound messages all session — not the official
+    Meta Business Cloud API class this used before, which reads
+    WHATSAPP_API_TOKEN/WHATSAPP_PHONE_NUMBER_ID (still placeholders,
+    per .env.example) and would silently "succeed" against Meta's real
+    servers with an auth error nobody was checking for, meaning every
+    automated WhatsApp send through here — appointment reminders included —
+    was never actually delivering."""
 
     def __init__(self):
         self.twilio = TwilioService()
-        self.whatsapp = WhatsAppService()
 
     async def resolve_channel(self, db: AsyncSession, practice_id: UUID, patient: Patient) -> ConversationChannel:
         # No stored channel preference exists on Patient — infer from the
@@ -78,12 +89,25 @@ class MessagingService:
 
         try:
             if channel == ConversationChannel.WHATSAPP:
-                await self.whatsapp.send_text(patient.phone, text)
+                result = await db.execute(select(Practice).where(Practice.id == practice_id))
+                practice = result.scalar_one_or_none()
+                ga = WhatsAppGreenAPI.from_practice_settings((practice.settings if practice else None) or {})
+                if ga is None:
+                    raise AppException("WhatsApp isn't connected for this practice yet")
+                send_result = await ga.send_text(patient.phone, text)
+                # A real successful sendMessage call returns a flat
+                # {"idMessage": "..."} — see the matching fix + comment on
+                # InboundService._send_reply for how this was confirmed
+                # against the live API.
+                if "idMessage" not in send_result:
+                    raise AppException(f"WhatsApp send did not return a message id: {send_result}")
             else:
                 # Twilio's SDK is synchronous (blocking network I/O) — run it
                 # off the event loop rather than stalling every other
                 # in-flight request.
                 await asyncio.to_thread(self.twilio.send_sms, patient.phone, text)
+        except AppException:
+            raise
         except Exception as exc:
             raise AppException(f"Failed to send message via {channel.value}: {exc}")
 

@@ -6,6 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.server.dependencies import get_current_practice_user
+from src.server.audit import audit_action
 from src.models.user import User
 from src.schemas.consent_document import (
     CreateConsentDocumentRequest,
@@ -52,7 +53,7 @@ async def list_consent_documents(
 async def sign_consent_document(
     document_id: UUID,
     data: SignConsentDocumentRequest,
-    user: User = Depends(get_current_practice_user),
+    user: User = Depends(audit_action("consent.sign", "consent_document", id_param="document_id")),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.sign_document(db, user, document_id, data.signed_by_name)
@@ -61,7 +62,7 @@ async def sign_consent_document(
 @router.post("/consent-documents/{document_id}/void", response_model=ConsentDocumentResponse)
 async def void_consent_document(
     document_id: UUID,
-    user: User = Depends(get_current_practice_user),
+    user: User = Depends(audit_action("consent.void", "consent_document", id_param="document_id")),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.void_document(db, user, document_id)

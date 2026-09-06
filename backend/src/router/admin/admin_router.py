@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
@@ -31,8 +31,9 @@ controller = AdminController()
 
 
 @router.post("/auth/login", response_model=AdminLoginResponse)
-async def login(body: AdminLoginRequest):
-    return await controller.login(body)
+async def login(body: AdminLoginRequest, request: Request):
+    client_key = f"{request.client.host if request.client else 'unknown'}:{body.username}"
+    return await controller.login(body, client_key)
 
 
 @router.get("/me", response_model=AdminMeResponse)

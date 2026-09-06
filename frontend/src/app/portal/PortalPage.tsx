@@ -17,17 +17,20 @@ import {
   StethoscopeIcon,
   ClipboardListIcon,
   KeyIcon,
-  LogOutIcon
+  LogOutIcon,
+  HeartPulseIcon
 } from "lucide-react";
 import { Logo } from "../../components/ui";
 import {
   portalLogin,
   getMyPortalData,
   portalBookAppointment,
-  type PortalPatientResponse
+  portalSubmitIntake,
+  type PortalPatientResponse,
+  type PatientIntakeRequest
 } from "../../api/entities";
 
-type Tab = "book" | "appointments" | "doctor" | "treatment" | "photos" | "consent" | "invoices";
+type Tab = "book" | "appointments" | "doctor" | "treatment" | "intake" | "photos" | "consent" | "invoices";
 
 const SESSION_KEY = "aiaceone_portal_token";
 
@@ -244,6 +247,7 @@ export function PortalPage() {
               <TabButton active={tab === "appointments"} onClick={() => setTab("appointments")} icon={<CalendarIcon className="h-3.5 w-3.5" />} label={`Appointments (${data.appointments.length})`} />
               <TabButton active={tab === "doctor"} onClick={() => setTab("doctor")} icon={<StethoscopeIcon className="h-3.5 w-3.5" />} label="My doctor" />
               <TabButton active={tab === "treatment"} onClick={() => setTab("treatment")} icon={<ClipboardListIcon className="h-3.5 w-3.5" />} label={`Treatment plan (${data.treatment_plans.length})`} />
+              <TabButton active={tab === "intake"} onClick={() => setTab("intake")} icon={<HeartPulseIcon className="h-3.5 w-3.5" />} label={data.intake_completed ? "Health intake" : "Health intake (needed)"} />
               <TabButton active={tab === "photos"} onClick={() => setTab("photos")} icon={<CameraIcon className="h-3.5 w-3.5" />} label={`Photos (${data.photos.length})`} />
               <TabButton active={tab === "consent"} onClick={() => setTab("consent")} icon={<FileTextIcon className="h-3.5 w-3.5" />} label={`Consent (${data.consent_documents.length})`} />
               <TabButton active={tab === "invoices"} onClick={() => setTab("invoices")} icon={<ReceiptIcon className="h-3.5 w-3.5" />} label={`Invoices (${data.invoices.length})`} />
@@ -260,6 +264,14 @@ export function PortalPage() {
             {tab === "appointments" && <AppointmentsTab appointments={data.appointments} />}
             {tab === "doctor" && <DoctorTab doctor={data.doctor} />}
             {tab === "treatment" && <TreatmentTab plans={data.treatment_plans} />}
+            {tab === "intake" && token && (
+            <IntakeTab
+              token={token}
+              intakeCompleted={data.intake_completed}
+              intakeSummary={data.intake_summary}
+              onSubmitted={(fresh) => setData(fresh)}
+            />
+            )}
             {tab === "photos" && <PhotosTab photos={data.photos} />}
             {tab === "consent" && <ConsentTab documents={data.consent_documents} />}
             {tab === "invoices" && <InvoicesTab invoices={data.invoices} />}
@@ -569,6 +581,140 @@ function TreatmentTab({ plans }: { plans: PortalPatientResponse["treatment_plans
         </div>
       )}
     </div>);
+}
+
+const SMOKING_OPTIONS = ["Never smoked", "Former smoker", "Current smoker", "Prefer not to say"];
+
+function splitToNamed(value: string, key: "name" | "procedure"): Array<Record<string, string>> {
+  return value
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean)
+    .map((v) => ({ [key]: v }));
+}
+
+function IntakeTab({
+  token,
+  intakeCompleted,
+  intakeSummary,
+  onSubmitted
+}: {
+  token: string;
+  intakeCompleted: boolean;
+  intakeSummary: string | null;
+  onSubmitted: (data: PortalPatientResponse) => void;
+}) {
+  const [editing, setEditing] = useState(!intakeCompleted);
+  const [allergies, setAllergies] = useState("");
+  const [surgicalHistory, setSurgicalHistory] = useState("");
+  const [medications, setMedications] = useState("");
+  const [smokingStatus, setSmokingStatus] = useState(SMOKING_OPTIONS[0]);
+  const [previousProcedures, setPreviousProcedures] = useState("");
+  const [notes, setNotes] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError(null);
+    try {
+      const payload: PatientIntakeRequest = {
+        allergies: splitToNamed(allergies, "name"),
+        surgical_history: splitToNamed(surgicalHistory, "procedure"),
+        current_medications: splitToNamed(medications, "name"),
+        smoking_status: smokingStatus,
+        previous_cosmetic_procedures: splitToNamed(previousProcedures, "procedure"),
+        additional_notes: notes.trim() || null
+      };
+      const fresh = await portalSubmitIntake(token, payload);
+      onSubmitted(fresh);
+      setEditing(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't save your intake — try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (!editing) {
+    return (
+      <div className="rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+        <div className="flex items-center gap-2">
+          <CheckCircle2Icon className="h-4 w-4 text-success" />
+          <p className="text-sm font-bold text-ink">Health intake on file</p>
+        </div>
+        {intakeSummary && <p className="mt-2 text-sm leading-relaxed text-ink-soft">{intakeSummary}</p>}
+        <button
+          type="button"
+          onClick={() => setEditing(true)}
+          className="mt-4 rounded-xl border border-sand-200 px-4 py-2 text-xs font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
+          Update my answers
+        </button>
+      </div>);
+  }
+
+  return (
+    <div className="rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+      <p className="text-sm font-bold text-ink">Pre-consultation health intake</p>
+      <p className="mt-1 text-xs text-ink-muted">
+        Help your doctor prepare — separate multiple entries with commas. This goes straight into your record.
+      </p>
+      <form onSubmit={submit} className="mt-5 space-y-4">
+        <Field label="Allergies" value={allergies} onChange={setAllergies} placeholder="e.g. Penicillin, Latex" />
+        <Field label="Past surgeries" value={surgicalHistory} onChange={setSurgicalHistory} placeholder="e.g. Appendectomy 2019" />
+        <Field label="Current medications" value={medications} onChange={setMedications} placeholder="e.g. Aspirin, Metformin" />
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Smoking status</span>
+          <select
+            value={smokingStatus}
+            onChange={(e) => setSmokingStatus(e.target.value)}
+            className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-600/40 focus:bg-white">
+            {SMOKING_OPTIONS.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+        </label>
+        <Field label="Previous cosmetic procedures" value={previousProcedures} onChange={setPreviousProcedures} placeholder="e.g. Botox 2022" />
+        <label className="block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">Anything else your doctor should know? (optional)</span>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+            className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-600/40 focus:bg-white" />
+        </label>
+
+        {error && <p className="text-sm font-medium text-danger">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={busy}
+          className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40">
+          <HeartPulseIcon className="h-4 w-4" /> {busy ? "Saving…" : "Submit intake"}
+        </button>
+      </form>
+    </div>);
+}
+
+function Field({
+  label,
+  value,
+  onChange,
+  placeholder
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder: string;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-ink-muted">{label}</span>
+      <input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-600/40 focus:bg-white" />
+    </label>);
 }
 
 function PhotosTab({ photos }: { photos: PortalPatientResponse["photos"] }) {

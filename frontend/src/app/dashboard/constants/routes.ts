@@ -25,8 +25,9 @@ export const DASHBOARD_ROUTES = {
   commandCenter: "/dashboard/command-center",
   // Receptionist's real staff workspace — distinct from receptionistMonitor
   // above, which is the Owner-only AI-monitoring page.
+  // Waiting Room used to be its own route/sidebar item — it's a tab inside
+  // Front Desk now (see ReceptionistFrontDesk.tsx), not a separate page.
   frontDesk: "/dashboard/front-desk",
-  waitingRoom: "/dashboard/waiting-room",
   bookAppointment: "/dashboard/book-appointment",
   staff: "/dashboard/staff",
   consultationNoteNew: (patientId: string) => `/dashboard/patients/${patientId}/notes/new`,

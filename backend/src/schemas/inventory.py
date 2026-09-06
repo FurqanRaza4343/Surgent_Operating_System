@@ -10,6 +10,7 @@ class CreateInventoryItemRequest(BaseModel):
     category: str | None = None
     unit: str | None = None
     reorder_threshold: int | None = None
+    is_implant: bool = False
 
 
 class UpdateInventoryItemRequest(BaseModel):
@@ -18,6 +19,7 @@ class UpdateInventoryItemRequest(BaseModel):
     category: str | None = None
     unit: str | None = None
     reorder_threshold: int | None = None
+    is_implant: bool | None = None
     is_active: bool | None = None
 
 
@@ -29,6 +31,7 @@ class InventoryItemResponse(BaseModel):
     category: str | None
     unit: str | None
     reorder_threshold: int | None
+    is_implant: bool = False
     is_active: bool
     # Computed from the item's batches (see InventoryService), not a stored
     # column — always the current real sum, never stale.
@@ -51,6 +54,11 @@ class ConsumeStockRequest(BaseModel):
     quantity: int
 
 
+class RecordWastageRequest(BaseModel):
+    quantity: int
+    reason: str
+
+
 class InventoryBatchResponse(BaseModel):
     id: UUID
     inventory_item_id: UUID
@@ -60,5 +68,19 @@ class InventoryBatchResponse(BaseModel):
     received_at: date
     created_at: datetime
     updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class InventoryAdjustmentResponse(BaseModel):
+    id: UUID
+    inventory_batch_id: UUID
+    adjustment_type: str
+    quantity: int
+    reason: str | None
+    resource_type: str | None
+    resource_id: UUID | None
+    performed_by: str | None
+    created_at: datetime
 
     model_config = {"from_attributes": True}

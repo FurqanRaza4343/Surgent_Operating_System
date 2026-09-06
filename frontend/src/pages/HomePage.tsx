@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { Navbar, Footer } from "../components/layout";
 import { CinematicHero, ScrollGuideAvatar } from "../components/hero";
+import { LandingChat, type HeroChatSeed } from "../components/chat/LandingChat";
 import {
-  TrustBar,
+  SpecialtySelector,
+  PainPointStats,
   HowItWorks,
   FeatureShowcase,
   DashboardPreview,
@@ -16,17 +18,31 @@ import { BookConsultationSection } from "../components/book-consultation/BookCon
 import { TOTAL_AGENTS } from "../data/agents";
 
 export function HomePage() {
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatSeed, setChatSeed] = useState<HeroChatSeed | null>(null);
+
   return (
     <div className="min-h-screen w-full bg-canvas font-sans text-ink">
       <Navbar />
-      <ScrollGuideAvatar />
+      <ScrollGuideAvatar
+        onAskAria={(message) => {
+          setChatSeed({ eyebrow: "", title: message, body: "" });
+          setChatOpen(true);
+        }}
+      />
       <main>
-        <CinematicHero />
-        <TrustBar />
+        <CinematicHero
+          onOpenChat={(seed) => {
+            setChatSeed(seed);
+            setChatOpen(true);
+          }}
+        />
+        <PainPointStats />
+        <SpecialtySelector />
         <HowItWorks />
         <SectionTeaser
           id="agents"
-          image="/lets-scroll/teaser-agents.png"
+          image="/screenshots/executive-dashboard.png"
           eyebrow="The agent suite"
           title={`${TOTAL_AGENTS} agents. Every corner of your practice.`}
           body="An entire agent factory working your practice — from the first call to the final recovery check-in. Meet the full roster."
@@ -43,7 +59,7 @@ export function HomePage() {
 
         <SectionTeaser
           id="channels"
-          image="/lets-scroll/teaser-channels.png"
+          image="/screenshots/ai-voice-receptionist.png"
           eyebrow="Everywhere your patients are"
           title="One inbox. Every channel. Fully automated."
           body="Your agents answer, qualify, and book across every social channel your patients already use."
@@ -61,6 +77,12 @@ export function HomePage() {
         <CTA />
       </main>
       <Footer />
+      <LandingChat
+        open={chatOpen}
+        seed={chatSeed}
+        onClose={() => setChatOpen(false)}
+        onSeedConsumed={() => setChatSeed(null)}
+      />
     </div>);
 
 }

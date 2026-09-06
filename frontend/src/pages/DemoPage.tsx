@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeftIcon, ClockIcon, CheckCircle2Icon, Loader2Icon } from "lucide-react";
+import { ArrowLeftIcon, ClockIcon, CheckCircle2Icon, Loader2Icon, StethoscopeIcon } from "lucide-react";
 import { Navbar, Footer } from "../components/layout";
 import { Container } from "../components/ui";
 import { submitDemoRequest } from "../api/commerce";
 import { ApiError } from "../api/client";
 
 export function DemoPage() {
-  const [videoFailed, setVideoFailed] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,23 +55,8 @@ export function DemoPage() {
           <div className="mt-10 grid gap-12 lg:grid-cols-[380px_1fr] lg:items-start">
             {/* Avatar + guidance */}
             <div className="flex flex-col items-center text-center lg:sticky lg:top-28">
-              <div className="relative h-48 w-48 overflow-hidden rounded-full border-4 border-white shadow-lift">
-                {!videoFailed ?
-                <video
-                  autoPlay
-                  loop
-                  muted
-                  playsInline
-                  src="/lets-scroll/avatar-intro.mp4"
-                  onError={() => setVideoFailed(true)}
-                  className="h-full w-full object-cover" /> :
-
-                <img
-                  src="/lets-scroll/avatar-doctor.png"
-                  alt="AesthetixAI guide"
-                  className="h-full w-full object-cover" />
-
-                }
+              <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-teal-600 shadow-lift">
+                <StethoscopeIcon className="h-12 w-12 text-white" />
               </div>
               <p className="mt-5 font-display text-xl font-600 text-ink">
                 Tell us a bit about your practice
@@ -86,7 +70,7 @@ export function DemoPage() {
                 Guaranteed response within 24 hours
               </div>
               <p className="mt-6 text-xs text-ink-muted">
-                AesthetixAI is built by <span className="font-semibold text-ink-soft">AceOne Solutions</span>.
+                Aiaceone is built by <span className="font-semibold text-ink-soft">AceOne Solutions</span>.
               </p>
             </div>
 

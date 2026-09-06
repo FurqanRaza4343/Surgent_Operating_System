@@ -11,6 +11,7 @@ from src.models.patient import Patient
 from src.models.treatment_plan import TreatmentPlan, TreatmentPlanItem
 from src.schemas.billing import CreateInvoiceRequest, UpdateInvoiceRequest
 from src.server.exceptions import NotFoundException, AppException
+from src.services.notifications.notification_service import NotificationService
 
 
 class InvoiceService:
@@ -18,6 +19,9 @@ class InvoiceService:
     line items directly) or generated from a treatment plan's items (caller
     supplies `treatment_plan_id` with no explicit items). Every method is
     practice-scoped."""
+
+    def __init__(self):
+        self.notifications = NotificationService()
 
     async def _resolve_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> Patient:
         result = await db.execute(select(Patient).where(Patient.id == patient_id, Patient.practice_id == practice_id))
@@ -140,6 +144,12 @@ class InvoiceService:
             # back and forth doesn't keep re-stamping it.
             if new_status == InvoiceStatus.PAID and invoice.paid_at is None:
                 fields["paid_at"] = datetime.now(timezone.utc)
+                await self.notifications.notify(
+                    db, practice_id, "payment_received",
+                    title=f"Payment received — ${float(invoice.total_amount):,.2f}",
+                    body=f"Invoice #{str(invoice.id)[:8]} was marked paid.",
+                    resource_type="invoice", resource_id=invoice.id,
+                )
 
         for field, value in fields.items():
             setattr(invoice, field, value)

@@ -75,8 +75,33 @@ This is what keeps the app from drifting back into looking "vibe coded."
   registration needs admin rights this shell doesn't have; see
   `backend/alembic/`, whose `env.py` previously never imported `src.models`
   so `Base.metadata` was empty and autogenerate produced blank migrations —
-  fixed). The frontend still reads `data/mockSessions.ts` — wiring it to this
-  real API is the next step, not done in this pass.
+  fixed). The sessions inbox (`sessions/useSessions.ts`), Overview KPIs,
+  the Analytics page, the Sidebar needs-attention badge, the per-agent and
+  per-category session lists, the patient session history, and the per-agent
+  session counts on Agent Settings all read the real `conversations`/`analytics`
+  APIs (`overview/useOverview.ts`, `analytics/computeAnalytics.ts`). The old
+  `data/mockSessions.ts` file has been deleted — nothing reads mock sessions
+  any more.
+- **AI Receptionist monitor is fully real** — `GET /api/v1/ai-receptionist/overview`
+  (`services/ai_receptionist/overview_service.py`) now returns, alongside the
+  cost/usage KPIs, the booking-pipeline funnel (patient stages + real
+  `Appointment` rows + auto-follow-up counts), channel connection status
+  (from `Practice.settings.green_api`), system health (last activity + 24h
+  session/interaction counts — no fake CPU/docs telemetry), and a recent
+  activity feed (latest 20 `AgentLog` rows). The monitor page polls every 30s;
+  `data/mockReceptionistActivity.ts` is deleted. `VoiceEngineCard` stays a
+  decorative waveform placeholder on purpose — no live audio stream exists yet.
+- **AI Receptionist system prompt is Owner-editable (viewable by staff)** —
+  `GET/PUT /api/v1/ai-receptionist/system-prompt`
+  (`services/ai_receptionist/system_prompt_service.py`) reads/writes a
+  practice-specific instruction block stored in `Practice.settings`
+  (`ai_receptionist_system_prompt`). The effective prompt returned is the real
+  base template from `inbound_service._system_prompt` plus that custom block —
+  the exact prompt every inbound WhatsApp message gets (it's re-read from
+  `Practice.settings` per message, so edits apply on the next turn). GET is
+  open to Owner/Doctor/Receptionist (front-desk staff can see exactly what the
+  AI is told); PUT is Owner-only. `SystemPromptCard.tsx` renders it on the
+  monitor page: read-only `pre` + copy for everyone, textarea edit for the Owner.
 - **Visual design system** — layout ideas from `design-references/For.UI/clinical_ethereal/DESIGN.md`
   ("Clinical Ethereal") still apply: fixed 280px sidebar, 24px card radius,
   tabular-figure numbers, Cmd+K command palette, progress rings for metrics.
@@ -148,17 +173,18 @@ data — build this first, everything else is a filtered view of it.
    agent info, a live/not-yet-active status badge (only `receptionist` is
    marked live — matches its actual backend state, see `LIVE_AGENT_SLUGS`),
    and that agent's own filtered sessions.
-4. **Analytics** — done (frontend). `analytics/computeAnalytics.ts` derives every
-   number (total sessions, escalation/resolution rate, breakdowns by channel
-   and category) from the same `data/mockSessions.ts` the rest of the
-   dashboard reads — deliberately not a second, disconnected fake dataset
-   like the marketing site's `DashboardPreview.tsx` mockup. Swapping in the
-   real `conversations` API later only changes this one file's data source.
-5. **Agent Settings** — done (frontend). `settings/AgentSettingsPage.tsx` lists
+4. **Analytics** — done (frontend, real API). `analytics/AnalyticsPage.tsx`
+   reads `GET /api/v1/analytics/sessions` (real SQL aggregates over the
+   `Conversation` table); `analytics/computeAnalytics.ts` is now a pure mapper
+   that only enriches the raw channel/category codes with the CHANNELS/
+   AGENT_CATEGORIES labels and colors the chart components expect.
+5. **Agent Settings** — done (frontend + real API). `settings/AgentSettingsPage.tsx` lists
    all 31 agents grouped by category with an enabled toggle, tone, and
-   escalation-sensitivity control per agent, persisted to `localStorage` via
-   `settings/useAgentSettings.ts` — shaped to match the real `AgentConfig`
-   model so a real settings API is a storage-layer swap, not a UI rewrite.
+   escalation-sensitivity control per agent. Writes now go through the real
+   per-practice `AgentConfig` model via `GET/PUT /api/v1/agent-config`
+   (`settings/useAgentSettings.ts` — optimistic PUTs, Owner-authorized on the
+   backend) instead of `localStorage`; a new `GET /api/v1/agent-config` list
+   endpoint loads the practice's rows in one call.
 6. **Auth (Clerk) + practice profile** — done (frontend). `app/auth/RequireAuth.tsx`
    gates every `/dashboard/*` route behind Clerk (`<SignedIn>`/`<SignedOut>`),
    wired into `DashboardRouter.tsx`; a signed-out visitor sees a sign-in
@@ -236,24 +262,30 @@ data — build this first, everything else is a filtered view of it.
    tier from now, not just the local override. Real backend enforcement
    (`services/practice/plan_capabilities.py` + `require_plan_feature()`/
    `require_agent_category()` in `server/dependencies.py`) exists and is
-   wired into `get_current_practice_context`, though no route currently
-   calls the `require_*` guards yet (nothing else is real-data-backed enough
-   to need gating beyond the frontend's presentation layer) — the dependency
-   is there for the next route that does. **Demo checkout mode**
+   wired into `get_current_practice_context`; `require_plan_feature("analytics")`
+   now guards `GET /api/v1/analytics/sessions` (the Analytics page), while
+   `/analytics/overview` stays open because it backs the Owner home screen for
+   every tier. **Demo checkout mode**
    (`checkout_services.py`'s `_stripe_configured()`/`_demo_checkout()`) skips
    real Stripe entirely while `backend/.env`'s Stripe keys are still "xxxx"
    placeholders, marking checkout as paid immediately so this whole flow is
    reviewable before real Stripe keys exist — an explicit, informed decision
    for pre-launch demoing, automatically stops once real keys are set.
 
-All of Phases 1–6 above run on `data/mockSessions.ts` / `data/mockPatients.ts`
-(and `localStorage` for settings/profile) — shaped to match the real
-`Conversation`/`Message`/`Patient`/`AgentConfig`/`Practice` backend models so
-swapping in real data later is a data-source change, not a UI rewrite. The
-real blocker for all of it is still the `conversations` backend API (Phase 1's
-own prerequisite) and real multi-tenant auth (Phase 6's remaining gap) — see
-`backend/src/services/agents/*/README.md` for the 31 agent-level specs written
-alongside this dashboard work, which is the next real build target.
+Phases 1–6 above were originally shaped on `data/mockSessions.ts` /
+`data/mockPatients.ts` and `localStorage` (settings/profile) — the mocks matched
+the real `Conversation`/`Message`/`Patient`/`AgentConfig`/`Practice` backend
+models so swapping in real data is a data-source change, not a UI rewrite. Now
+that the `conversations`/`analytics` APIs, real auth, and the real `AgentConfig`
+settings API are live, every session list on the dashboard reads real
+conversations, and `data/mockSessions.ts` plus `data/mockPatients.ts` are both
+deleted — agent settings persist via `/api/v1/agent-config`; patients fall back
+to the IndexedDB cache of real API data (never fabricated rosters) and the
+signed-out doctor "My Day" screen shows an honest empty schedule (the profile
+`localStorage` still stands in for its real API). Remaining gaps are the real
+multi-tenant auth polish and the agent-level runtime work described in
+`backend/src/services/agents/*/README.md` (the 31-agent specs written alongside
+this dashboard work), which is the next real build target.
 
 ## Backend LLM: Mistral added (low-stakes tier)
 

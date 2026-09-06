@@ -31,6 +31,14 @@ class Settings(BaseSettings):
     mistral_api_key_3: str = ""
     mistral_model: str = "mistral-small-latest"
 
+    # Groq's chat-completions endpoint is also OpenAI-SDK compatible (same
+    # pattern as Mistral above, different base_url) — used as the fallback
+    # tier between Mistral (rate-limit-prone free tier) and OpenAI (a real
+    # key isn't configured yet), since Groq's free tier is fast and has
+    # generous limits. See LLMService._call_with_fallback.
+    groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-120b"
+
     resend_api_key: str = ""
     resend_from_email: str = "onboarding@resend.dev"
 

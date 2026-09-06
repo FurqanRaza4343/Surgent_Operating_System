@@ -7,6 +7,7 @@ from src.database import async_session_factory
 from src.models.practice import Practice
 from src.services.channels.inbound_service import InboundService
 from src.services.channels.whatsapp_green_api import WhatsAppGreenAPI
+from src.services.speech.speech_service import SpeechService
 from sqlalchemy import select
 
 logger = logging.getLogger(__name__)
@@ -81,7 +82,7 @@ class GreenAPIPoller:
                 receipt_id = notification.get("receiptId")
                 body = notification.get("body") or {}
                 try:
-                    await self._process_notification(inbound, instance_id, body)
+                    await self._process_notification(inbound, instance_id, body, wa)
                 except Exception:
                     logger.exception("Failed processing notification %s", receipt_id)
                 if receipt_id is not None:
@@ -104,20 +105,68 @@ class GreenAPIPoller:
                     instances.append((instance_id, token))
             return instances
 
-    async def _process_notification(self, inbound: InboundService, instance_id: str, body: dict) -> None:
-        if body.get("typeWebhook") != "incomingMessageReceived":
+    async def _process_notification(self, inbound: InboundService, instance_id: str, body: dict, wa: WhatsAppGreenAPI) -> None:
+        webhook_type = body.get("typeWebhook")
+        if webhook_type != "incomingMessageReceived":
+            # This used to be a silent early-return — every notification
+            # that wasn't a plain incoming message (delivery receipts,
+            # instance status changes, outgoing-message echoes, etc.)
+            # vanished with zero trace, making it impossible to tell "no
+            # message ever arrived" apart from "a message arrived in a
+            # shape we don't handle yet." Log it instead so a real send
+            # that Green API delivered under a webhook type we're not
+            # expecting is at least visible.
+            logger.info("Received non-message webhook type: %s", webhook_type)
             return
 
         message_data = body.get("messageData", {})
-        if message_data.get("typeMessage") != "textMessage":
-            logger.info("Ignoring non-text message: %s", message_data.get("typeMessage"))
+        type_message = message_data.get("typeMessage")
+
+        message_text = ""
+        if type_message == "textMessage":
+            message_text = message_data.get("textMessageData", {}).get("textMessage", "")
+        elif type_message == "audioMessage":
+            # Voice notes: Green API gives a downloadUrl in fileMessageData
+            # (same shape documented for images/audio/video/documents), not
+            # the audio bytes inline. Transcribe via Groq Whisper and treat
+            # the result exactly like a typed message — same conversation,
+            # same AI-reply flow, patient never has to know it was voice.
+            download_url = message_data.get("fileMessageData", {}).get("downloadUrl")
+            if not download_url:
+                logger.info("Audio message with no downloadUrl, skipping")
+                return
+            try:
+                audio_bytes = await wa.download_file(download_url)
+                message_text = await SpeechService().transcribe(audio_bytes, filename="voice_note.ogg")
+            except Exception:
+                logger.exception("Failed to transcribe incoming voice note")
+                return
+            if not message_text.strip():
+                logger.info("Voice note transcribed to empty text, skipping")
+                return
+            logger.info("Transcribed voice note: %s", message_text[:100])
+        else:
+            logger.info("Ignoring unsupported message type: %s", type_message)
             return
 
         sender_data = body.get("senderData", {})
+        chat_id = sender_data.get("chatId", "")
+
+        # Group chats end in "@g.us" (individuals end in "@c.us") — the
+        # connected number can be a member of ordinary WhatsApp groups
+        # (dev groups, course batches, whatever) that have nothing to do
+        # with the clinic. Without this check, a group's long numeric chat
+        # ID was being stripped of its suffix and treated as if it were a
+        # patient's own phone number — creating a fake "patient" out of
+        # someone else's group-chat display name, and the AI receptionist
+        # would have started replying into that group. This is a hard skip,
+        # not something to route anywhere.
+        if chat_id.endswith("@g.us"):
+            logger.info("Ignoring group chat message from %s", chat_id)
+            return
+
         phone = (sender_data.get("sender") or "").replace("@c.us", "").replace("@g.us", "")
         sender_name = sender_data.get("senderName", "Unknown")
-        chat_id = sender_data.get("chatId", "")
-        message_text = message_data.get("textMessageData", {}).get("textMessage", "")
 
         if not phone or not message_text:
             return

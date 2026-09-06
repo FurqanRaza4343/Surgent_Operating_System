@@ -69,6 +69,17 @@ class PortalBookingRequest(BaseModel):
     notes: str | None = None
 
 
+class PatientIntakeRequest(BaseModel):
+    allergies: list[dict] = []
+    surgical_history: list[dict] = []
+    current_medications: list[dict] = []
+    smoking_status: str | None = None
+    previous_cosmetic_procedures: list[dict] = []
+    # Freeform context for the AI summary only — not stored as a structured
+    # field on Patient, just fed into the doctor-facing summary generation.
+    additional_notes: str | None = None
+
+
 class PortalPatientResponse(BaseModel):
     id: UUID
     portal_id: str | None
@@ -85,6 +96,10 @@ class PortalPatientResponse(BaseModel):
     photos: list[PortalPhoto] = []
     treatment_plans: list[PortalTreatmentPlan] = []
     invoice_total_pending: float = 0.0
+    # AI Patient Intake (Week 4) — intake_completed gates whether the portal
+    # shows the intake form or the doctor-facing summary it produced.
+    intake_completed: bool = False
+    intake_summary: str | None = None
 
 
 # --- Owner/staff-side portal management ---

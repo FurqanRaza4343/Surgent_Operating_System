@@ -79,7 +79,7 @@ const CATEGORY_MAP: Record<string, string> = {
   lead_nurturing: "business",
 };
 
-function mapConversationToSession(c: ConversationListItem): Session {
+export function mapConversationToSession(c: ConversationListItem): Session {
   const name = c.patient_name || "Unknown Patient";
   return {
     id: c.id,

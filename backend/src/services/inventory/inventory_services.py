@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.inventory_item import InventoryItem
 from src.models.inventory_batch import InventoryBatch
+from src.models.inventory_adjustment import InventoryAdjustment, AdjustmentType
 from src.schemas.inventory import CreateInventoryItemRequest, UpdateInventoryItemRequest, ReceiveBatchRequest
 from src.server.exceptions import NotFoundException, AppException
 
@@ -25,6 +26,7 @@ class InventoryService:
             category=data.category,
             unit=data.unit,
             reorder_threshold=data.reorder_threshold,
+            is_implant=data.is_implant,
         )
         db.add(item)
         await db.flush()
@@ -60,7 +62,8 @@ class InventoryService:
         return item
 
     async def receive_batch(
-        self, db: AsyncSession, practice_id: UUID, item_id: UUID, data: ReceiveBatchRequest
+        self, db: AsyncSession, practice_id: UUID, item_id: UUID, data: ReceiveBatchRequest,
+        resource_type: str | None = None, resource_id: UUID | None = None, performed_by: str | None = None,
     ) -> InventoryBatch:
         await self.get_item(db, practice_id, item_id)
         if data.quantity <= 0:
@@ -75,6 +78,11 @@ class InventoryService:
         db.add(batch)
         await db.flush()
         await db.refresh(batch)
+        db.add(InventoryAdjustment(
+            inventory_batch_id=batch.id, adjustment_type=AdjustmentType.RECEIVED, quantity=data.quantity,
+            resource_type=resource_type, resource_id=resource_id, performed_by=performed_by,
+        ))
+        await db.flush()
         return batch
 
     async def list_batches(self, db: AsyncSession, practice_id: UUID, item_id: UUID) -> list[InventoryBatch]:
@@ -87,9 +95,17 @@ class InventoryService:
         result = await db.execute(query)
         return list(result.scalars().all())
 
-    async def consume(self, db: AsyncSession, practice_id: UUID, item_id: UUID, quantity: int) -> InventoryItem:
+    async def consume(
+        self, db: AsyncSession, practice_id: UUID, item_id: UUID, quantity: int,
+        adjustment_type: AdjustmentType = AdjustmentType.CONSUMED, reason: str | None = None,
+        resource_type: str | None = None, resource_id: UUID | None = None, performed_by: str | None = None,
+    ) -> InventoryItem:
         """Decrements on-hand stock, oldest-expiry-first (FEFO), across
-        however many batches it takes to cover the requested quantity."""
+        however many batches it takes to cover the requested quantity.
+        Logs one InventoryAdjustment per batch touched — `adjustment_type`
+        distinguishes ordinary use (CONSUMED, e.g. on a surgery) from
+        wastage (WASTED, e.g. expired/damaged/dropped) so the audit trail
+        can tell the difference; see record_wastage() for the latter."""
         if quantity <= 0:
             raise AppException("Quantity to consume must be greater than zero")
         await self.get_item(db, practice_id, item_id)
@@ -112,9 +128,37 @@ class InventoryService:
             take = min(batch.quantity, remaining)
             batch.quantity -= take
             remaining -= take
+            db.add(InventoryAdjustment(
+                inventory_batch_id=batch.id, adjustment_type=adjustment_type, quantity=take, reason=reason,
+                resource_type=resource_type, resource_id=resource_id, performed_by=performed_by,
+            ))
 
         await db.flush()
         return await self.get_item(db, practice_id, item_id)
+
+    async def record_wastage(
+        self, db: AsyncSession, practice_id: UUID, item_id: UUID, quantity: int, reason: str, performed_by: str | None = None,
+    ) -> InventoryItem:
+        """Expired, damaged, dropped — stock that's gone but was never used
+        on a patient. A required `reason` (unlike ordinary consumption)
+        since wastage is exactly the number a practice wants to be able to
+        explain later, not just a silent stock decrease."""
+        if not reason or not reason.strip():
+            raise AppException("A reason is required to record wastage")
+        return await self.consume(
+            db, practice_id, item_id, quantity,
+            adjustment_type=AdjustmentType.WASTED, reason=reason, performed_by=performed_by,
+        )
+
+    async def list_adjustments(self, db: AsyncSession, practice_id: UUID, item_id: UUID) -> list[InventoryAdjustment]:
+        await self.get_item(db, practice_id, item_id)
+        result = await db.execute(
+            select(InventoryAdjustment)
+            .join(InventoryBatch, InventoryAdjustment.inventory_batch_id == InventoryBatch.id)
+            .where(InventoryBatch.inventory_item_id == item_id)
+            .order_by(InventoryAdjustment.created_at.desc())
+        )
+        return list(result.scalars().all())
 
     async def _attach_on_hand(self, db: AsyncSession, items: list[InventoryItem]) -> None:
         if not items:

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, SparklesIcon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { usePlan } from "../plan/PlanContext";
 import { usePatients } from "../patients/usePatients";
@@ -17,7 +17,7 @@ export function ConsultationNoteFormPage() {
   const navigate = useNavigate();
   const { authedFetch } = usePlan();
   const { getPatient, loading: patientLoading } = usePatients(authedFetch);
-  const { create } = useConsultationNotes(authedFetch, patientId);
+  const { create, aiDraft } = useConsultationNotes(authedFetch, patientId);
 
   const patient = patientId ? getPatient(patientId) : undefined;
 
@@ -28,6 +28,30 @@ export function ConsultationNoteFormPage() {
   const [plan, setPlan] = useState("");
   const [saving, setSaving] = useState<"draft" | "final" | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const [rawNotes, setRawNotes] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [followUpTasks, setFollowUpTasks] = useState<string[]>([]);
+
+  async function handleAiDraft() {
+    if (!patientId || !rawNotes.trim()) return;
+    setDrafting(true);
+    setDraftError(null);
+    try {
+      const draft = await aiDraft(patientId, rawNotes.trim());
+      if (!draft) throw new Error("no draft");
+      setSubjective(draft.subjective);
+      setObjective(draft.objective);
+      setAssessment(draft.assessment);
+      setPlan(draft.plan);
+      setFollowUpTasks(draft.follow_up_tasks);
+    } catch {
+      setDraftError("Couldn't generate a draft — try again, or fill the fields in manually.");
+    } finally {
+      setDrafting(false);
+    }
+  }
 
   React.useEffect(() => {
     if (patient?.chiefComplaint) setChiefComplaint((prev) => prev || patient.chiefComplaint);
@@ -73,11 +97,42 @@ export function ConsultationNoteFormPage() {
 
 
       <div className="mt-6 max-w-2xl space-y-4">
+        <div className="rounded-xl border border-teal-600/20 bg-teal-600/[0.04] p-4">
+          <div className="flex items-center gap-1.5">
+            <SparklesIcon className="h-4 w-4 text-teal-600" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-teal-600">Consultation Assistant</span>
+          </div>
+          <p className="mt-1 text-xs text-ink-muted">Paste or dictate your raw notes — AI drafts the SOAP fields below for you to review and edit.</p>
+          <textarea
+            value={rawNotes}
+            onChange={(e) => setRawNotes(e.target.value)}
+            rows={3}
+            placeholder="e.g. Patient here for rhinoplasty consult, unhappy with dorsal hump since teens, no prior surgeries, exam shows mild deviation..."
+            className="mt-2 w-full rounded-xl border border-sand-200 bg-white px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-600/40" />
+          {draftError && <p className="mt-1.5 text-xs font-medium text-danger">{draftError}</p>}
+          <button
+            type="button"
+            onClick={handleAiDraft}
+            disabled={drafting || !rawNotes.trim()}
+            className="mt-2 flex items-center gap-1.5 rounded-lg bg-teal-600 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40">
+            <SparklesIcon className="h-3.5 w-3.5" /> {drafting ? "Drafting…" : "Generate SOAP draft"}
+          </button>
+        </div>
+
         <Field label="Chief complaint" value={chiefComplaint} onChange={setChiefComplaint} rows={2} placeholder="What brings the patient in today" />
         <Field label="Subjective" value={subjective} onChange={setSubjective} rows={4} placeholder="What the patient reports — symptoms, history, concerns, in their own words." />
         <Field label="Objective" value={objective} onChange={setObjective} rows={4} placeholder="What you observe — exam findings, measurements, photos taken." />
         <Field label="Assessment" value={assessment} onChange={setAssessment} rows={3} placeholder="Your clinical impression / diagnosis." />
         <Field label="Plan" value={plan} onChange={setPlan} rows={3} placeholder="Next steps — treatment plan, follow-up, referrals." />
+
+        {followUpTasks.length > 0 &&
+        <div className="rounded-xl border border-sand-200 bg-sand-50 p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-ink-muted">AI-suggested follow-up tasks</p>
+            <ul className="mt-2 space-y-1 text-sm text-ink-soft">
+              {followUpTasks.map((t, i) => <li key={i}>• {t}</li>)}
+            </ul>
+          </div>
+        }
 
         {error && <p className="text-sm font-medium text-danger">{error}</p>}
 

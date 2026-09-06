@@ -9,8 +9,10 @@ from src.schemas.inventory import (
     UpdateInventoryItemRequest,
     ReceiveBatchRequest,
     ConsumeStockRequest,
+    RecordWastageRequest,
     InventoryItemResponse,
     InventoryBatchResponse,
+    InventoryAdjustmentResponse,
 )
 from src.services.inventory.inventory_services import InventoryService
 
@@ -36,7 +38,7 @@ class InventoryController:
         return InventoryItemResponse.model_validate(item)
 
     async def receive_batch(self, db: AsyncSession, user: User, item_id: UUID, data: ReceiveBatchRequest) -> InventoryBatchResponse:
-        batch = await self.service.receive_batch(db, user.practice_id, item_id, data)
+        batch = await self.service.receive_batch(db, user.practice_id, item_id, data, performed_by=str(user.id))
         return InventoryBatchResponse.model_validate(batch)
 
     async def list_batches(self, db: AsyncSession, user: User, item_id: UUID) -> list[InventoryBatchResponse]:
@@ -44,5 +46,13 @@ class InventoryController:
         return [InventoryBatchResponse.model_validate(b) for b in batches]
 
     async def consume(self, db: AsyncSession, user: User, item_id: UUID, data: ConsumeStockRequest) -> InventoryItemResponse:
-        item = await self.service.consume(db, user.practice_id, item_id, data.quantity)
+        item = await self.service.consume(db, user.practice_id, item_id, data.quantity, performed_by=str(user.id))
         return InventoryItemResponse.model_validate(item)
+
+    async def record_wastage(self, db: AsyncSession, user: User, item_id: UUID, data: RecordWastageRequest) -> InventoryItemResponse:
+        item = await self.service.record_wastage(db, user.practice_id, item_id, data.quantity, data.reason, performed_by=str(user.id))
+        return InventoryItemResponse.model_validate(item)
+
+    async def list_adjustments(self, db: AsyncSession, user: User, item_id: UUID) -> list[InventoryAdjustmentResponse]:
+        adjustments = await self.service.list_adjustments(db, user.practice_id, item_id)
+        return [InventoryAdjustmentResponse.model_validate(a) for a in adjustments]

@@ -11,6 +11,10 @@ class AgentConfigController:
     def __init__(self):
         self.service = AgentConfigService()
 
+    async def list_configs(self, db: AsyncSession, user: User) -> list[AgentConfigResponse]:
+        configs = await self.service.list_configs(db, user.practice_id)
+        return [AgentConfigResponse.model_validate(c) for c in configs]
+
     async def get_config(self, db: AsyncSession, user: User, agent_type: str) -> AgentConfigResponse:
         config = await self.service.get_config(db, user.practice_id, agent_type)
         return AgentConfigResponse.model_validate(config)

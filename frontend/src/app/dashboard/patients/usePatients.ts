@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { MOCK_PATIENTS } from "../data/mockPatients";
 import type { Patient } from "./types";
 import { loadPatientsDB, savePatientsDB } from "./patientsDB";
 import { createPatient, listPatients, type PatientResponse } from "../../../api/entities";
@@ -24,7 +23,9 @@ function normalize(patient: Patient): Patient {
     agentStatus: patient.agentStatus ?? "inactive",
     lifecycleStage: patient.lifecycleStage ?? "inquiry",
     lostReason: patient.lostReason ?? null,
-    source: patient.source ?? null
+    source: patient.source ?? null,
+    qualification: patient.qualification ?? null,
+    intakeSummary: patient.intakeSummary ?? null
   };
 }
 
@@ -59,7 +60,17 @@ function fromApi(p: PatientResponse): Patient {
     agentStatus: p.agent_status === "active" ? "active" : "inactive",
     lifecycleStage: (p.lifecycle_stage as Patient["lifecycleStage"]) ?? "inquiry",
     lostReason: p.lost_reason,
-    source: p.source
+    source: p.source,
+    qualification: p.qualification
+      ? {
+          interestedProcedure: p.qualification.interested_procedure,
+          budgetSignal: p.qualification.budget_signal,
+          urgency: p.qualification.urgency,
+          score: p.qualification.score,
+          summary: p.qualification.summary
+        }
+      : null,
+    intakeSummary: p.intake_summary
   };
 }
 
@@ -102,29 +113,24 @@ export function usePatients(authedFetch: AuthedFetch = null) {
         try {
           const remote = await listPatients(authedFetch);
           data = remote.map(fromApi);
-          await withTimeout(savePatientsDB(data)).catch(() => {});
+          await withTimeout(savePatientsDB(data)).catch(() => undefined);
         } catch {
           data = undefined;
         }
       }
 
-      if (!data) {
-        try {
+if (!data) {
+try {
           data = await withTimeout(loadPatientsDB());
-          if (!data) {
-            data = MOCK_PATIENTS.map(normalize);
-            await withTimeout(savePatientsDB(data));
-          } else {
-            data = data.map(normalize);
-          }
+          if (data) data = data.map(normalize);
         } catch {
-          data = MOCK_PATIENTS;
+          data = undefined;
         }
       }
 
       if (!cancelled) {
-        patientsRef.current = data;
-        setPatients(data);
+        patientsRef.current = data ?? [];
+        setPatients(data ?? []);
         setLoading(false);
       }
     })();

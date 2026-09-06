@@ -12,8 +12,10 @@ from src.schemas.inventory import (
     UpdateInventoryItemRequest,
     ReceiveBatchRequest,
     ConsumeStockRequest,
+    RecordWastageRequest,
     InventoryItemResponse,
     InventoryBatchResponse,
+    InventoryAdjustmentResponse,
 )
 from src.controller.inventory.inventory_controllers import InventoryController
 
@@ -88,3 +90,22 @@ async def consume(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.consume(db, user, item_id, data)
+
+
+@router.post("/items/{item_id}/wastage", response_model=InventoryItemResponse)
+async def record_wastage(
+    item_id: UUID,
+    data: RecordWastageRequest,
+    user: User = Depends(require_role(*_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.record_wastage(db, user, item_id, data)
+
+
+@router.get("/items/{item_id}/adjustments", response_model=list[InventoryAdjustmentResponse])
+async def list_adjustments(
+    item_id: UUID,
+    user: User = Depends(require_role(*_ROLES)),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.list_adjustments(db, user, item_id)

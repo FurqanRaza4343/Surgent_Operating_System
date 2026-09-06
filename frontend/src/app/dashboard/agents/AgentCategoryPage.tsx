@@ -4,8 +4,8 @@ import { ActivityIcon } from "lucide-react";
 import { AGENT_CATEGORIES } from "../../../data/agents";
 import { PageHeader } from "../components/PageHeader";
 import { ComingSoon } from "../components/ComingSoon";
-import { MOCK_SESSIONS } from "../data/mockSessions";
 import { SessionsView } from "../sessions/SessionsView";
+import { useSessions } from "../sessions/useSessions";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { usePlan } from "../plan/PlanContext";
 import { UpgradeRequired } from "../plan/UpgradeRequired";
@@ -26,6 +26,7 @@ export function AgentCategoryPage() {
   const { categoryId } = useParams<{ categoryId: string }>();
   const category = AGENT_CATEGORIES.find((c) => c.id === categoryId);
   const { allowsCategory, loading } = usePlan();
+  const { sessions: allSessions, loading: sessionsLoading, error: sessionsError, refetch } = useSessions();
 
   if (!category) {
     return (
@@ -39,7 +40,8 @@ export function AgentCategoryPage() {
     return <UpgradeRequired title={category.label} tagline={category.tagline} minTier={minTierForCategory(category.id) || "enterprise"} agents={category.agents} />;
   }
 
-  const sessions = MOCK_SESSIONS.filter((s) => s.categoryId === category.id);
+  const categorySlugs = new Set(category.agents.map((a) => a.slug));
+  const sessions = allSessions.filter((s) => categorySlugs.has(s.agentSlug));
 
   return (
     <>
@@ -56,7 +58,18 @@ export function AgentCategoryPage() {
           </Link>
         )}
       </div>
+      {sessionsLoading ?
+      <div className="rounded-3xl border border-sand-200 bg-white p-12 text-center">
+          <p className="text-sm text-ink-muted">Loading sessions...</p>
+        </div> :
+      sessionsError ?
+      <div className="rounded-3xl border border-sand-200 bg-white p-12 text-center">
+          <p className="text-sm text-danger">{sessionsError}</p>
+          <button onClick={refetch} className="mt-3 text-sm text-teal-600 hover:underline">Retry</button>
+        </div> :
+
       <SessionsView sessions={sessions} />
+      }
     </>);
 
 }

@@ -1,14 +1,17 @@
 import React from "react";
-import { MOCK_BOOKING_PIPELINE, type PipelineStage } from "../data/mockReceptionistActivity";
 
 const COLORS = ["#2563EB", "#06B6D4", "#10B981"];
 
 // Same hand-rolled width-bar convention as BarRow.tsx, decreasing width per
-// funnel stage instead of a shared max. Defaults to the AI-receptionist
-// monitor's mock data when no `stages` is passed (its one existing caller,
-// ReceptionistMonitorPage.tsx) — FunnelPage.tsx passes real patient-funnel
-// data instead.
-export function BookingPipelineFunnel({ stages = MOCK_BOOKING_PIPELINE, title = "Booking Pipeline" }: { stages?: PipelineStage[]; title?: string }) {
+// funnel stage instead of a shared max. Data is always real — ReceptionistMonitorPage
+// passes the AI-receptionist pipeline (from GET /ai-receptionist/overview) and
+// FunnelPage passes patient-funnel stages (from GET /patients/funnel-summary).
+export interface PipelineStage {
+  label: string;
+  count: number;
+}
+
+export function BookingPipelineFunnel({ stages, title = "Booking Pipeline" }: { stages: PipelineStage[]; title?: string }) {
   const max = Math.max(...stages.map((s) => s.count), 1);
 
   return (

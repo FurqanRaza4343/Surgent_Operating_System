@@ -1,4 +1,5 @@
-export { TrustBar } from "./TrustBar";
+export { SpecialtySelector } from "./SpecialtySelector";
+export { PainPointStats } from "./PainPointStats";
 export { HowItWorks } from "./HowItWorks";
 export { FeatureShowcase } from "./FeatureShowcase";
 export { DashboardPreview } from "./DashboardPreview";

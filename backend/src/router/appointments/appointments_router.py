@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
 from src.server.dependencies import get_current_practice_user
+from src.server.audit import audit_action
 from src.models.user import User
 from src.schemas.appointment import (
     AppointmentResponse,
@@ -50,7 +51,7 @@ async def create_appointment(
 async def reschedule_appointment(
     appointment_id: UUID,
     data: RescheduleAppointmentRequest,
-    user: User = Depends(get_current_practice_user),
+    user: User = Depends(audit_action("appointment.reschedule", "appointment", id_param="appointment_id")),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.reschedule_appointment(db, user, appointment_id, data)
@@ -60,7 +61,7 @@ async def reschedule_appointment(
 async def cancel_appointment(
     appointment_id: UUID,
     data: CancelAppointmentRequest,
-    user: User = Depends(get_current_practice_user),
+    user: User = Depends(audit_action("appointment.cancel", "appointment", id_param="appointment_id")),
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.cancel_appointment(db, user, appointment_id, data)

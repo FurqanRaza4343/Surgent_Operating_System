@@ -1,34 +1,37 @@
-import { MOCK_SESSIONS } from "../data/mockSessions";
+import type { SessionAnalyticsResponse } from "../../../api/entities";
 import { CHANNELS, type ChannelId } from "../data/channels";
 import { AGENT_CATEGORIES } from "../../../data/agents";
 
-// Every number here is derived from the same MOCK_SESSIONS the rest of the
-// dashboard reads (Overview, Sessions, Patients) — no separate invented
-// dataset, so this page can't drift into the "illustrative fake stats"
-// problem the marketing site's DashboardPreview had.
-export function computeAnalytics() {
-  const total = MOCK_SESSIONS.length;
+// Pure mapper over GET /api/v1/analytics/sessions — the backend already
+// aggregates the real conversation table (total/active/needs-attention/
+// resolved counts + channel/category breakdowns), so this only enriches
+// those raw codes with the CHANNELS/AGENT_CATEGORIES labels and colors the
+// chart components expect. No deriving from mock sessions here anymore.
+export function computeAnalytics(analytics: SessionAnalyticsResponse) {
+  const total = analytics.total_conversations;
   const byStatus = {
-    active: MOCK_SESSIONS.filter((s) => s.status === "active").length,
-    needs_attention: MOCK_SESSIONS.filter((s) => s.status === "needs_attention").length,
-    resolved: MOCK_SESSIONS.filter((s) => s.status === "resolved").length
+    active: analytics.active_count,
+    needs_attention: analytics.needs_attention_count,
+    resolved: analytics.resolved_count
   };
 
-  const byChannel = (Object.keys(CHANNELS) as ChannelId[]).
-  map((id) => ({
-    id,
-    label: CHANNELS[id].label,
-    color: CHANNELS[id].color,
-    count: MOCK_SESSIONS.filter((s) => s.channel === id).length
-  })).
-  filter((c) => c.count > 0).
+  const byChannel = analytics.by_channel.
+  map((c) => {
+    const meta = CHANNELS[c.channel as ChannelId];
+    return {
+      id: c.channel,
+      label: meta?.label ?? c.channel,
+      color: meta?.color ?? "#64748B",
+      count: c.count
+    };
+  }).
   sort((a, b) => b.count - a.count);
 
-  const byCategory = AGENT_CATEGORIES.
+  const byCategory = analytics.by_category.
   map((c) => ({
-    id: c.id,
-    label: c.label,
-    count: MOCK_SESSIONS.filter((s) => s.categoryId === c.id).length
+    id: c.category,
+    label: AGENT_CATEGORIES.find((cat) => cat.id === c.category)?.label ?? c.category,
+    count: c.count
   })).
   sort((a, b) => b.count - a.count);
 

@@ -11,6 +11,8 @@ from src.schemas.clinical import (
     CreateConsultationNoteRequest,
     UpdateConsultationNoteRequest,
     ConsultationNoteResponse,
+    AIConsultationDraftRequest,
+    AIConsultationDraftResponse,
     CreateTreatmentPlanRequest,
     UpdateTreatmentPlanRequest,
     UpdateTreatmentPlanItemRequest,
@@ -63,6 +65,18 @@ async def update_note(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.update_note(db, user, note_id, data)
+
+
+@router.post("/notes/ai-draft", response_model=AIConsultationDraftResponse)
+async def ai_draft_note(
+    data: AIConsultationDraftRequest,
+    user: User = Depends(require_role(UserRole.DOCTOR)),
+    db: AsyncSession = Depends(get_db),
+):
+    """Consultation Assistant — drafts a SOAP note + follow-up tasks from
+    the doctor's own raw/dictated notes. A drafting aid only: nothing is
+    saved until the doctor reviews it and calls create_note separately."""
+    return await controller.ai_draft_note(db, user, data)
 
 
 @router.post("/treatment-plans", response_model=TreatmentPlanResponse)

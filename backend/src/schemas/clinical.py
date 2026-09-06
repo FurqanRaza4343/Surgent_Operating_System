@@ -26,6 +26,19 @@ class UpdateConsultationNoteRequest(BaseModel):
     status: str | None = None
 
 
+class AIConsultationDraftRequest(BaseModel):
+    patient_id: UUID
+    raw_notes: str
+
+
+class AIConsultationDraftResponse(BaseModel):
+    subjective: str
+    objective: str
+    assessment: str
+    plan: str
+    follow_up_tasks: list[str] = []
+
+
 class ConsultationNoteResponse(BaseModel):
     id: UUID
     practice_id: UUID

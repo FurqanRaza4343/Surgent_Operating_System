@@ -10,11 +10,13 @@ from src.schemas.ai_receptionist import (
     TranslateResponse,
     SendReminderResponse,
     AIReceptionistOverviewResponse,
+    SystemPromptResponse,
 )
 from src.services.ai_receptionist.voice_chat_service import VoiceChatService
 from src.services.ai_receptionist.reminder_service import ReminderService
 from src.services.ai_receptionist.translation_service import TranslationService
 from src.services.ai_receptionist.overview_service import AIReceptionistOverviewService
+from src.services.ai_receptionist.system_prompt_service import SystemPromptService
 
 
 class AIReceptionistController:
@@ -23,6 +25,7 @@ class AIReceptionistController:
         self.reminders = ReminderService()
         self.translation = TranslationService()
         self.overview = AIReceptionistOverviewService()
+        self.system_prompt = SystemPromptService()
 
     async def handle_call(self, db: AsyncSession, user: User) -> HandleCallResponse:
         result = await self.voice_chat.handle_call(db, user.practice_id, performed_by="ai_agent")
@@ -42,3 +45,9 @@ class AIReceptionistController:
 
     async def get_overview(self, db: AsyncSession, user: User) -> AIReceptionistOverviewResponse:
         return await self.overview.get_overview(db, user.practice_id)
+
+    async def get_system_prompt(self, db: AsyncSession, user: User) -> SystemPromptResponse:
+        return await self.system_prompt.get_system_prompt(db, user.practice_id)
+
+    async def update_system_prompt(self, db: AsyncSession, user: User, custom_instructions: str) -> SystemPromptResponse:
+        return await self.system_prompt.save_custom_instructions(db, user.practice_id, custom_instructions, user.id)

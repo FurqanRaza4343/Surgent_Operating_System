@@ -1,5 +1,7 @@
 from __future__ import annotations
 import json
+import logging
+import re
 from datetime import datetime, date as date_cls, timedelta, timezone
 from uuid import UUID
 
@@ -16,12 +18,85 @@ from src.services.llm.llm_service import LLMService
 from src.services.agent_log.agent_log_service import AgentLogService
 from src.services.appointments.appointments_services import AppointmentsService
 from src.services.channels.whatsapp_green_api import WhatsAppGreenAPI
+from src.services.channels.booking_draft_store import BookingDraftStore
+from src.services.leads.lead_qualification_service import LeadQualificationService
+
+logger = logging.getLogger(__name__)
 
 _WEEKDAY_KEYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"]
 _APPOINTMENT_DURATION_MINUTES = 30
 
+_DATE_RE = re.compile(r"\b(20\d{2}-\d{2}-\d{2})\b")
+_TIME_RE = re.compile(r"\b([01]?\d|2[0-3]):([0-5]\d)\b")
+_PM_HINT_RE = re.compile(r"\b(evening|pm|p\.m\.|afternoon|tonight)\b", re.IGNORECASE)
+_PROCEDURE_KEYWORDS = [
+    "consultation", "consult", "botox", "dermal filler", "filler", "rhinoplasty",
+    "liposuction", "facelift", "breast augmentation", "breast aug", "tummy tuck",
+    "lip filler", "chemical peel",
+]
 
-def _system_prompt(is_new_patient: bool, today: date_cls) -> str:
+
+def _extract_booking_hints(text: str, today: date_cls) -> dict:
+    """Conservative, deterministic extraction of date/time/reason from a
+    patient's raw message. Exists because relying on the LLM to reliably
+    call book_appointment with partial info EVERY turn (so progress isn't
+    lost) turned out not to hold in practice — the model would often just
+    reply conversationally, understanding the fact but never persisting it.
+    This only recognizes the exact formats the AI itself asks patients for
+    (YYYY-MM-DD, 24-hour HH:MM) plus "today"/"tomorrow" — deliberately NOT
+    attempting free-form parsing ("10 September", "next Tuesday"), since a
+    real bug already came from over-eager date guessing: "may in the
+    evening" got misread as the month May. A patient who replies in the
+    exact format requested is captured here regardless of whether the LLM
+    also calls the tool that turn; anything looser is left for the LLM's
+    own understanding + tool call to catch."""
+    hints: dict[str, str] = {}
+    lowered = text.lower()
+
+    date_match = _DATE_RE.search(text)
+    if date_match:
+        hints["date"] = date_match.group(1)
+    elif re.search(r"\btomorrow\b", lowered):
+        hints["date"] = (today + timedelta(days=1)).isoformat()
+    elif re.search(r"\btoday\b", lowered):
+        hints["date"] = today.isoformat()
+
+    time_match = _TIME_RE.search(text)
+    if time_match:
+        hour = int(time_match.group(1))
+        minute = time_match.group(2)
+        # "5:30" said alongside "evening"/"pm"/etc with no AM/PM marker of
+        # its own — treat as post-noon rather than taking it literally as
+        # 24-hour 05:30, which is very unlikely to be what a patient means
+        # when they've just said "in the evening".
+        if hour < 12 and _PM_HINT_RE.search(lowered):
+            hour += 12
+        hints["time"] = f"{hour:02d}:{minute}"
+
+    for kw in _PROCEDURE_KEYWORDS:
+        if kw in lowered:
+            hints["appointment_type"] = kw.title()
+            break
+
+    return hints
+
+
+def _format_draft(draft: dict) -> str:
+    if not draft:
+        return "Nothing confirmed yet."
+    parts = []
+    if draft.get("date"):
+        parts.append(f"date={draft['date']}")
+    if draft.get("time"):
+        parts.append(f"time={draft['time']}")
+    if draft.get("appointment_type"):
+        parts.append(f"reason={draft['appointment_type']}")
+    return ", ".join(parts) if parts else "Nothing confirmed yet."
+
+
+def _system_prompt(
+    is_new_patient: bool, today: date_cls, draft: dict | None = None, extra_instructions: str | None = None
+) -> str:
     patient_context = (
         "This is a NEW patient — you don't have any prior visit on file for them. "
         "Greet them warmly and get their name if the conversation doesn't already make it clear."
@@ -29,22 +104,41 @@ def _system_prompt(is_new_patient: bool, today: date_cls) -> str:
         else "This is a RETURNING patient — you already have their record. "
         "Acknowledge that warmly (e.g. \"welcome back\") instead of asking who they are."
     )
-    return (
+    base = (
         "You are a warm, professional AI receptionist for a plastic surgery clinic, replying over WhatsApp. "
         f"{patient_context}\n\n"
         "You help with: booking appointments, questions about procedures (rhinoplasty, breast augmentation, "
         "liposuction, facelift, Botox, dermal fillers, etc.), pricing, clinic hours, and general post-op questions.\n\n"
+        "BOOKING DETAILS CONFIRMED SO FAR (trust this, don't re-derive it from scrolling back through the "
+        f"conversation): {_format_draft(draft or {})}\n\n"
         "When a patient wants to book:\n"
-        "1. Ask for their preferred date, time, and what the visit is for, if you don't already have all three.\n"
-        "2. Once you have a specific date, time, and reason, call book_appointment. You do NOT need to ask which "
-        "doctor — the system automatically assigns whichever doctor actually has an opening at that time.\n"
-        "3. If it succeeds, confirm the booking warmly, including which doctor they're seeing.\n"
-        "4. If no one is free at that time, apologize and ask for a different date or time — then try again.\n\n"
+        "1. If the line above already shows date, time, AND reason all confirmed, call book_appointment right "
+        "now (it's fine to call it with no arguments, or restating the confirmed values) — that completes the "
+        "booking. Do not ask another question first.\n"
+        "2. Otherwise, call book_appointment with whatever of date/time/appointment_type you can extract from "
+        "THIS message — even if it's only one field. The system merges it with what's already confirmed above "
+        "and tells you exactly what's still missing. Never ask again for something already listed as confirmed.\n"
+        "3. Once date, time, and reason are all confirmed, the same call books it for real. You do NOT need to "
+        "ask which doctor — the system automatically assigns whichever doctor actually has an opening.\n"
+        "4. If it succeeds, confirm the booking warmly, including which doctor they're seeing.\n"
+        "5. If no one is free at that requested time, apologize and ask ONLY for a different time — the date "
+        "and reason stay confirmed, don't re-ask for those.\n\n"
         "If the patient explicitly asks for a real person, or you genuinely cannot help with something, call "
         "request_human_handoff with a short reason, then let them know a team member will follow up shortly.\n\n"
-        f"Today's date is {today.isoformat()}. Keep every reply short and WhatsApp-appropriate — 2-4 sentences. "
+        f"Today's date is {today.isoformat()}.\n\n"
+        "STYLE — this matters: reply like a busy front-desk receptionist texting on WhatsApp, not a chatbot. "
+        "1-2 short sentences, plain language, no re-explaining things you already said. Ask exactly ONE question "
+        "per reply — never stack multiple questions or restate the full list of what you need. If a patient's "
+        "wording is ambiguous (e.g. 'may' as in 'maybe' vs. the month May), ask ONE short clarifying question "
+        "instead of guessing or listing both interpretations. "
         "Never diagnose or give clinical medical advice — that's the doctor's job, not yours."
     )
+    if extra_instructions and extra_instructions.strip():
+        base += (
+            "\n\nPRACTICE-SPECIFIC INSTRUCTIONS (set by this practice's owner — always follow these first):\n"
+            f"{extra_instructions.strip()}\n"
+        )
+    return base
 
 
 def _booking_tools() -> list[dict]:
@@ -54,21 +148,22 @@ def _booking_tools() -> list[dict]:
             "function": {
                 "name": "book_appointment",
                 "description": (
-                    "Book a real appointment for this patient. The system finds whichever doctor is actually "
-                    "free at the requested date/time and books them automatically — do not ask the patient to "
-                    "pick a doctor."
+                    "Record whatever booking details (date/time/reason) you have from the patient's latest "
+                    "message, even a single field — call this every time you learn something new, not just once "
+                    "everything is known. The system merges it with details already confirmed in earlier turns; "
+                    "once all three are present it books for real with whichever doctor is actually free at that "
+                    "time — do not ask the patient to pick a doctor."
                 ),
                 "parameters": {
                     "type": "object",
                     "properties": {
-                        "date": {"type": "string", "description": "Appointment date, YYYY-MM-DD"},
-                        "time": {"type": "string", "description": "Appointment time, 24-hour HH:MM"},
+                        "date": {"type": "string", "description": "Appointment date, YYYY-MM-DD, if mentioned this turn"},
+                        "time": {"type": "string", "description": "Appointment time, 24-hour HH:MM, if mentioned this turn"},
                         "appointment_type": {
                             "type": "string",
-                            "description": "What the visit is for, e.g. 'Consultation', 'Botox', 'Rhinoplasty consultation'",
+                            "description": "What the visit is for, e.g. 'Consultation', 'Botox', 'Rhinoplasty consultation', if mentioned this turn",
                         },
                     },
-                    "required": ["date", "time", "appointment_type"],
                 },
             },
         },
@@ -96,6 +191,8 @@ class InboundService:
         self.llm = LLMService()
         self.agent_log = AgentLogService()
         self.appointments = AppointmentsService()
+        self.booking_drafts = BookingDraftStore()
+        self.lead_qualification = LeadQualificationService()
 
     async def handle_whatsapp_message(
         self,
@@ -179,6 +276,10 @@ class InboundService:
                 db, practice, patient, conversation, message_text, is_new_patient
             )
         except Exception:
+            logger.exception(
+                "AI reply generation failed for patient %s (conversation %s)",
+                patient.id, conversation.id,
+            )
             conversation.status = ConversationStatus.NEEDS_ATTENTION
             db.add(Message(
                 conversation_id=conversation.id,
@@ -224,6 +325,14 @@ class InboundService:
                 content_type="text",
             ))
         await db.flush()
+
+        # 6b. Score lead fit/intent once enough of the conversation exists to
+        # judge — best-effort, never allowed to affect whether the reply
+        # itself gets sent.
+        try:
+            await self.lead_qualification.maybe_qualify(db, patient, conversation.id)
+        except Exception:
+            logger.exception("Lead qualification step failed for patient %s", patient.id)
 
         # 7. Send reply back via WhatsApp
         sent = await self._send_reply(practice, phone_number, ai_reply)
@@ -421,28 +530,59 @@ class InboundService:
         patient: Patient,
         tool_name: str,
         tool_args: dict,
+        conversation_id: UUID | None = None,
     ) -> tuple[str, bool]:
         """Runs one tool call for real — actual DB reads/writes, never
         LLM-fabricated results. Returns (result_text_for_the_llm, escalate)."""
         if tool_name == "book_appointment":
+            draft = tool_args
+            if conversation_id is not None:
+                draft = await self.booking_drafts.merge(
+                    conversation_id,
+                    date=tool_args.get("date"),
+                    time=tool_args.get("time"),
+                    appointment_type=tool_args.get("appointment_type"),
+                )
+
+            missing = [f for f in ("date", "time", "appointment_type") if not draft.get(f)]
+            if missing:
+                return (
+                    f"Saved so far: {_format_draft(draft)}. Still missing: {', '.join(missing)}. "
+                    "Ask the patient for ONLY the missing item(s), nothing they've already given.",
+                    False,
+                )
+
             try:
-                when = datetime.strptime(f"{tool_args['date']} {tool_args['time']}", "%Y-%m-%d %H:%M")
+                when = datetime.strptime(f"{draft['date']} {draft['time']}", "%Y-%m-%d %H:%M")
                 when = when.replace(tzinfo=timezone.utc)
             except (KeyError, ValueError):
+                if conversation_id is not None:
+                    await self.booking_drafts.clear_field(conversation_id, "date")
+                    await self.booking_drafts.clear_field(conversation_id, "time")
                 return "Invalid date/time format — ask the patient to confirm a specific date (YYYY-MM-DD) and time.", False
 
             if when < datetime.now(timezone.utc):
+                if conversation_id is not None:
+                    await self.booking_drafts.clear_field(conversation_id, "date")
+                    await self.booking_drafts.clear_field(conversation_id, "time")
                 return "That date/time is in the past — ask the patient for an upcoming date.", False
 
             doctor = await self._find_available_doctor(db, practice.id, when)
             if doctor is None:
+                # Keep the date and reason confirmed — only the time slot
+                # didn't work, so only clear that field. Without this, the
+                # next turn's draft would be empty again and the model would
+                # re-ask for everything, exactly the loop this was built to
+                # avoid.
+                if conversation_id is not None:
+                    await self.booking_drafts.clear_field(conversation_id, "time")
                 return (
-                    f"No doctor is available at {tool_args['date']} {tool_args['time']}. "
-                    "Ask the patient for a different date or time and try again.",
+                    f"No doctor is available at {draft['date']} {draft['time']}. "
+                    "Date and reason stay confirmed — ask ONLY for a different time.",
                     False,
                 )
 
-            appointment_type = str(tool_args.get("appointment_type") or "Consultation")
+            appointment_type = str(draft.get("appointment_type") or "Consultation")
             appointment = await self.appointments.create_appointment(
                 db,
                 practice.id,
@@ -467,12 +607,15 @@ class InboundService:
                 },
                 performed_by="ai_agent",
             )
+            if conversation_id is not None:
+                await self.booking_drafts.clear(conversation_id)
+
             # doctor.name is free text — some rows already include "Dr."
             # (e.g. "Dr. Amina Siddiqui"), others don't (e.g. "Test Doctor").
             # Prepending it unconditionally produced "Dr. Dr. Amina Siddiqui".
             display_name = doctor.name if doctor.name.lower().startswith("dr") else f"Dr. {doctor.name}"
             return (
-                f"Booked successfully with {display_name} on {tool_args['date']} at {tool_args['time']} "
+                f"Booked successfully with {display_name} on {draft['date']} at {draft['time']} "
                 f"for {appointment_type}. Confirm these exact details back to the patient.",
                 False,
             )
@@ -517,7 +660,14 @@ class InboundService:
             llm_messages.append({"role": role, "content": msg.content})
         llm_messages.append({"role": "user", "content": new_message})
 
-        system_prompt = _system_prompt(is_new_patient, datetime.now(timezone.utc).date())
+        today = datetime.now(timezone.utc).date()
+        hints = _extract_booking_hints(new_message, today)
+        if hints:
+            draft = await self.booking_drafts.merge(conversation.id, **hints)
+        else:
+            draft = await self.booking_drafts.get(conversation.id)
+        custom = (practice.settings or {}).get("ai_receptionist_system_prompt") or None
+        system_prompt = _system_prompt(is_new_patient, today, draft, custom)
         tools = _booking_tools()
 
         first = await self.llm.chat_with_tools(
@@ -535,7 +685,7 @@ class InboundService:
                 args = json.loads(tc.function.arguments or "{}")
             except (json.JSONDecodeError, TypeError):
                 args = {}
-            summary, did_escalate = await self._execute_tool(db, practice, patient, tc.function.name, args)
+            summary, did_escalate = await self._execute_tool(db, practice, patient, tc.function.name, args, conversation.id)
             if did_escalate:
                 escalated = True
                 escalation_reason = str(args.get("reason") or "").strip() or None
@@ -558,12 +708,22 @@ class InboundService:
         return final, escalated, escalation_reason
 
     async def _send_reply(self, practice: Practice, phone_number: str, message: str) -> bool:
-        """Send reply via WhatsApp Green API. Returns True on success."""
+        """Send reply via WhatsApp Green API. Returns True on success.
+
+        A real successful sendMessage call returns a flat
+        `{"idMessage": "..."}` (confirmed against the live API directly —
+        there's no "sendMessageResult" wrapper). The previous check looked
+        for `result["sendMessageResult"]["sent"]`/`"idMessage" in
+        result["sendMessageResult"]`, neither of which a real response ever
+        has, so this always evaluated to False even on a genuinely
+        successful send — every "sent" flag logged for a WhatsApp reply
+        this whole session was wrong, though the message itself did go out
+        (this only affects the boolean, not delivery)."""
         ga = WhatsAppGreenAPI.from_practice_settings(practice.settings or {})
         if not ga:
             return False
         try:
             result = await ga.send_text(phone_number, message)
-            return result.get("sendMessageResult", {}).get("sent", False) is True or "idMessage" in result.get("sendMessageResult", {})
+            return "idMessage" in result
         except Exception:
             return False

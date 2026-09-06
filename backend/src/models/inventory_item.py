@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import String, Integer, DateTime, ForeignKey, func
+from sqlalchemy import String, Integer, Boolean, DateTime, ForeignKey, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,6 +25,13 @@ class InventoryItem(Base):
     # Below this on-hand quantity, the item shows as low-stock. Null means
     # no threshold has been set — never flagged low.
     reorder_threshold: Mapped[int] = mapped_column(Integer, nullable=True)
+    # Implants (breast implants, etc.) need stricter batch-traceability than
+    # a box of gloves — every unit used on a patient must be individually
+    # accounted for (see Surgery.implants_used + the consume-on-completion
+    # hook in InventoryService.consume). This flag is what a future stricter
+    # traceability UI/rule would key off; it doesn't change consume()'s
+    # behavior today beyond being available to filter/report on.
+    is_implant: Mapped[bool] = mapped_column(Boolean, default=False)
     is_active: Mapped[bool] = mapped_column(default=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

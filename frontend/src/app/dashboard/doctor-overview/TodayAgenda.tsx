@@ -1,8 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import { ClockIcon, FileTextIcon, PlayCircleIcon, UserCircleIcon } from "lucide-react";
+import { ClockIcon, FileTextIcon, PlayCircleIcon } from "lucide-react";
 import { EmptyState } from "../components/EmptyState";
-import { MOCK_PATIENTS } from "../data/mockPatients";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import type { AppointmentResponse } from "../../../api/entities";
 
@@ -21,42 +20,9 @@ function timeRange(a: AppointmentResponse) {
   return `${start} – ${end}`;
 }
 
-// Demo (signed-out) stand-in: a believable today-schedule built from the mock
-// patient roster so the "My Day" screen reads as a full working day instead of
-// an empty list. Real sessions replace this with the API's own records — this
-// array is never mixed with real data.
-export function buildMockTodayAgenda(): AppointmentResponse[] {
-  const now = new Date();
-  const at = (hour: number, minute: number) => {
-    const d = new Date(now);
-    d.setHours(hour, minute, 0, 0);
-    return d.toISOString();
-  };
-  const raws: Array<{ patient: (typeof MOCK_PATIENTS)[number]; type: string; hour: number; minute: number }> = [
-    { patient: MOCK_PATIENTS[3], type: "Rhinoplasty consultation", hour: 9, minute: 0 },
-    { patient: MOCK_PATIENTS[4], type: "Botox follow-up", hour: 10, minute: 30 },
-    { patient: MOCK_PATIENTS[0], type: "Rhinoplasty surgery", hour: 11, minute: 45 },
-    { patient: MOCK_PATIENTS[5], type: "Facelift consultation", hour: 14, minute: 0 },
-    { patient: MOCK_PATIENTS[1], type: "Post-op check-in", hour: 15, minute: 45 },
-    { patient: MOCK_PATIENTS[2], type: "Healing follow-up", hour: 17, minute: 0 }
-  ];
-  return raws.map((r, i) => ({
-    id: `mock-appt-${i}`,
-    practice_id: "mock",
-    patient_id: r.patient.id,
-    doctor_id: null,
-    appointment_type: r.type,
-    status: "scheduled",
-    start_time: at(r.hour, r.minute),
-    end_time: at(r.hour, r.minute + 30),
-    checked_in_at: null,
-    notes: null,
-    created_at: now.toISOString(),
-    updated_at: now.toISOString(),
-    patient_name: r.patient.name
-  }));
-}
-
+// The schedule comes straight from listMyAppointments (real API) — no mock
+// roster stand-in. A signed-out doctor sees an honest "Nothing scheduled"
+// empty state instead of fabricated names.
 function timeToMinutes(iso: string) {
   const d = new Date(iso);
   return d.getHours() * 60 + d.getMinutes();

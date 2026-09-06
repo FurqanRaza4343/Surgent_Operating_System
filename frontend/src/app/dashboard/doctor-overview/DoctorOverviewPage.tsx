@@ -14,7 +14,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { KpiCard } from "../components/KpiCard";
-import { EmptyState } from "../components/EmptyState";
 import { usePlan } from "../plan/PlanContext";
 import {
   getMyDoctor,
@@ -27,7 +26,7 @@ import {
   type DoctorAlertEntry
 } from "../../../api/entities";
 import { DASHBOARD_ROUTES } from "../constants/routes";
-import { TodayAgenda, buildMockTodayAgenda } from "./TodayAgenda";
+import { TodayAgenda } from "./TodayAgenda";
 import { PatientQuickSearch } from "./PatientQuickSearch";
 import { AttendanceCalendar } from "../attendance/AttendanceCalendar";
 
@@ -46,7 +45,7 @@ function isSurgery(type: string) {
 }
 
 export function DoctorOverviewPage() {
-  const { authedFetch, permissions } = usePlan();
+  const { authedFetch } = usePlan();
   const [doctorName, setDoctorName] = useState<string | null>(null);
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
   const [today, setToday] = useState<DoctorTodayResponse | null>(null);
@@ -56,11 +55,10 @@ export function DoctorOverviewPage() {
     let cancelled = false;
     (async () => {
       if (!authedFetch) {
-        // Demo / signed-out: the agenda paints a believable working day and
-        // the KPIs reflect it, so the "My Day" screen reads full rather than
-        // an invitation to a blank page.
+        // Demo / signed-out: an honest view — no fabricated roster. The
+        // schedule stays empty until a real API session provides it.
         setDoctorName(null);
-        setAppointments(buildMockTodayAgenda());
+        setAppointments([]);
         setLoading(false);
         return;
       }

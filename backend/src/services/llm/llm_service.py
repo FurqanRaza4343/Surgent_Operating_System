@@ -7,16 +7,19 @@ settings = get_settings()
 
 
 class LLMService:
-    # Mistral's chat completions endpoint is OpenAI-SDK compatible, so this
-    # reuses the same client class pointed at a different base_url instead of
-    # adding a second SDK dependency.
+    # Mistral's and Groq's chat completions endpoints are both OpenAI-SDK
+    # compatible, so this reuses the same client class pointed at different
+    # base_urls instead of adding new SDK dependencies.
     MISTRAL_BASE_URL = "https://api.mistral.ai/v1"
+    GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 
     def __init__(self):
         self._openai_client = None
         self._mistral_clients = None
+        self._groq_client = None
         self.openai_model = settings.openai_model
         self.mistral_model = settings.mistral_model
+        self.groq_model = settings.groq_model
 
     @property
     def openai_client(self):
@@ -28,7 +31,7 @@ class LLMService:
     def mistral_clients(self) -> list:
         # Free-tier Mistral rate limits are tight enough to hit during
         # normal dev/testing — several separate free accounts' keys are
-        # tried in order on a 429 before ever falling back to OpenAI.
+        # tried in order on a 429 before ever falling back to Groq/OpenAI.
         if self._mistral_clients is None:
             keys = [k for k in (settings.mistral_api_key, settings.mistral_api_key_2, settings.mistral_api_key_3) if k]
             self._mistral_clients = [
@@ -36,11 +39,20 @@ class LLMService:
             ]
         return self._mistral_clients
 
+    @property
+    def groq_client(self):
+        if self._groq_client is None and settings.groq_api_key:
+            self._groq_client = AsyncOpenAI(api_key=settings.groq_api_key, base_url=self.GROQ_BASE_URL)
+        return self._groq_client
+
     async def _call_with_fallback(self, call):
         """Runs `call(client, model)` against each configured Mistral key in
-        turn, falling through to the next only on a rate limit; falls back
-        to OpenAI only once every Mistral key is exhausted. Raises the last
-        error if everything fails, rather than silently swallowing it."""
+        turn, falling through to the next only on a rate limit. Once every
+        Mistral key is exhausted, tries Groq (free tier, fast, not prone to
+        the same rate-limit wall as Mistral's) before finally trying OpenAI
+        (a real key isn't configured yet, so this last leg mostly stays
+        theoretical until it is). Raises the last error if everything fails,
+        rather than silently swallowing it."""
         last_error: Exception | None = None
         for client in self.mistral_clients:
             try:
@@ -48,6 +60,11 @@ class LLMService:
             except RateLimitError as e:
                 last_error = e
                 continue
+        if self.groq_client is not None:
+            try:
+                return await call(self.groq_client, self.groq_model)
+            except Exception as e:
+                last_error = e
         try:
             return await call(self.openai_client, self.openai_model)
         except Exception:

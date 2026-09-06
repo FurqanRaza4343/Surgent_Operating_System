@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { mountLetsScroll } from "./scrub-engine";
+import type { HeroChatSeed } from "../chat/LandingChat";
 
 const SECTIONS = [
 {
@@ -11,8 +12,8 @@ const SECTIONS = [
   clipMobile: "/lets-scroll/reception-mobile.mp4",
   accent: "#0B6362",
   eyebrow: "First Call, Answered",
-  title: "Your practice, run by an AI workforce",
-  body: "From the first call to full recovery, autonomous agents answer patients around the clock.",
+  title: "Never miss another patient call",
+  body: "A missed call becomes a missed patient. Aiaceone's AI receptionist answers instantly — day or night — so every inquiry turns into a booked consult, not a call to the practice next door.",
   tags: ["24/7 coverage", "Phone · Chat · WhatsApp"]
 },
 {
@@ -60,8 +61,13 @@ const SECTIONS = [
 }];
 
 
-export function CinematicHero() {
+export function CinematicHero({ onOpenChat }: { onOpenChat?: (seed: HeroChatSeed) => void }) {
   const ref = useRef<HTMLDivElement>(null);
+  const onOpenChatRef = useRef(onOpenChat);
+
+  useEffect(() => {
+    onOpenChatRef.current = onOpenChat;
+  }, [onOpenChat]);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -78,6 +84,33 @@ export function CinematicHero() {
       connectors: [],
       crossfade: 0.08
     });
+
+    // Make the flying copy interactive: clicking a headline/body opens the
+    // landing chat (LandingChat.tsx) seeded with that section's text, so a
+    // visitor can press a claim and immediately ask Aria about it. The
+    // engine builds this DOM itself (scrub-engine.js), so enrichment happens
+    // after mount: enable pointer events on title/body, then a single
+    // delegated click reads whichever .sw-copy got clicked.
+    const copylayer = container.querySelector<HTMLElement>(".sw-copylayer");
+    let copyStyleEl: HTMLStyleElement | null = null;
+    const onCopyClick = (ev: MouseEvent) => {
+      const target = ev.target as HTMLElement;
+      const copyEl = target.closest<HTMLElement>(".sw-copy");
+      if (!copyEl || !onOpenChatRef.current) return;
+      const text = (sel: string) => copyEl.querySelector<HTMLElement>(sel)?.textContent?.trim() || "";
+      const title = text(".sw-copy__title");
+      const body = text(".sw-copy__body");
+      if (!title && !body) return;
+      onOpenChatRef.current({ eyebrow: text(".sw-copy__eyebrow"), title, body });
+    };
+    if (copylayer) {
+      copyStyleEl = document.createElement("style");
+      copyStyleEl.textContent =
+        ".sw-copy__title,.sw-copy__body{cursor:pointer;pointer-events:auto;user-select:text;}" +
+        ".sw-copy__title:hover,.sw-copy__body:hover{text-decoration:underline;text-decoration-color:var(--sw-accent);text-decoration-thickness:2px;text-underline-offset:6px;}";
+      container.appendChild(copyStyleEl);
+      copylayer.addEventListener("click", onCopyClick);
+    }
 
     // The track carries one extra viewport-height of scroll after the last
     // scene ("so the last flight completes") — that trailing stretch is where
@@ -106,7 +139,17 @@ export function CinematicHero() {
         copylayer.style.opacity = String(1 - fade);
       }
 
-      container.classList.toggle("sw-past-end", distancePastPadStart >= vh);
+      // The engine reserves one full extra viewport-height of scroll track
+      // beyond the last scene ("so the last flight completes" — see
+      // scrub-engine.js's `track.style.height = ... + vh`). Waiting for the
+      // FULL extra vh before hiding the sky/particles left a long stretch of
+      // scrolling with nothing on screen but drifting decorative dots and a
+      // flat background — no text, no next section, reads as a broken/empty
+      // page rather than a settling animation. The flight itself visually
+      // finishes well before the full buffer is used up, so hiding at a
+      // fraction of it removes the dead zone without cutting the motion off
+      // mid-flight.
+      container.classList.toggle("sw-past-end", distancePastPadStart >= vh * 0.15);
     };
     const onScroll = () => {
       if (ticking) return;
@@ -117,6 +160,8 @@ export function CinematicHero() {
     update();
     return () => {
       window.removeEventListener("scroll", onScroll);
+      if (copylayer) copylayer.removeEventListener("click", onCopyClick);
+      if (copyStyleEl) copyStyleEl.remove();
       // Real routing exists now (Home → /agents → back to Home unmounts and
       // remounts this component) — without disposing the engine, each round
       // trip leaked another full set of its own listeners plus an orphaned

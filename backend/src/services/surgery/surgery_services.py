@@ -11,6 +11,11 @@ from src.models.patient import Patient
 from src.models.doctor import Doctor
 from src.models.procedure import Procedure
 from src.server.exceptions import NotFoundException, AppException
+from src.services.inventory.inventory_services import InventoryService
+
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SurgeryService:
@@ -19,6 +24,9 @@ class SurgeryService:
     conflict scheduler). Practice-scoped throughout; every lookup verifies
     the referenced patient/doctor/procedure belongs to the caller's own
     practice before allowing the link."""
+
+    def __init__(self):
+        self.inventory = InventoryService()
 
     async def _verify_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> None:
         result = await db.execute(select(Patient).where(Patient.id == patient_id, Patient.practice_id == practice_id))
@@ -162,6 +170,31 @@ class SurgeryService:
         surgery.operative_note = operative_note
         surgery.implants_used = implants_used
         await db.flush()
+
+        # Consume-on-completion: an implant entry that names a real
+        # InventoryItem (via inventory_item_id — optional, since
+        # implants_used stays free-text for anything not tracked in the
+        # catalog) decrements that item's stock FEFO, same real path
+        # InventoryService.consume already uses elsewhere. A missing item,
+        # or not enough stock on hand, is logged and skipped rather than
+        # failing the whole surgery-completion call — the operative record
+        # itself must never be blocked by an inventory bookkeeping gap.
+        for entry in implants_used or []:
+            item_id = entry.get("inventory_item_id")
+            quantity = entry.get("quantity", 1)
+            if not item_id:
+                continue
+            try:
+                await self.inventory.consume(
+                    db, practice_id, UUID(str(item_id)), int(quantity),
+                    resource_type="surgery", resource_id=surgery.id, performed_by="system",
+                )
+            except Exception:
+                logger.exception(
+                    "Failed to consume inventory item %s (qty %s) for surgery %s — completing anyway",
+                    item_id, quantity, surgery.id,
+                )
+
         return await self.get_surgery(db, practice_id, surgery.id)
 
     async def cancel_surgery(self, db: AsyncSession, practice_id: UUID, surgery_id: UUID) -> Surgery:

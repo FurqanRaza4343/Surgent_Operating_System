@@ -9,6 +9,7 @@ from src.models.consent_document import ConsentDocument, ConsentDocumentStatus, 
 from src.models.patient import Patient
 from src.schemas.consent_document import CreateConsentDocumentRequest
 from src.server.exceptions import NotFoundException, AppException
+from src.services.notifications.notification_service import NotificationService
 
 
 class ConsentService:
@@ -18,6 +19,9 @@ class ConsentService:
     Administrative/legal, not clinical judgment — deliberately open to
     Owner/Doctor/Receptionist alike (front desk routinely collects consent
     at intake), unlike clinical notes."""
+
+    def __init__(self):
+        self.notifications = NotificationService()
 
     async def _get_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> Patient:
         result = await db.execute(select(Patient).where(Patient.id == patient_id, Patient.practice_id == practice_id))
@@ -72,6 +76,14 @@ class ConsentService:
         db.add(document)
         await db.flush()
         await db.refresh(document)
+
+        patient = await self._get_patient(db, practice_id, patient_id)
+        await self.notifications.notify(
+            db, practice_id, "consent_pending",
+            title=f"Consent pending — {patient.first_name} {patient.last_name}",
+            body=f"A {data.document_type} consent document is awaiting signature.",
+            resource_type="consent_document", resource_id=document.id,
+        )
         return document
 
     async def list_for_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> list[ConsentDocument]:

@@ -3,9 +3,11 @@ import {
   listConsultationNotes,
   createConsultationNote,
   updateConsultationNote,
+  aiDraftConsultationNote,
   type ConsultationNoteResponse,
   type CreateConsultationNoteRequest,
-  type UpdateConsultationNoteRequest
+  type UpdateConsultationNoteRequest,
+  type AIConsultationDraftResponse
 } from "../../../api/entities";
 
 type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
@@ -55,5 +57,13 @@ export function useConsultationNotes(authedFetch: AuthedFetch, patientId: string
     [authedFetch]
   );
 
-  return { notes, loading, refetch, create, update };
+  const aiDraft = useCallback(
+    async (patientId: string, rawNotes: string): Promise<AIConsultationDraftResponse | null> => {
+      if (!authedFetch) return null;
+      return aiDraftConsultationNote(authedFetch, { patient_id: patientId, raw_notes: rawNotes });
+    },
+    [authedFetch]
+  );
+
+  return { notes, loading, refetch, create, update, aiDraft };
 }

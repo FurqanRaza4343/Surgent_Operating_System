@@ -23,4 +23,16 @@ export interface Patient {
   lifecycleStage: "inquiry" | "contacted" | "consult_scheduled" | "consult_completed" | "treatment_planned" | "patient" | "lost";
   lostReason: string | null;
   source: string | null;
+  // --- AI workflows (Week 4) — see backend/src/services/leads/. Optional
+  // since stored/older patient rows predate these fields — normalize() below
+  // backfills both to null for any patient missing them, same pattern as
+  // lifecycleStage/source above.
+  qualification?: {
+    interestedProcedure: string | null;
+    budgetSignal: string;
+    urgency: string;
+    score: number;
+    summary: string;
+  } | null;
+  intakeSummary?: string | null;
 }

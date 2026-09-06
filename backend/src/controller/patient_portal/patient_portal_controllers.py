@@ -12,9 +12,11 @@ from src.schemas.patient_portal import (
     PortalBookingRequest,
     PatientPortalLoginRequest,
     PatientPortalLoginResponse,
+    PatientIntakeRequest,
 )
 from src.services.patient_portal.patient_portal_services import PatientPortalService
 from src.services.patient_portal.patient_portal_auth_service import PatientPortalAuthService
+from src.services.patient_portal.patient_intake_service import PatientIntakeService
 from src.config import get_settings
 
 settings = get_settings()
@@ -24,6 +26,7 @@ class PatientPortalController:
     def __init__(self):
         self.service = PatientPortalService()
         self.auth = PatientPortalAuthService()
+        self.intake = PatientIntakeService()
 
     # --- Owner/staff-side management ---
 
@@ -47,8 +50,8 @@ class PatientPortalController:
 
     # --- Patient-side login ---
 
-    async def login(self, db: AsyncSession, data: PatientPortalLoginRequest, client_key: str) -> PatientPortalLoginResponse:
-        token, _patient = await self.auth.login(db, data.portal_id, data.pin, client_key)
+    async def login(self, db: AsyncSession, data: PatientPortalLoginRequest, client_key: str, ip_address: str | None = None) -> PatientPortalLoginResponse:
+        token, _patient = await self.auth.login(db, data.portal_id, data.pin, client_key, ip_address)
         return PatientPortalLoginResponse(access_token=token, expires_in_minutes=settings.patient_portal_jwt_expires_minutes)
 
     # --- Patient-side data ---
@@ -58,4 +61,8 @@ class PatientPortalController:
 
     async def book_appointment(self, db: AsyncSession, patient: Patient, data: PortalBookingRequest) -> PortalPatientResponse:
         await self.service.book_appointment(db, patient, data)
+        return await self.service.get_my_portal_data(db, patient)
+
+    async def submit_intake(self, db: AsyncSession, patient: Patient, data: PatientIntakeRequest) -> PortalPatientResponse:
+        await self.intake.submit_intake(db, patient, data)
         return await self.service.get_my_portal_data(db, patient)

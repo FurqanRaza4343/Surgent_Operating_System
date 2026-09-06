@@ -21,7 +21,7 @@ export function OnboardingLayout({ children, step }: OnboardingLayoutProps) {
             <Logo className="h-5 w-5" />
           </span>
           <span className="text-[15px] font-bold tracking-tight text-ink">
-            Aesthetix<span className="text-teal-600">AI</span>
+            <span className="text-teal-600">Ai</span>aceone
           </span>
         </Link>
         {step &&
