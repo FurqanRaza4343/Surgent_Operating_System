@@ -100,6 +100,21 @@ class TreatmentPlanService:
         await db.flush()
         return await self.get_plan(db, practice_id, plan_id)
 
+    async def get_plan_for_item(self, db: AsyncSession, practice_id: UUID, item_id: UUID) -> TreatmentPlan:
+        """Resolves the parent plan (and its patient_id) for an item —
+        used by ClinicalController.update_item to run the Doctor
+        hard-restriction check before the item itself is fetched."""
+        query = (
+            select(TreatmentPlan)
+            .join(TreatmentPlanItem, TreatmentPlanItem.treatment_plan_id == TreatmentPlan.id)
+            .where(TreatmentPlanItem.id == item_id, TreatmentPlan.practice_id == practice_id)
+        )
+        result = await db.execute(query)
+        plan = result.scalar_one_or_none()
+        if plan is None:
+            raise NotFoundException("Treatment plan item not found")
+        return plan
+
     async def update_item(
         self, db: AsyncSession, practice_id: UUID, item_id: UUID, data: UpdateTreatmentPlanItemRequest
     ) -> TreatmentPlanItem:

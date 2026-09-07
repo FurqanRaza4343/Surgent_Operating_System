@@ -37,7 +37,7 @@ export const DASHBOARD_ROUTES = {
   invoiceNew: (patientId?: string) => (patientId ? `/dashboard/invoices/new?patient_id=${patientId}` : "/dashboard/invoices/new"),
   invoiceDetail: (id: string) => `/dashboard/invoices/${id}`,
   messages: "/dashboard/messages",
-  messageThread: (staffUserId: string) => `/dashboard/messages/${staffUserId}`,
+  messageThread: (conversationId: string) => `/dashboard/messages?thread=${conversationId}`,
   expenses: "/dashboard/finance/expenses",
   financeOverview: "/dashboard/finance/overview",
   leadsFunnel: "/dashboard/leads",

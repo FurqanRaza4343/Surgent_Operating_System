@@ -51,6 +51,13 @@ export interface PatientResponse {
     summary: string;
   } | null;
   intake_summary: string | null;
+  portal_id: string | null;
+  portal_enabled: boolean;
+  // --- Clinical ownership + lifecycle ---
+  assigned_doctor_id: string | null;
+  assigned_doctor_name: string | null;
+  is_archived: boolean;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -75,8 +82,8 @@ export function createPatient(authedFetch: AuthedFetch, data: CreatePatientReque
   });
 }
 
-export function listPatients(authedFetch: AuthedFetch) {
-  return authedFetch<PatientResponse[]>("/api/v1/patients");
+export function listPatients(authedFetch: AuthedFetch, includeArchived = false) {
+  return authedFetch<PatientResponse[]>(`/api/v1/patients${includeArchived ? "?include_archived=true" : ""}`);
 }
 
 // The raw, un-cached single-patient fetch — used by sections that need the
@@ -134,6 +141,43 @@ export function updatePatientStage(authedFetch: AuthedFetch, id: string, stage: 
 
 export function getFunnelSummary(authedFetch: AuthedFetch) {
   return authedFetch<FunnelStageCount[]>("/api/v1/patients/funnel-summary");
+}
+
+// --- doctor assignment + archive (Patient Management redesign) --------------
+// Matches backend/src/router/patients/patients_router.py's assign-doctor/
+// archive/restore/audit-log endpoints.
+
+export function assignPatientDoctor(authedFetch: AuthedFetch, patientId: string, doctorId: string | null) {
+  return authedFetch<PatientResponse>(`/api/v1/patients/${patientId}/assign-doctor`, {
+    method: "PATCH",
+    body: JSON.stringify({ doctor_id: doctorId })
+  });
+}
+
+export function archivePatient(authedFetch: AuthedFetch, patientId: string, reason?: string | null) {
+  return authedFetch<PatientResponse>(`/api/v1/patients/${patientId}/archive`, {
+    method: "POST",
+    body: JSON.stringify({ reason: reason ?? null })
+  });
+}
+
+export function restorePatient(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PatientResponse>(`/api/v1/patients/${patientId}/restore`, {
+    method: "POST"
+  });
+}
+
+export interface PatientAuditLogEntry {
+  id: string;
+  action: string;
+  actor_name: string | null;
+  actor_type: string;
+  resource_type: string | null;
+  created_at: string;
+}
+
+export function getPatientAuditLog(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PatientAuditLogEntry[]>(`/api/v1/patients/${patientId}/audit-log`);
 }
 
 // --- doctors ----------------------------------------------------------------
@@ -245,6 +289,44 @@ export function listMyAppointments(authedFetch: AuthedFetch) {
 // view), as opposed to listMyAppointments' own-schedule-only scope.
 export function listPracticeAppointments(authedFetch: AuthedFetch) {
   return authedFetch<AppointmentResponse[]>("/api/v1/appointments?scope=practice");
+}
+
+// --- doctor personal time blocks --------------------------------------------
+// A doctor's own private calendar note/block — no booking-engine effect,
+// visible only to them. Matches backend/src/router/doctors/doctors_router.py's
+// /me/time-blocks endpoints.
+export interface DoctorTimeBlockResponse {
+  id: string;
+  doctor_id: string;
+  title: string;
+  note: string | null;
+  start_time: string;
+  end_time: string;
+  created_at: string;
+}
+
+export interface CreateDoctorTimeBlockRequest {
+  title: string;
+  note?: string | null;
+  start_time: string;
+  end_time: string;
+}
+
+export function listMyTimeBlocks(authedFetch: AuthedFetch) {
+  return authedFetch<DoctorTimeBlockResponse[]>("/api/v1/doctors/me/time-blocks");
+}
+
+export function createTimeBlock(authedFetch: AuthedFetch, data: CreateDoctorTimeBlockRequest) {
+  return authedFetch<DoctorTimeBlockResponse>("/api/v1/doctors/me/time-blocks", {
+    method: "POST",
+    body: JSON.stringify(data)
+  });
+}
+
+export function deleteTimeBlock(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<void>(`/api/v1/doctors/me/time-blocks/${id}`, {
+    method: "DELETE"
+  });
 }
 
 export function createAppointment(authedFetch: AuthedFetch, data: CreateAppointmentRequest) {
@@ -515,6 +597,7 @@ export async function listConversations(
     channel?: string;
     agent_type?: string[];
     search?: string;
+    patient_id?: string;
     limit?: number;
     offset?: number;
   }
@@ -524,6 +607,7 @@ export async function listConversations(
   if (params?.channel) query.set("channel", params.channel);
   if (params?.agent_type) params.agent_type.forEach((t) => query.append("agent_type", t));
   if (params?.search) query.set("search", params.search);
+  if (params?.patient_id) query.set("patient_id", params.patient_id);
   if (params?.limit) query.set("limit", String(params.limit));
   if (params?.offset) query.set("offset", String(params.offset));
   const qs = query.toString();
@@ -775,6 +859,19 @@ export function aiDraftConsultationNote(authedFetch: AuthedFetch, data: AIConsul
   });
 }
 
+export interface TranscriptionResponse {
+  text: string;
+}
+
+export function transcribeDictation(authedFetch: AuthedFetch, audioBlob: Blob, filename: string) {
+  const form = new FormData();
+  form.append("file", audioBlob, filename);
+  return authedFetch<TranscriptionResponse>("/api/v1/clinical/notes/transcribe", {
+    method: "POST",
+    body: form
+  });
+}
+
 export interface TreatmentPlanItemResponse {
   id: string;
   treatment_plan_id: string;
@@ -966,6 +1063,8 @@ export interface ConsentDocumentResponse {
   signed_at: string | null;
   signed_by_name: string | null;
   witnessed_by: string | null;
+  discussed_at: string | null;
+  discussed_by: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -1036,6 +1135,13 @@ export function signConsentDocument(authedFetch: AuthedFetch, id: string, signed
 
 export function voidConsentDocument(authedFetch: AuthedFetch, id: string) {
   return authedFetch<ConsentDocumentResponse>(`/api/v1/consent-documents/${id}/void`, {
+    method: "POST"
+  });
+}
+
+// Doctor's one consent action — see consent_router.py's role split.
+export function markConsentDiscussed(authedFetch: AuthedFetch, id: string) {
+  return authedFetch<ConsentDocumentResponse>(`/api/v1/consent-documents/${id}/mark-discussed`, {
     method: "POST"
   });
 }
@@ -1502,54 +1608,68 @@ export function sendAppointmentReminder(authedFetch: AuthedFetch, appointmentId:
 }
 
 // --- staff messages ---------------------------------------------------------------
-// Matches backend/src/router/staff_messages/staff_message_router.py — a
-// simple two-way thread per (Owner, staff member). Doctor/Receptionist use
-// the /me aliases (their own thread, no need to know their own User.id);
-// Owner uses /threads (inbox) + /{staff_user_id} for a specific thread.
+// Matches backend/src/router/staff_messages/staff_message_router.py — a 1:1
+// team chat between any two practice users. Conversations are stored as
+// canonical user pairs, so every member (owner, doctor, receptionist) uses
+// the same endpoints with no role-specific aliases. `mine` is computed
+// server-side per viewer.
 export interface StaffMessageResponse {
   id: string;
-  practice_id: string;
-  staff_user_id: string;
+  conversation_id: string;
   sender_id: string;
   sender_name: string | null;
   sender_role: string;
   body: string;
   created_at: string;
+  mine: boolean;
 }
 
-export interface StaffMessageThreadSummary {
-  staff_user_id: string;
-  staff_name: string | null;
-  staff_role: string;
+export interface StaffContactResponse {
+  id: string;
+  name: string | null;
+  role: string;
+  email: string;
+}
+
+export interface StaffConversationSummary {
+  conversation_id: string;
+  recipient_id: string;
+  recipient_name: string | null;
+  recipient_role: string;
   last_message_preview: string | null;
   last_message_at: string | null;
   message_count: number;
 }
 
-export function listMyMessages(authedFetch: AuthedFetch) {
-  return authedFetch<StaffMessageResponse[]>("/api/v1/staff-messages/me");
+export interface StartStaffConversationPayload {
+  recipient_user_id: string;
+  body?: string;
 }
 
-export function sendMyMessage(authedFetch: AuthedFetch, body: string) {
-  return authedFetch<StaffMessageResponse>("/api/v1/staff-messages/me", {
+export function listStaffContacts(authedFetch: AuthedFetch) {
+  return authedFetch<StaffContactResponse[]>("/api/v1/staff-messages/contacts");
+}
+
+export function listStaffConversations(authedFetch: AuthedFetch) {
+  return authedFetch<StaffConversationSummary[]>("/api/v1/staff-messages/conversations");
+}
+
+export function startStaffConversation(authedFetch: AuthedFetch, payload: StartStaffConversationPayload) {
+  return authedFetch<StaffConversationSummary>("/api/v1/staff-messages/conversations", {
     method: "POST",
-    body: JSON.stringify({ body })
+    body: JSON.stringify(payload)
   });
 }
 
-export function listMessagesWith(authedFetch: AuthedFetch, staffUserId: string) {
-  return authedFetch<StaffMessageResponse[]>(`/api/v1/staff-messages/${staffUserId}`);
+export function listStaffMessages(authedFetch: AuthedFetch, conversationId: string) {
+  return authedFetch<StaffMessageResponse[]>(`/api/v1/staff-messages/conversations/${conversationId}`);
 }
 
-export function sendMessageTo(authedFetch: AuthedFetch, staffUserId: string, body: string) {
-  return authedFetch<StaffMessageResponse>(`/api/v1/staff-messages/${staffUserId}`, {
+export function sendStaffMessage(authedFetch: AuthedFetch, conversationId: string, body: string) {
+  return authedFetch<StaffMessageResponse>(`/api/v1/staff-messages/conversations/${conversationId}`, {
     method: "POST",
     body: JSON.stringify({ body })
   });
-}
-
-export function listMessageThreads(authedFetch: AuthedFetch) {
-  return authedFetch<StaffMessageThreadSummary[]>("/api/v1/staff-messages/threads");
 }
 
 // --- patient portal ----------------------------------------------------------
@@ -1563,9 +1683,9 @@ export interface PortalAccessResponse {
   enabled: boolean;
 }
 
-export interface PortalPinIssuedResponse {
+export interface PortalEnabledResponse {
   portal_id: string;
-  pin: string;
+  invite_sent: boolean;
 }
 
 export interface PortalAppointment {
@@ -1665,13 +1785,13 @@ export interface PatientIntakeRequest {
 // --- Owner/staff-side management (authedFetch, Clerk) ---
 
 export function enablePatientPortal(authedFetch: AuthedFetch, patientId: string) {
-  return authedFetch<PortalPinIssuedResponse>(`/api/v1/patient-portal/patients/${patientId}/enable`, {
+  return authedFetch<PortalEnabledResponse>(`/api/v1/patient-portal/patients/${patientId}/enable`, {
     method: "POST"
   });
 }
 
-export function resetPatientPortalPin(authedFetch: AuthedFetch, patientId: string) {
-  return authedFetch<PortalPinIssuedResponse>(`/api/v1/patient-portal/patients/${patientId}/reset-pin`, {
+export function resendPatientPortalInvite(authedFetch: AuthedFetch, patientId: string) {
+  return authedFetch<PortalAccessResponse>(`/api/v1/patient-portal/patients/${patientId}/resend-invite`, {
     method: "POST"
   });
 }
@@ -1717,10 +1837,22 @@ export interface PortalLoginResponse {
   expires_in_minutes: number;
 }
 
-export function portalLogin(portalId: string, pin: string) {
-  return portalFetch<PortalLoginResponse>("/api/v1/patient-portal/login", null, {
+export interface RequestOtpResponse {
+  found: boolean;
+  delivered_via: "whatsapp" | "email" | null;
+}
+
+export function portalRequestOtp(phone: string) {
+  return portalFetch<RequestOtpResponse>("/api/v1/patient-portal/request-otp", null, {
     method: "POST",
-    body: JSON.stringify({ portal_id: portalId, pin })
+    body: JSON.stringify({ phone })
+  });
+}
+
+export function portalVerifyOtp(phone: string, code: string) {
+  return portalFetch<PortalLoginResponse>("/api/v1/patient-portal/verify-otp", null, {
+    method: "POST",
+    body: JSON.stringify({ phone, code })
   });
 }
 
@@ -1739,6 +1871,24 @@ export function portalSubmitIntake(portalToken: string, data: PatientIntakeReque
   return portalFetch<PortalPatientResponse>("/api/v1/patient-portal/me/intake", portalToken, {
     method: "POST",
     body: JSON.stringify(data)
+  });
+}
+
+export interface PortalMessage {
+  id: string;
+  role: "patient" | "agent" | "staff" | "system";
+  content: string;
+  created_at: string;
+}
+
+export function getMyPortalMessages(portalToken: string) {
+  return portalFetch<PortalMessage[]>("/api/v1/patient-portal/me/messages", portalToken);
+}
+
+export function sendMyPortalMessage(portalToken: string, content: string) {
+  return portalFetch<PortalMessage>("/api/v1/patient-portal/me/messages", portalToken, {
+    method: "POST",
+    body: JSON.stringify({ content })
   });
 }
 
@@ -1792,8 +1942,12 @@ export interface LandingChatMessagePayload {
 export interface LandingChatMessageResponse {
   conversation_id: string;
   reply: string;
+  /** "sales" (clinic buyer evaluating Aiaceone) or "patient" (booked a consult). */
+  flow?: "sales" | "patient" | null;
   booking_created: boolean;
   lead_name?: string | null;
+  sales_lead_created?: boolean;
+  sales_lead_name?: string | null;
 }
 
 export async function sendLandingChatMessage(data: LandingChatMessagePayload): Promise<LandingChatMessageResponse> {

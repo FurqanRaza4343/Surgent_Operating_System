@@ -39,6 +39,8 @@ class ConsentDocumentResponse(BaseModel):
     signed_at: datetime | None
     signed_by_name: str | None
     witnessed_by: UUID | None
+    discussed_at: datetime | None = None
+    discussed_by: UUID | None = None
     created_at: datetime
     updated_at: datetime
 

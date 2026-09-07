@@ -13,8 +13,7 @@ import { usePlan } from "../plan/PlanContext";
 import { usePatients } from "../patients/usePatients";
 import { useInvoices } from "../billing-invoices/useInvoices";
 import { useExpenses } from "./useExpenses";
-import { useMessageThreads } from "../messages/useMessageThreads";
-import { listStaff, sendMessageTo, getFinanceOverview, type FinanceOverviewResponse, type ExpenseResponse, type InvoiceResponse, type StaffResponse } from "../../../api/entities";
+import { listStaff, listStaffContacts, startStaffConversation, getFinanceOverview, type FinanceOverviewResponse, type ExpenseResponse, type InvoiceResponse, type StaffResponse, type StaffContactResponse } from "../../../api/entities";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 
 type Tab = "overview" | "invoices" | "payments";
@@ -91,7 +90,7 @@ export function FinanceOverviewPage() {
       finally { if (!cancelled) setOverviewLoading(false); }
     })();
     if (isOwner && authedFetch) {
-      listStaff(authedFetch).then(setStaff).catch(() => {});
+      listStaff(authedFetch).then(setStaff).catch(() => undefined);
     }
     return () => { cancelled = true; };
   }, [authedFetch, isOwner]);
@@ -482,9 +481,15 @@ function ChargeCardModal({
   const [processing, setProcessing] = useState(false);
   const [done, setDone] = useState(false);
   const [sendTarget, setSendTarget] = useState<string>("");
+  const [sentConversationId, setSentConversationId] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
   const [sending, setSending] = useState(false);
-  const { threads } = useMessageThreads(authedFetch);
+  const [contacts, setContacts] = useState<StaffContactResponse[]>([]);
+
+  useEffect(() => {
+    if (!authedFetch) return;
+    listStaffContacts(authedFetch).then(setContacts).catch(() => setContacts([]));
+  }, [authedFetch]);
 
   async function pay() {
     setProcessing(true);
@@ -499,9 +504,13 @@ function ChargeCardModal({
   async function share() {
     if (!sendTarget || !authedFetch) return;
     setSending(true);
-    await sendMessageTo(authedFetch, sendTarget, receiptText);
-    setSending(false);
-    setSent(true);
+    try {
+      const conversation = await startStaffConversation(authedFetch, { recipient_user_id: sendTarget, body: receiptText });
+      setSentConversationId(conversation.conversation_id);
+      setSent(true);
+    } finally {
+      setSending(false);
+    }
   }
 
   if (done) {
@@ -519,18 +528,18 @@ function ChargeCardModal({
           <div className="flex gap-2">
             <select value={sendTarget} onChange={(e) => setSendTarget(e.target.value)} className="flex-1 rounded-xl border border-sand-200 bg-canvas px-3 py-2.5 text-sm text-ink outline-none focus:border-teal-600/40">
               <option value="">Choose receptionist / doctor…</option>
-              {threads.map((t) => <option key={t.staff_user_id} value={t.staff_user_id}>{t.staff_name} ({t.staff_role})</option>)}
+              {contacts.map((c) => <option key={c.id} value={c.id}>{c.name || "Unnamed"} ({c.role})</option>)}
             </select>
             <button type="button" onClick={share} disabled={!sendTarget || sending} className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-40">
               <SendIcon className="h-4 w-4" /> {sending ? "Sending…" : "Send"}
             </button>
           </div>
           }
-          {sendTarget && sent &&
-        <Link to={DASHBOARD_ROUTES.messageThread(sendTarget)} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-teal-600 hover:underline">
+{sendTarget && sent && sentConversationId &&
+        <Link to={DASHBOARD_ROUTES.messageThread(sentConversationId)} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-teal-600 hover:underline">
             Open conversation <ArrowUpRightIcon className="h-3 w-3" />
           </Link>
-          }
+        }
         </div>
 
         <button type="button" onClick={onClose} className="mt-5 w-full rounded-xl bg-ink px-4 py-3 text-sm font-semibold text-white hover:bg-ink-soft">Done</button>

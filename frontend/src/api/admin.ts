@@ -147,3 +147,26 @@ export function updateAdminPlan(planId: string, body: Partial<PlanResponse>) {
     body: JSON.stringify(body)
   });
 }
+
+// Clinic-buyer leads captured by Aria on the marketing site — the platform's
+// own sales pipeline (backend /admin/sales-leads). These are Aiaceone-owner
+// records, deliberately NOT practice-scoped.
+export interface SalesLeadResponse {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+  message: string | null;
+  source: string;
+  status: string;
+  conversation_id: string | null;
+  created_at: string;
+}
+
+export function listAdminSalesLeads(params: { q?: string } = {}) {
+  const qs = new URLSearchParams();
+  if (params.q) qs.set("q", params.q);
+  const suffix = qs.toString() ? `?${qs.toString()}` : "";
+  return adminFetch<SalesLeadResponse[]>(`/api/v1/admin/sales-leads${suffix}`);
+}

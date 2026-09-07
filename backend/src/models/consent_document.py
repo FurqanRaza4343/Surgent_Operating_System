@@ -82,10 +82,18 @@ class ConsentDocument(Base):
     signed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
     signed_by_name: Mapped[str] = mapped_column(String(255), nullable=True)
     witnessed_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    # A doctor's lightweight "I went over this with the patient" note — the
+    # only consent action a Doctor gets (see consent_router.py's role
+    # split): the actual send/sign/void workflow stays Owner/Receptionist
+    # territory. Independent of `status`/`signed_at` — a document can be
+    # discussed clinically before or after the patient's own signature.
+    discussed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=True)
+    discussed_by: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     practice = relationship("Practice", back_populates="consent_documents")
     patient = relationship("Patient", back_populates="consent_documents")
-    witness = relationship("User")
+    witness = relationship("User", foreign_keys=[witnessed_by])
+    discussed_by_user = relationship("User", foreign_keys=[discussed_by])
     template = relationship("ConsentTemplate")

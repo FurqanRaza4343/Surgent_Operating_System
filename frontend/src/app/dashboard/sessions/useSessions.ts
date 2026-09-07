@@ -122,7 +122,7 @@ function mapDetailMessages(detail: ConversationDetail): SessionMessage[] {
 // polling-based (not websocket) inbox.
 const POLL_INTERVAL_MS = 4000;
 
-export function useSessions(statusFilter?: string) {
+export function useSessions(statusFilter?: string, patientId?: string) {
   const { authedFetch } = usePlan();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,7 +137,7 @@ export function useSessions(statusFilter?: string) {
       }
       try {
         if (!opts?.silent) setLoading(true);
-        const data = await listConversations(authedFetch, { status: statusFilter, limit: 100 });
+        const data = await listConversations(authedFetch, { status: statusFilter, patient_id: patientId, limit: 100 });
         setSessions((prev) => {
           const next = data.map(mapConversationToSession);
           // A background poll re-applies the server-side status filter, so
@@ -169,7 +169,7 @@ export function useSessions(statusFilter?: string) {
         if (!opts?.silent) setLoading(false);
       }
     },
-    [authedFetch, statusFilter, selectedId]
+    [authedFetch, statusFilter, patientId, selectedId]
   );
 
   useEffect(() => {

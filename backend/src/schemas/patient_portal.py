@@ -62,6 +62,17 @@ class PortalTreatmentPlan(BaseModel):
     created_at: datetime
 
 
+class PortalMessage(BaseModel):
+    id: UUID
+    role: str
+    content: str
+    created_at: datetime
+
+
+class SendPortalMessageRequest(BaseModel):
+    content: str
+
+
 class PortalBookingRequest(BaseModel):
     appointment_type: str
     start_time: datetime
@@ -109,19 +120,30 @@ class PortalAccessResponse(BaseModel):
     enabled: bool
 
 
-class PortalPinIssuedResponse(BaseModel):
-    """Returned exactly once, right after enabling the portal or resetting
-    a PIN — the plaintext PIN is never stored or retrievable again after
-    this response, matching the model's own bcrypt-hash-only storage."""
+class PortalEnabledResponse(BaseModel):
+    """Returned after enabling portal access — portal_id is a reference
+    identifier only (see PatientPortalAuthService's own docstring on why
+    it no longer participates in login); invite_sent tells staff whether
+    the "portal is ready" message actually went out or needs a manual
+    resend (patient has no phone/email on file, or delivery failed)."""
     portal_id: str
-    pin: str
+    invite_sent: bool
 
 
-# --- Patient-side login ---
+# --- Patient-side login (phone + one-time code) ---
 
-class PatientPortalLoginRequest(BaseModel):
-    portal_id: str
-    pin: str
+class RequestOtpRequest(BaseModel):
+    phone: str
+
+
+class RequestOtpResponse(BaseModel):
+    found: bool
+    delivered_via: str | None = None
+
+
+class VerifyOtpRequest(BaseModel):
+    phone: str
+    code: str
 
 
 class PatientPortalLoginResponse(BaseModel):

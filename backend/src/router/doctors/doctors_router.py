@@ -17,6 +17,8 @@ from src.schemas.doctor import (
     CreateDoctorAvailabilityRequest,
     DoctorAvailabilityResponse,
     DoctorTodayResponse,
+    CreateDoctorTimeBlockRequest,
+    DoctorTimeBlockResponse,
 )
 from src.controller.doctors.doctors_controllers import DoctorsController
 
@@ -58,6 +60,36 @@ async def get_my_today(
 ):
     # Also before /{doctor_id} — same ordering reason as /me above.
     return await controller.get_my_today(db, user)
+
+
+@router.post("/me/time-blocks", response_model=DoctorTimeBlockResponse)
+async def create_my_time_block(
+    data: CreateDoctorTimeBlockRequest,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """A doctor's own private calendar note/block — no require_role beyond
+    being an authenticated practice member, since the service resolves and
+    writes only to the caller's own linked Doctor row (see
+    DoctorTimeBlockService._resolve_doctor). Also before /{doctor_id}."""
+    return await controller.create_my_time_block(db, user, data)
+
+
+@router.get("/me/time-blocks", response_model=list[DoctorTimeBlockResponse])
+async def list_my_time_blocks(
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.list_my_time_blocks(db, user)
+
+
+@router.delete("/me/time-blocks/{block_id}", status_code=204)
+async def delete_my_time_block(
+    block_id: UUID,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await controller.delete_my_time_block(db, user, block_id)
 
 
 @router.get("/{doctor_id}", response_model=DoctorResponse)

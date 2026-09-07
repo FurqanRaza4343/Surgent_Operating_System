@@ -6,5 +6,6 @@ export const ADMIN_ROUTES = {
   clinics: "/admin/clinics",
   clinicDetail: (id: string) => `/admin/clinics/${id}`,
   plans: "/admin/plans",
+  salesLeads: "/admin/sales-leads",
   signIn: "/admin/sign-in"
 } as const;

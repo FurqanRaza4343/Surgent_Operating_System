@@ -11,6 +11,7 @@ from src.models.doctor import Doctor
 from src.models.patient import Patient
 from src.schemas.clinical import CreateConsultationNoteRequest, UpdateConsultationNoteRequest, AIConsultationDraftResponse
 from src.services.llm.llm_service import LLMService
+from src.services.speech.speech_service import SpeechService
 from src.server.exceptions import NotFoundException, AppException
 
 logger = logging.getLogger(__name__)
@@ -38,6 +39,19 @@ class ConsultationService:
 
     def __init__(self):
         self.llm = LLMService()
+        self.speech = SpeechService()
+
+    async def transcribe_dictation(self, audio_bytes: bytes, filename: str) -> str:
+        """Voice dictation for the Consultation Assistant's raw-notes box —
+        same Groq Whisper backend already proven live for WhatsApp voice
+        notes (see channels/green_api_poller.py), just a different caller.
+        Doesn't touch the DB at all; purely audio-in, text-out."""
+        if not self.speech.is_configured:
+            raise AppException("Voice dictation isn't configured for this environment (missing Groq API key)")
+        try:
+            return await self.speech.transcribe(audio_bytes, filename=filename)
+        except Exception as exc:
+            raise AppException(f"Transcription failed: {exc}")
 
     async def ai_draft(
         self, db: AsyncSession, practice_id: UUID, patient_id: UUID, raw_notes: str

@@ -1,4 +1,5 @@
 from __future__ import annotations
+import logging
 from datetime import datetime, timezone
 from uuid import UUID
 
@@ -8,12 +9,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.models.appointment import Appointment, AppointmentStatus
 from src.models.doctor import Doctor
 from src.models.patient import Patient
+from src.services.messaging.messaging_service import MessagingService
 from src.server.exceptions import NotFoundException, AppException
+
+logger = logging.getLogger(__name__)
 
 
 class AppointmentsService:
     """Every method here is practice-scoped; callers must always pass the
     requesting user's own practice_id, never trust one from the client."""
+
+    def __init__(self):
+        self.messaging = MessagingService()
+
+    async def _notify_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID, agent_type: str, text: str) -> None:
+        """Best-effort appointment-change notification — a failure here
+        (no phone on file, channel misconfigured, provider outage) must
+        never block the actual appointment state change staff just made,
+        the same boundary Surgery.complete_surgery draws around its own
+        optional inventory-consumption side effect."""
+        result = await db.execute(select(Patient).where(Patient.id == patient_id))
+        patient = result.scalar_one_or_none()
+        if patient is None or not patient.phone:
+            return
+        try:
+            await self.messaging.send_and_log(db, practice_id, patient, agent_type, text)
+        except Exception:
+            logger.exception("Failed to send %s notification for patient %s", agent_type, patient_id)
 
     @staticmethod
     def _with_patient_names(rows: list[tuple[Appointment, Patient]]) -> list[Appointment]:
@@ -88,8 +110,11 @@ class AppointmentsService:
         patient_result = await db.execute(
             select(Patient).where(Patient.id == patient_id, Patient.practice_id == practice_id)
         )
-        if patient_result.scalar_one_or_none() is None:
+        patient = patient_result.scalar_one_or_none()
+        if patient is None:
             raise NotFoundException("Patient not found")
+        if patient.is_archived:
+            raise AppException("Cannot book an appointment for an archived patient — restore them first")
 
         if doctor_id is not None:
             doctor_result = await db.execute(
@@ -133,6 +158,12 @@ class AppointmentsService:
         appointment.status = AppointmentStatus.SCHEDULED
         await db.flush()
         await db.refresh(appointment)
+
+        when = new_start_time.strftime("%A, %B %d at %I:%M %p")
+        await self._notify_patient(
+            db, practice_id, appointment.patient_id, "appointment_reschedule",
+            f"Your {appointment.appointment_type} appointment has been rescheduled to {when}. Reply if this doesn't work for you.",
+        )
         return appointment
 
     async def cancel_appointment(
@@ -147,6 +178,12 @@ class AppointmentsService:
             appointment.notes = f"{appointment.notes}\nCancelled: {reason}" if appointment.notes else f"Cancelled: {reason}"
         await db.flush()
         await db.refresh(appointment)
+
+        when = appointment.start_time.strftime("%A, %B %d at %I:%M %p")
+        await self._notify_patient(
+            db, practice_id, appointment.patient_id, "appointment_cancellation",
+            f"Your {appointment.appointment_type} appointment on {when} has been cancelled. Reply if you'd like to rebook.",
+        )
         return appointment
 
     async def check_in_appointment(self, db: AsyncSession, practice_id: UUID, appointment_id: UUID) -> Appointment:

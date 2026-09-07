@@ -2,118 +2,208 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select, func
+from sqlalchemy import select, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from src.models.staff_message import StaffMessage
-from src.models.user import User, UserRole
-from src.schemas.staff_message import StaffMessageThreadSummary
+from src.models.staff_message import StaffConversation, StaffMessage
+from src.models.user import User
+from src.schemas.staff_message import StaffContactResponse, StaffConversationResponse
 from src.server.exceptions import NotFoundException, ForbiddenException
 
 
 class StaffMessageService:
-    """A simple two-way message thread per (practice, staff member) — Owner
-    on one side, that Doctor or Receptionist on the other. Every method is
-    practice-scoped; `_authorize` is the single access-control chokepoint:
-    Owner can reach any staff member's thread, a staff member can only reach
-    their own."""
+    """One-to-one chat between any two active users of a practice. Threads
+    are real conversations (user pairs stored canonically), so anyone on the
+    team — owner, doctor, receptionist — can message anyone else. Every
+    method is practice-scoped; participants are the only people who can read
+    or write a conversation."""
 
-    def _authorize(self, user: User, staff_user_id: UUID) -> None:
-        if user.role == UserRole.OWNER:
-            return
-        if user.id != staff_user_id:
-            raise ForbiddenException("You can only view your own conversation with the Owner.")
-
-    async def _resolve_staff_member(self, db: AsyncSession, practice_id: UUID, staff_user_id: UUID) -> User:
+    async def _resolve_user(self, db: AsyncSession, practice_id: UUID, user_id: UUID) -> User:
         result = await db.execute(
-            select(User).where(
-                User.id == staff_user_id, User.practice_id == practice_id, User.role != UserRole.OWNER
+            select(User).where(User.id == user_id, User.practice_id == practice_id, User.is_active.is_(True))
+        )
+        user = result.scalar_one_or_none()
+        if user is None:
+            raise NotFoundException("User not found")
+        return user
+
+    async def _get_participant_conversation(
+        self, db: AsyncSession, practice_id: UUID, user: User, conversation_id: UUID
+    ) -> StaffConversation:
+        result = await db.execute(
+            select(StaffConversation).where(
+                StaffConversation.id == conversation_id, StaffConversation.practice_id == practice_id
             )
         )
-        staff = result.scalar_one_or_none()
-        if staff is None:
-            raise NotFoundException("Staff member not found")
-        return staff
+        conversation = result.scalar_one_or_none()
+        if conversation is None:
+            raise NotFoundException("Conversation not found")
+        if user.id not in (conversation.user_a_id, conversation.user_b_id):
+            raise ForbiddenException("You can only view conversations you are part of.")
+        return conversation
 
-    async def list_messages(self, db: AsyncSession, practice_id: UUID, user: User, staff_user_id: UUID) -> list[StaffMessage]:
-        self._authorize(user, staff_user_id)
-        await self._resolve_staff_member(db, practice_id, staff_user_id)
-
-        query = (
-            select(StaffMessage)
-            .options(selectinload(StaffMessage.sender))
-            .where(StaffMessage.practice_id == practice_id, StaffMessage.staff_user_id == staff_user_id)
-            .order_by(StaffMessage.created_at.asc())
+    async def list_contacts(self, db: AsyncSession, practice_id: UUID, user: User) -> list[StaffContactResponse]:
+        """Every other active member of the practice — who you can start a
+        conversation with."""
+        result = await db.execute(
+            select(User).where(
+                User.practice_id == practice_id,
+                User.is_active.is_(True),
+                User.id != user.id,
+            )
         )
-        result = await db.execute(query)
-        messages = list(result.scalars().all())
-        for m in messages:
-            m.sender_name = m.sender.name
-            m.sender_role = m.sender.role.value
-        return messages
-
-    async def send_message(
-        self, db: AsyncSession, practice_id: UUID, user: User, staff_user_id: UUID, body: str
-    ) -> StaffMessage:
-        self._authorize(user, staff_user_id)
-        await self._resolve_staff_member(db, practice_id, staff_user_id)
-
-        message = StaffMessage(practice_id=practice_id, staff_user_id=staff_user_id, sender_id=user.id, body=body)
-        db.add(message)
-        await db.flush()
-        await db.refresh(message)
-        message.sender_name = user.name
-        message.sender_role = user.role.value
-        return message
-
-    async def list_threads(self, db: AsyncSession, practice_id: UUID) -> list[StaffMessageThreadSummary]:
-        # Owner-only — one row per active Doctor/Receptionist, with their
-        # latest message (if any) so the Owner can see who's waiting on a
-        # reply without opening every thread.
-        staff_result = await db.execute(
-            select(User).where(User.practice_id == practice_id, User.role != UserRole.OWNER, User.is_active == True)  # noqa: E712
+        members = sorted(
+            list(result.scalars().all()),
+            key=lambda u: (u.role.value, (u.name or "").lower()),
         )
-        staff_members = list(staff_result.scalars().all())
-        if not staff_members:
+        return [
+            StaffContactResponse(id=m.id, name=m.name, role=m.role.value, email=m.email)
+            for m in members
+        ]
+
+    async def list_conversations(
+        self, db: AsyncSession, practice_id: UUID, user: User
+    ) -> list[StaffConversationResponse]:
+        result = await db.execute(
+            select(StaffConversation).where(
+                or_(
+                    StaffConversation.user_a_id == user.id,
+                    StaffConversation.user_b_id == user.id,
+                )
+            )
+        )
+        conversations = list(result.scalars().all())
+        if not conversations:
             return []
 
-        staff_ids = [s.id for s in staff_members]
+        ids = [c.id for c in conversations]
+        participant_ids = {user.id}
+        for c in conversations:
+            participant_ids.add(c.user_a_id)
+            participant_ids.add(c.user_b_id)
+
+        users_result = await db.execute(select(User).where(User.id.in_(participant_ids)))
+        users = {u.id: u for u in users_result.scalars().all()}
+
         counts_result = await db.execute(
-            select(StaffMessage.staff_user_id, func.count())
-            .where(StaffMessage.practice_id == practice_id, StaffMessage.staff_user_id.in_(staff_ids))
-            .group_by(StaffMessage.staff_user_id)
+            select(StaffMessage.conversation_id, func.count())
+            .where(StaffMessage.conversation_id.in_(ids))
+            .group_by(StaffMessage.conversation_id)
         )
         counts = dict(counts_result.all())
 
-        last_message_result = await db.execute(
+        last_result = await db.execute(
             select(StaffMessage)
-            .where(StaffMessage.practice_id == practice_id, StaffMessage.staff_user_id.in_(staff_ids))
-            .order_by(StaffMessage.staff_user_id, StaffMessage.created_at.desc())
+            .where(StaffMessage.conversation_id.in_(ids))
+            .order_by(StaffMessage.created_at.desc())
         )
-        last_by_staff: dict[UUID, StaffMessage] = {}
-        for m in last_message_result.scalars().all():
-            if m.staff_user_id not in last_by_staff:
-                last_by_staff[m.staff_user_id] = m
+        last_by_conversation: dict[UUID, StaffMessage] = {}
+        for m in last_result.scalars().all():
+            if m.conversation_id not in last_by_conversation:
+                last_by_conversation[m.conversation_id] = m
 
         summaries = []
-        for staff in staff_members:
-            last = last_by_staff.get(staff.id)
+        for c in conversations:
+            other_id = c.user_b_id if c.user_a_id == user.id else c.user_a_id
+            other = users.get(other_id)
+            last = last_by_conversation.get(c.id)
             summaries.append(
-                StaffMessageThreadSummary(
-                    staff_user_id=staff.id,
-                    staff_name=staff.name,
-                    staff_role=staff.role.value,
+                StaffConversationResponse(
+                    conversation_id=c.id,
+                    recipient_id=other_id,
+                    recipient_name=(other.name if other else None),
+                    recipient_role=(other.role.value if other else "staff"),
                     last_message_preview=(last.body[:120] if last else None),
                     last_message_at=(last.created_at if last else None),
-                    message_count=counts.get(staff.id, 0),
+                    message_count=counts.get(c.id, 0),
                 )
             )
-        # Most recently active thread first; staff with no messages yet sort
-        # last (sorting directly on `last_message_at or staff_name` would mix
-        # datetime and str keys and raise on comparison).
         summaries.sort(
             key=lambda s: (s.last_message_at is not None, s.last_message_at or datetime.min.replace(tzinfo=timezone.utc)),
             reverse=True,
         )
         return summaries
+
+    async def list_messages(
+        self, db: AsyncSession, practice_id: UUID, user: User, conversation_id: UUID
+    ) -> list[StaffMessage]:
+        conversation = await self._get_participant_conversation(db, practice_id, user, conversation_id)
+        result = await db.execute(
+            select(StaffMessage)
+            .options(selectinload(StaffMessage.sender))
+            .where(StaffMessage.conversation_id == conversation.id)
+            .order_by(StaffMessage.created_at.asc())
+        )
+        messages = list(result.scalars().all())
+        for m in messages:
+            m.sender_name = m.sender.name
+            m.sender_role = m.sender.role.value
+            m.mine = m.sender_id == user.id
+        return messages
+
+    async def start_conversation(
+        self,
+        db: AsyncSession,
+        practice_id: UUID,
+        user: User,
+        recipient_id: UUID,
+        body: str | None = None,
+    ) -> StaffConversationResponse:
+        if recipient_id == user.id:
+            raise ForbiddenException("You can't start a conversation with yourself.")
+        recipient = await self._resolve_user(db, practice_id, recipient_id)
+
+        user_a, user_b = sorted([user.id, recipient_id])
+        result = await db.execute(
+            select(StaffConversation).where(
+                StaffConversation.practice_id == practice_id,
+                StaffConversation.user_a_id == user_a,
+                StaffConversation.user_b_id == user_b,
+            )
+        )
+        conversation = result.scalar_one_or_none()
+        if conversation is None:
+            conversation = StaffConversation(practice_id=practice_id, user_a_id=user_a, user_b_id=user_b)
+            db.add(conversation)
+            await db.flush()
+            await db.refresh(conversation)
+
+        if body:
+            await self.send_message(db, practice_id, user, conversation.id, body)
+
+        message_count_result = await db.execute(
+            select(func.count()).select_from(StaffMessage).where(StaffMessage.conversation_id == conversation.id)
+        )
+        message_count = message_count_result.scalar_one()
+        last_result = await db.execute(
+            select(StaffMessage)
+            .where(StaffMessage.conversation_id == conversation.id)
+            .order_by(StaffMessage.created_at.desc())
+            .limit(1)
+        )
+        last = last_result.scalar_one_or_none()
+
+        return StaffConversationResponse(
+            conversation_id=conversation.id,
+            recipient_id=recipient.id,
+            recipient_name=recipient.name,
+            recipient_role=recipient.role.value,
+            last_message_preview=(last.body[:120] if last else None),
+            last_message_at=(last.created_at if last else None),
+            message_count=message_count,
+        )
+
+    async def send_message(
+        self, db: AsyncSession, practice_id: UUID, user: User, conversation_id: UUID, body: str
+    ) -> StaffMessage:
+        conversation = await self._get_participant_conversation(db, practice_id, user, conversation_id)
+
+        message = StaffMessage(practice_id=practice_id, conversation_id=conversation.id, sender_id=user.id, body=body)
+        db.add(message)
+        await db.flush()
+        await db.refresh(message)
+        message.sender_name = user.name
+        message.sender_role = user.role.value
+        message.mine = True
+        return message

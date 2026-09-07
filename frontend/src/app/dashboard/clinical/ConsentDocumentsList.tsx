@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { ShieldCheckIcon, PlusIcon, PenLineIcon, XIcon, CheckIcon } from "lucide-react";
+import { ShieldCheckIcon, PlusIcon, PenLineIcon, XIcon, CheckIcon, MessageSquareIcon } from "lucide-react";
 import { usePlan } from "../plan/PlanContext";
 import { useConsentDocuments } from "./useConsentDocuments";
 import { listConsentTemplates, type ConsentDocumentResponse, type ConsentTemplateResponse } from "../../../api/entities";
@@ -15,12 +15,16 @@ function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-// Open to any active practice role — administrative/legal, not clinical
-// judgment (matches consent_router.py's own gate).
+// Owner/Receptionist manage the workflow (create/send/sign/void); Doctor
+// gets read access plus one lightweight action — "mark discussed" — rather
+// than administrative control over the consent process (matches
+// consent_router.py's role split).
 export function ConsentDocumentsList({ patientId }: { patientId: string }) {
-  const { authedFetch } = usePlan();
-  const { documents, loading, create, sign, voidDoc } = useConsentDocuments(authedFetch, patientId);
+  const { authedFetch, role } = usePlan();
+  const { documents, loading, create, sign, voidDoc, markDiscussed } = useConsentDocuments(authedFetch, patientId);
   const [adding, setAdding] = useState(false);
+  const canManage = role === "owner" || role === "receptionist";
+  const isDoctor = role === "doctor";
 
   return (
     <div className="mb-6 rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
@@ -28,6 +32,7 @@ export function ConsentDocumentsList({ patientId }: { patientId: string }) {
         <p className="flex items-center gap-2 text-sm font-bold text-ink">
           <ShieldCheckIcon className="h-4 w-4 text-teal-600" /> Consent documents
         </p>
+        {canManage &&
         <button
           type="button"
           onClick={() => setAdding((v) => !v)}
@@ -35,6 +40,7 @@ export function ConsentDocumentsList({ patientId }: { patientId: string }) {
 
           <PlusIcon className="h-3.5 w-3.5" /> New document
         </button>
+        }
       </div>
 
       {adding && <NewDocumentForm onCreate={create} onDone={() => setAdding(false)} />}
@@ -46,7 +52,9 @@ export function ConsentDocumentsList({ patientId }: { patientId: string }) {
         <p className="px-3 py-4 text-sm text-ink-muted">No consent documents yet.</p> :
 
         <div className="divide-y divide-sand-100">
-            {documents.map((doc) => <DocumentRow key={doc.id} document={doc} onSign={sign} onVoid={voidDoc} />)}
+            {documents.map((doc) => (
+              <DocumentRow key={doc.id} document={doc} canManage={canManage} isDoctor={isDoctor} onSign={sign} onVoid={voidDoc} onMarkDiscussed={markDiscussed} />
+            ))}
           </div>
         }
       </div>
@@ -139,17 +147,28 @@ function NewDocumentForm({
 
 function DocumentRow({
   document,
+  canManage,
+  isDoctor,
   onSign,
-  onVoid
+  onVoid,
+  onMarkDiscussed
 
 
 
 
-}: {document: ConsentDocumentResponse;onSign: (id: string, name: string) => Promise<unknown>;onVoid: (id: string) => Promise<unknown>;}) {
+}: {
+  document: ConsentDocumentResponse;
+  canManage: boolean;
+  isDoctor: boolean;
+  onSign: (id: string, name: string) => Promise<unknown>;
+  onVoid: (id: string) => Promise<unknown>;
+  onMarkDiscussed: (id: string) => Promise<unknown>;
+}) {
   const [signing, setSigning] = useState(false);
   const [name, setName] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [markingDiscussed, setMarkingDiscussed] = useState(false);
 
   async function handleSign() {
     if (!name.trim() || !confirmed) return;
@@ -159,6 +178,15 @@ function DocumentRow({
       setSigning(false);
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function handleMarkDiscussed() {
+    setMarkingDiscussed(true);
+    try {
+      await onMarkDiscussed(document.id);
+    } finally {
+      setMarkingDiscussed(false);
     }
   }
 
@@ -172,10 +200,15 @@ function DocumentRow({
             `Signed by ${document.signed_by_name} on ${formatDate(document.signed_at)}` :
             `Created ${formatDate(document.created_at)}`}
           </p>
+          {document.discussed_at &&
+          <p className="mt-0.5 flex items-center gap-1 text-[11px] text-teal-600">
+              <MessageSquareIcon className="h-3 w-3" /> Discussed with patient on {formatDate(document.discussed_at)}
+            </p>
+          }
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold capitalize ${STATUS_CLASS[document.status]}`}>{document.status}</span>
-          {(document.status === "draft" || document.status === "sent") && !signing &&
+          {canManage && (document.status === "draft" || document.status === "sent") && !signing &&
           <>
               <button type="button" onClick={() => setSigning(true)} className="flex items-center gap-1 rounded-lg border border-sand-200 px-2.5 py-1 text-xs font-semibold text-ink-soft hover:border-teal-600/40 hover:text-teal-600">
                 <PenLineIcon className="h-3 w-3" /> Sign
@@ -184,6 +217,15 @@ function DocumentRow({
                 Void
               </button>
             </>
+          }
+          {isDoctor && !document.discussed_at &&
+          <button
+            type="button"
+            onClick={handleMarkDiscussed}
+            disabled={markingDiscussed}
+            className="flex items-center gap-1 rounded-lg border border-sand-200 px-2.5 py-1 text-xs font-semibold text-ink-soft hover:border-teal-600/40 hover:text-teal-600 disabled:opacity-50">
+              <MessageSquareIcon className="h-3 w-3" /> {markingDiscussed ? "…" : "Mark discussed"}
+            </button>
           }
         </div>
       </div>

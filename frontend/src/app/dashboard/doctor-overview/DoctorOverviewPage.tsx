@@ -217,7 +217,10 @@ function WaitingRoomWidget({ entries }: { entries: WaitingRoomEntry[] }) {
       </div>
       <div className="divide-y divide-sand-100">
         {entries.map((e) =>
-        <div key={e.appointment_id} className="flex items-center gap-3 px-5 py-3.5">
+        <Link
+          key={e.appointment_id}
+          to={`${DASHBOARD_ROUTES.consultationNoteNew(e.patient_id)}?appointmentId=${e.appointment_id}`}
+          className="flex items-center gap-3 px-5 py-3.5 transition-colors hover:bg-sand-50">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand-200 text-sm font-bold text-ink-soft">
               {e.patient_name[0]?.toUpperCase() || "?"}
             </span>
@@ -228,7 +231,7 @@ function WaitingRoomWidget({ entries }: { entries: WaitingRoomEntry[] }) {
             <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${e.status === "with_doctor" ? "bg-warning/10 text-warning" : "bg-teal-600/10 text-teal-600"}`}>
               {e.status === "with_doctor" ? "With you" : `Waiting ${elapsedMinutes(e.checked_in_at!)}`}
             </span>
-          </div>
+          </Link>
         )}
       </div>
     </div>);

@@ -130,3 +130,15 @@ class ConsentService:
 
         await self._recompute_consent_status(db, practice_id, document.patient_id)
         return document
+
+    async def mark_discussed(self, db: AsyncSession, practice_id: UUID, document_id: UUID, doctor_user_id: UUID) -> ConsentDocument:
+        """The one consent action a Doctor gets (see consent_router.py's
+        role split) — a lightweight "I went over this with the patient"
+        note, independent of the actual send/sign/void workflow which stays
+        Owner/Receptionist territory."""
+        document = await self.get_document(db, practice_id, document_id)
+        document.discussed_at = datetime.now(timezone.utc)
+        document.discussed_by = doctor_user_id
+        await db.flush()
+        await db.refresh(document)
+        return document

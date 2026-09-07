@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, FileTextIcon, PlusIcon } from "lucide-react";
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, ClockIcon, FileTextIcon, PlusIcon, CalendarClockIcon, XIcon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { EmptyState } from "../components/EmptyState";
 import { usePlan } from "../plan/PlanContext";
-import { listMyAppointments, type AppointmentResponse } from "../../../api/entities";
+import { listMyAppointments, listMyTimeBlocks, deleteTimeBlock, type AppointmentResponse, type DoctorTimeBlockResponse } from "../../../api/entities";
 import { DASHBOARD_ROUTES } from "../constants/routes";
+import { TimeBlockForm } from "./TimeBlockForm";
 
 const RECENT_DAYS = 7;
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -40,16 +41,22 @@ function dayLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
 }
 
-function timeRange(a: AppointmentResponse) {
-  const start = new Date(a.start_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
-  const end = new Date(a.end_time).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+function timeRangeRaw(startIso: string, endIso: string) {
+  const start = new Date(startIso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+  const end = new Date(endIso).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
   return `${start} – ${end}`;
+}
+
+function timeRange(a: AppointmentResponse) {
+  return timeRangeRaw(a.start_time, a.end_time);
 }
 
 export function MyCalendarPage() {
   const { authedFetch } = usePlan();
   const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+  const [timeBlocks, setTimeBlocks] = useState<DoctorTimeBlockResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [blocking, setBlocking] = useState(false);
 
   const now = new Date();
   const [viewYear, setViewYear] = useState(now.getFullYear());
@@ -65,8 +72,14 @@ export function MyCalendarPage() {
         return;
       }
       try {
-        const appts = await listMyAppointments(authedFetch);
-        if (!cancelled) setAppointments(appts);
+        const [appts, blocks] = await Promise.all([
+          listMyAppointments(authedFetch),
+          listMyTimeBlocks(authedFetch).catch(() => [])
+        ]);
+        if (!cancelled) {
+          setAppointments(appts);
+          setTimeBlocks(blocks);
+        }
       } catch {
         if (!cancelled) setAppointments([]);
       } finally {
@@ -86,6 +99,27 @@ export function MyCalendarPage() {
     }
     return map;
   }, [appointments]);
+
+  const blocksByDay = useMemo(() => {
+    const map = new Map<string, DoctorTimeBlockResponse[]>();
+    for (const b of timeBlocks) {
+      const key = toKey(new Date(b.start_time).getFullYear(), new Date(b.start_time).getMonth(), new Date(b.start_time).getDate());
+      map.set(key, [...(map.get(key) || []), b]);
+    }
+    return map;
+  }, [timeBlocks]);
+
+  async function handleDeleteBlock(id: string) {
+    if (!authedFetch) return;
+    setTimeBlocks((prev) => prev.filter((b) => b.id !== id));
+    try {
+      await deleteTimeBlock(authedFetch, id);
+    } catch {
+      // Re-fetch would be more correct than silently leaving it removed
+      // client-side, but this is low-stakes personal data — a failed
+      // delete just means it reappears on next page load.
+    }
+  }
 
   const monthLabel = new Date(viewYear, viewMonth, 1).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
@@ -139,12 +173,27 @@ export function MyCalendarPage() {
               <ChevronRightIcon className="h-4 w-4" />
             </button>
           </div>
-          <Link
-            to={DASHBOARD_ROUTES.myBook}
-            className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-700">
-            <PlusIcon className="h-3.5 w-3.5" /> Book
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setBlocking((v) => !v)}
+              className="flex items-center gap-1.5 rounded-xl border border-sand-200 px-3.5 py-2 text-xs font-semibold text-ink-soft transition-colors hover:border-teal-600/40 hover:text-teal-600">
+              <CalendarClockIcon className="h-3.5 w-3.5" /> Block time
+            </button>
+            <Link
+              to={DASHBOARD_ROUTES.myBook}
+              className="flex items-center gap-1.5 rounded-xl bg-teal-600 px-3.5 py-2 text-xs font-semibold text-white transition-colors hover:bg-teal-700">
+              <PlusIcon className="h-3.5 w-3.5" /> Book
+            </Link>
+          </div>
         </div>
+
+        {blocking &&
+        <TimeBlockForm
+          defaultDay={selectedKey}
+          onCreated={(block) => { setTimeBlocks((prev) => [...prev, block]); setBlocking(false); }}
+          onCancel={() => setBlocking(false)} />
+        }
 
         {loading ?
         <p className="mt-8 text-sm text-ink-muted">Loading…</p> :
@@ -155,19 +204,23 @@ export function MyCalendarPage() {
               {cells.map((cell) => {
               if (cell.d === 0) return <span key={cell.key} />;
               const dayAppts = byDay.get(cell.key) || [];
+              const dayBlocks = blocksByDay.get(cell.key) || [];
               const selected = cell.key === selectedKey;
               return (
                 <button
                   key={cell.key}
                   type="button"
                   onClick={() => setSelectedKey(cell.key)}
-                  className={`flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border text-sm font-bold tabular-nums transition-colors ${
+                  className={`relative flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border text-sm font-bold tabular-nums transition-colors ${
                     selected ?
                     "border-teal-600 bg-teal-600/10 text-ink" :
                     cell.today ?
                     "border-accent-500 bg-accent-500/10 text-ink" :
                     "border-transparent text-ink-soft hover:bg-sand-100"
                   }`}>
+                  {dayBlocks.length > 0 && (
+                    <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full border border-white bg-ink-muted" title="Time blocked" />
+                  )}
                   <span>{cell.d}</span>
                   <span className="flex h-1.5 items-center gap-0.5">
                     {dayAppts.slice(0, 3).map((a) => (
@@ -193,6 +246,25 @@ export function MyCalendarPage() {
                   </span>
               }
               </div>
+
+              {(blocksByDay.get(selectedKey) || []).length > 0 &&
+            <div className="mt-3 space-y-1.5">
+                  {(blocksByDay.get(selectedKey) || []).map((b) => (
+                    <div key={b.id} className="flex items-center gap-3 rounded-xl border border-dashed border-sand-300 bg-sand-50 px-4 py-2.5">
+                      <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-ink-muted/10 text-ink-muted">
+                        <CalendarClockIcon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-ink-soft">{b.title}</p>
+                        <p className="truncate text-xs text-ink-muted">{timeRangeRaw(b.start_time, b.end_time)}{b.note ? ` · ${b.note}` : ""}</p>
+                      </div>
+                      <button type="button" onClick={() => handleDeleteBlock(b.id)} className="shrink-0 rounded-lg p-1.5 text-ink-muted hover:bg-sand-100 hover:text-danger" aria-label="Remove block">
+                        <XIcon className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+            }
 
               {selectedAppointments.length === 0 ?
             <div className="mt-3 rounded-xl border border-dashed border-sand-200 px-5 py-6">

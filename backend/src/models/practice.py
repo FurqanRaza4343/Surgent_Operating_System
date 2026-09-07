@@ -39,4 +39,5 @@ class Practice(Base):
     expenses = relationship("Expense", back_populates="practice", cascade="all, delete-orphan")
     inventory_items = relationship("InventoryItem", back_populates="practice", cascade="all, delete-orphan")
     staff_messages = relationship("StaffMessage", back_populates="practice", cascade="all, delete-orphan")
+    staff_conversations = relationship("StaffConversation", back_populates="practice", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLog", back_populates="practice", cascade="all, delete-orphan")

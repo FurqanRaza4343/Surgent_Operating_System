@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.subscription import Subscription, SubscriptionStatus, SubscriptionTier
+from src.models.sales_lead import SalesLead
 from src.schemas.admin import (
     AdminSummaryResponse,
     AdminPracticeListItem,
@@ -17,6 +18,7 @@ from src.schemas.admin import (
     AdminMeResponse,
     AdminLoginRequest,
     AdminLoginResponse,
+    SalesLeadResponse,
 )
 from src.schemas.plan import PlanResponse, PlanCreateRequest, PlanUpdateRequest
 from src.services.admin.admin_services import AdminService
@@ -157,6 +159,27 @@ class AdminController:
     async def list_users(self, db: AsyncSession, q: str | None) -> list[AdminUserResponse]:
         users = await self.service.list_users(db, q=q)
         return [AdminUserResponse.model_validate(u) for u in users]
+
+    async def list_sales_leads(self, db: AsyncSession, q: str | None) -> list[SalesLeadResponse]:
+        stmt = select(SalesLead).order_by(SalesLead.created_at.desc())
+        if q:
+            stmt = stmt.where(SalesLead.email.ilike(f"%{q}%") | SalesLead.full_name.ilike(f"%{q}%"))
+        result = await db.execute(stmt)
+        return [
+            SalesLeadResponse(
+                id=lead.id,
+                full_name=lead.full_name,
+                email=lead.email,
+                phone=lead.phone,
+                company=lead.company,
+                message=lead.message,
+                source=lead.source.value,
+                status=lead.status.value,
+                conversation_id=lead.conversation_id,
+                created_at=lead.created_at,
+            )
+            for lead in result.scalars().all()
+        ]
 
     async def update_user(self, db: AsyncSession, user_id, body: UpdateAdminUserRequest) -> AdminUserResponse:
         user = await self.service.get_user(db, user_id)

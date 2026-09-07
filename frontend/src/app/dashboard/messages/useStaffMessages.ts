@@ -1,51 +1,48 @@
 import { useCallback, useEffect, useState } from "react";
 import {
-  listMyMessages,
-  sendMyMessage,
-  listMessagesWith,
-  sendMessageTo,
+  listStaffMessages,
+  sendStaffMessage,
   type StaffMessageResponse
 } from "../../../api/entities";
 
 type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
 
-// Pass a staffUserId for the Owner viewing a specific staff member's
-// thread; omit it for a Doctor/Receptionist viewing their own thread with
-// the Owner (uses the /me aliases — they never need to know their own
-// backend User.id).
-export function useStaffMessages(authedFetch: AuthedFetch, staffUserId?: string) {
+// Messages within one 1:1 conversation. `conversationId` is legitimately
+// undefined while no thread is open — the hook then just stays empty.
+export function useStaffMessages(authedFetch: AuthedFetch, conversationId?: string) {
   const [messages, setMessages] = useState<StaffMessageResponse[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
-    if (!authedFetch) {
+    if (!authedFetch || !conversationId) {
       setMessages([]);
       setLoading(false);
       return;
     }
     try {
       setLoading(true);
-      const data = staffUserId ? await listMessagesWith(authedFetch, staffUserId) : await listMyMessages(authedFetch);
+      const data = await listStaffMessages(authedFetch, conversationId);
       setMessages(data);
     } catch {
       setMessages([]);
     } finally {
       setLoading(false);
     }
-  }, [authedFetch, staffUserId]);
+  }, [authedFetch, conversationId]);
 
   useEffect(() => {
+    setMessages([]);
     refetch();
   }, [refetch]);
 
   const send = useCallback(
     async (body: string) => {
-      if (!authedFetch) return null;
-      const message = staffUserId ? await sendMessageTo(authedFetch, staffUserId, body) : await sendMyMessage(authedFetch, body);
+      if (!authedFetch || !conversationId) return null;
+      const message = await sendStaffMessage(authedFetch, conversationId, body);
       setMessages((prev) => [...prev, message]);
       return message;
     },
-    [authedFetch, staffUserId]
+    [authedFetch, conversationId]
   );
 
   return { messages, loading, refetch, send };

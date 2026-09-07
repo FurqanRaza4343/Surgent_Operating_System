@@ -1,7 +1,7 @@
 from __future__ import annotations
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
@@ -13,6 +13,7 @@ from src.schemas.clinical import (
     ConsultationNoteResponse,
     AIConsultationDraftRequest,
     AIConsultationDraftResponse,
+    TranscriptionResponse,
     CreateTreatmentPlanRequest,
     UpdateTreatmentPlanRequest,
     UpdateTreatmentPlanItemRequest,
@@ -65,6 +66,18 @@ async def update_note(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.update_note(db, user, note_id, data)
+
+
+@router.post("/notes/transcribe", response_model=TranscriptionResponse)
+async def transcribe_dictation(
+    file: UploadFile = File(...),
+    user: User = Depends(require_role(UserRole.DOCTOR)),
+):
+    """Voice dictation for the Consultation Assistant — transcribes an
+    uploaded audio clip (webm/wav/m4a/etc.) via Groq Whisper. No DB access,
+    doesn't need `db` injected."""
+    audio_bytes = await file.read()
+    return await controller.transcribe_dictation(audio_bytes, file.filename or "dictation.webm")
 
 
 @router.post("/notes/ai-draft", response_model=AIConsultationDraftResponse)

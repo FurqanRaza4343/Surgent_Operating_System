@@ -30,7 +30,9 @@ class Conversation(Base):
     __tablename__ = "conversations"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    practice_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("practices.id"), nullable=False)
+    # Nullable: platform landing-chat (Aria) sales conversations aren't scoped
+    # to any clinic's practice — a clinic-buyer chat is the platform's own.
+    practice_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("practices.id"), nullable=True)
     patient_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("patients.id"), nullable=True)
     agent_type: Mapped[str] = mapped_column(String(100), nullable=False)
     channel: Mapped[ConversationChannel] = mapped_column(Enum(ConversationChannel), nullable=False)

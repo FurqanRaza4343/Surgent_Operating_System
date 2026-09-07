@@ -4,6 +4,7 @@ import {
   createConsentDocument,
   signConsentDocument,
   voidConsentDocument,
+  markConsentDiscussed,
   type ConsentDocumentResponse,
   type CreateConsentDocumentRequest
 } from "../../../api/entities";
@@ -65,5 +66,15 @@ export function useConsentDocuments(authedFetch: AuthedFetch, patientId: string 
     [authedFetch]
   );
 
-  return { documents, loading, refetch, create, sign, voidDoc };
+  const markDiscussed = useCallback(
+    async (id: string) => {
+      if (!authedFetch) return null;
+      const doc = await markConsentDiscussed(authedFetch, id);
+      setDocuments((prev) => prev.map((d) => (d.id === id ? doc : d)));
+      return doc;
+    },
+    [authedFetch]
+  );
+
+  return { documents, loading, refetch, create, sign, voidDoc, markDiscussed };
 }

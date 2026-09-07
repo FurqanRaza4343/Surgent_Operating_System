@@ -21,12 +21,19 @@ async def list_conversations(
     channel: str | None = None,
     agent_type: list[str] | None = Query(default=None),
     search: str | None = None,
+    patient_id: UUID | None = Query(default=None),
     limit: int = Query(default=50, le=200),
     offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await controller.list_conversations(db, user, status, channel, agent_type, search, limit, offset)
+    # patient_id scopes to one patient's conversations only — used by a
+    # Doctor's own per-patient Communication tab (see
+    # DoctorPatientDetail.tsx), which must never become a way to browse the
+    # practice-wide lead/CRM inbox by omitting it. When set, the Doctor
+    # hard-restriction is enforced in the controller (verify_doctor_access)
+    # before any conversation data is returned.
+    return await controller.list_conversations(db, user, status, channel, agent_type, search, patient_id, limit, offset)
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetail)

@@ -14,11 +14,14 @@ from src.schemas.doctor import (
     CreateDoctorAvailabilityRequest,
     DoctorAvailabilityResponse,
     DoctorTodayResponse,
+    CreateDoctorTimeBlockRequest,
+    DoctorTimeBlockResponse,
 )
 from src.services.doctors.doctors_services import DoctorsService
 from src.services.doctors.doctor_procedures_services import DoctorProceduresService
 from src.services.doctors.doctor_availability_services import DoctorAvailabilityService
 from src.services.doctors.doctor_dashboard_services import DoctorDashboardService
+from src.services.doctors.doctor_time_block_services import DoctorTimeBlockService
 
 
 class DoctorsController:
@@ -27,6 +30,7 @@ class DoctorsController:
         self.procedures = DoctorProceduresService()
         self.availability = DoctorAvailabilityService()
         self.dashboard = DoctorDashboardService()
+        self.time_blocks = DoctorTimeBlockService()
 
     async def create_doctor(self, db: AsyncSession, user: User, data: CreateDoctorRequest) -> DoctorResponse:
         doctor = await self.service.create_doctor(db, user.practice_id, data)
@@ -87,3 +91,16 @@ class DoctorsController:
 
     async def remove_availability(self, db: AsyncSession, user: User, doctor_id: UUID, override_id: UUID) -> None:
         await self.availability.remove_override(db, user.practice_id, doctor_id, override_id)
+
+    # --- Personal time blocks ("me" only — no cross-doctor access) ---
+
+    async def create_my_time_block(self, db: AsyncSession, user: User, data: CreateDoctorTimeBlockRequest) -> DoctorTimeBlockResponse:
+        block = await self.time_blocks.create_block(db, user.practice_id, user.id, data)
+        return DoctorTimeBlockResponse.model_validate(block)
+
+    async def list_my_time_blocks(self, db: AsyncSession, user: User) -> list[DoctorTimeBlockResponse]:
+        blocks = await self.time_blocks.list_blocks(db, user.practice_id, user.id)
+        return [DoctorTimeBlockResponse.model_validate(b) for b in blocks]
+
+    async def delete_my_time_block(self, db: AsyncSession, user: User, block_id: UUID) -> None:
+        await self.time_blocks.delete_block(db, user.practice_id, user.id, block_id)

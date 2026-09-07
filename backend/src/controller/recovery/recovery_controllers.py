@@ -14,6 +14,7 @@ from src.schemas.recovery import (
 )
 from src.services.recovery.recovery_services import RecoveryService
 from src.services.recovery.post_op_followup_service import PostOpFollowUpService
+from src.server.patient_access import verify_doctor_access
 from src.server.exceptions import AppException
 
 
@@ -27,6 +28,7 @@ class RecoveryController:
         return {"sent": sent, "count": len(sent)}
 
     async def get_journal_for_patient(self, db: AsyncSession, user: User, patient_id: UUID) -> RecoveryJournalResponse | None:
+        await verify_doctor_access(db, user, patient_id)
         journal = await self.service.get_journal_for_patient(db, user.practice_id, patient_id)
         return RecoveryJournalResponse.model_validate(journal) if journal else None
 
@@ -37,6 +39,7 @@ class RecoveryController:
     async def submit_checkin_for_patient(
         self, db: AsyncSession, user: User, patient_id: UUID, data: SubmitCheckInRequest
     ) -> RecoveryCheckInResponse:
+        await verify_doctor_access(db, user, patient_id)
         return await self._submit(db, user.practice_id, patient_id, data)
 
     async def submit_checkin_from_portal(

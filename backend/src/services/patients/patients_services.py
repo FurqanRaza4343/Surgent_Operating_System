@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.patient import Patient, PatientLifecycleStage
 from src.models.appointment import Appointment, AppointmentStatus
+from src.models.doctor import Doctor
 from src.schemas.patient import CreatePatientRequest, UpdatePatientRequest, FunnelStageCount
 from src.server.exceptions import NotFoundException, AppException
 
@@ -37,11 +38,25 @@ class PatientsService:
         await db.refresh(patient)
         return patient
 
-    async def list_patients(self, db: AsyncSession, practice_id: UUID) -> list[Patient]:
-        query = select(Patient).where(Patient.practice_id == practice_id).order_by(desc(Patient.created_at))
+    async def list_patients(
+        self, db: AsyncSession, practice_id: UUID, doctor_id: UUID | None = None, include_archived: bool = False
+    ) -> list[Patient]:
+        # doctor_id scopes to Patient.assigned_doctor_id — the Doctor
+        # hard-restriction (see server/patient_access.py); the controller
+        # passes this whenever the caller's role is DOCTOR, never trusting
+        # the client to ask for the right doctor_id itself. Archived
+        # patients are excluded by default — this is the "hidden from the
+        # default list" half of archiving (see archive_patient).
+        query = select(Patient).where(Patient.practice_id == practice_id)
+        if not include_archived:
+            query = query.where(Patient.is_archived == False)  # noqa: E712
+        if doctor_id is not None:
+            query = query.where(Patient.assigned_doctor_id == doctor_id)
+        query = query.order_by(desc(Patient.created_at))
         result = await db.execute(query)
         patients = list(result.scalars().all())
         await self._attach_appointment_flags(db, practice_id, patients)
+        await self._attach_doctor_names(db, practice_id, patients)
         return patients
 
     async def get_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> Patient:
@@ -51,6 +66,46 @@ class PatientsService:
         if patient is None:
             raise NotFoundException("Patient not found")
         await self._attach_appointment_flags(db, practice_id, [patient])
+        await self._attach_doctor_names(db, practice_id, [patient])
+        return patient
+
+    async def assign_doctor(self, db: AsyncSession, practice_id: UUID, patient_id: UUID, doctor_id: UUID | None) -> Patient:
+        patient = await self.get_patient(db, practice_id, patient_id)
+        if doctor_id is not None:
+            doctor_result = await db.execute(select(Doctor).where(Doctor.id == doctor_id, Doctor.practice_id == practice_id))
+            if doctor_result.scalar_one_or_none() is None:
+                raise NotFoundException("Doctor not found")
+        patient.assigned_doctor_id = doctor_id
+        await db.flush()
+        await db.refresh(patient)
+        await self._attach_appointment_flags(db, practice_id, [patient])
+        await self._attach_doctor_names(db, practice_id, [patient])
+        return patient
+
+    async def archive_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID, archived_by: UUID) -> Patient:
+        patient = await self.get_patient(db, practice_id, patient_id)
+        if patient.is_archived:
+            return patient
+        patient.is_archived = True
+        patient.archived_at = datetime.now(timezone.utc)
+        patient.archived_by = archived_by
+        # Archiving blocks portal login too (see AppointmentsService's own
+        # is_archived check for the "no new appointments" half) — an
+        # archived record shouldn't still be reachable through any door.
+        patient.portal_enabled = False
+        await db.flush()
+        await db.refresh(patient)
+        await self._attach_doctor_names(db, practice_id, [patient])
+        return patient
+
+    async def restore_patient(self, db: AsyncSession, practice_id: UUID, patient_id: UUID) -> Patient:
+        patient = await self.get_patient(db, practice_id, patient_id)
+        patient.is_archived = False
+        patient.archived_at = None
+        patient.archived_by = None
+        await db.flush()
+        await db.refresh(patient)
+        await self._attach_doctor_names(db, practice_id, [patient])
         return patient
 
     async def update_patient(
@@ -67,6 +122,7 @@ class PatientsService:
         await db.flush()
         await db.refresh(patient)
         await self._attach_appointment_flags(db, practice_id, [patient])
+        await self._attach_doctor_names(db, practice_id, [patient])
         return patient
 
     async def update_stage(
@@ -88,6 +144,7 @@ class PatientsService:
         await db.flush()
         await db.refresh(patient)
         await self._attach_appointment_flags(db, practice_id, [patient])
+        await self._attach_doctor_names(db, practice_id, [patient])
         return patient
 
     async def funnel_summary(self, db: AsyncSession, practice_id: UUID) -> list[FunnelStageCount]:
@@ -138,3 +195,15 @@ class PatientsService:
         for patient in patients:
             patient.has_upcoming_appointment = patient.id in upcoming_ids
             patient.has_completed_appointment = patient.id in completed_ids
+
+    async def _attach_doctor_names(self, db: AsyncSession, practice_id: UUID, patients: list[Patient]) -> None:
+        # Same transient-attribute pattern as _attach_appointment_flags —
+        # PatientResponse.assigned_doctor_name reads this, not a live join,
+        # so every response stays a flat query plus one small IN lookup.
+        doctor_ids = {p.assigned_doctor_id for p in patients if p.assigned_doctor_id}
+        names: dict[UUID, str] = {}
+        if doctor_ids:
+            result = await db.execute(select(Doctor.id, Doctor.name).where(Doctor.id.in_(doctor_ids)))
+            names = dict(result.all())
+        for patient in patients:
+            patient.assigned_doctor_name = names.get(patient.assigned_doctor_id) if patient.assigned_doctor_id else None

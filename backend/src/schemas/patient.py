@@ -53,9 +53,31 @@ class UpdatePatientStageRequest(BaseModel):
     lost_reason: str | None = None
 
 
+class AssignDoctorRequest(BaseModel):
+    # None unassigns — Owner or Receptionist may call this (see
+    # patients_router.py); a dedicated endpoint rather than folding into
+    # UpdatePatientRequest so it gets its own audited action
+    # ("assigned"/"reassigned"/"unassigned"), matching every other
+    # clinically-meaningful change on this record.
+    doctor_id: UUID | None = None
+
+
+class ArchivePatientRequest(BaseModel):
+    reason: str | None = None
+
+
 class FunnelStageCount(BaseModel):
     stage: str
     count: int
+
+
+class PatientAuditLogEntry(BaseModel):
+    id: UUID
+    action: str
+    actor_name: str | None
+    actor_type: str
+    resource_type: str | None
+    created_at: datetime
 
 
 class PatientResponse(BaseModel):
@@ -97,6 +119,16 @@ class PatientResponse(BaseModel):
     # --- AI workflows (Week 4) ---
     qualification: dict | None = None
     intake_summary: str | None = None
+    portal_id: str | None = None
+    portal_enabled: bool = False
+    # --- Clinical ownership + lifecycle ---
+    assigned_doctor_id: UUID | None = None
+    # Attached as a transient attribute (see patients_services.py's
+    # _attach_doctor_names), same pattern as has_upcoming_appointment — the
+    # column only stores the id, not a live join, on every response.
+    assigned_doctor_name: str | None = None
+    is_archived: bool = False
+    archived_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

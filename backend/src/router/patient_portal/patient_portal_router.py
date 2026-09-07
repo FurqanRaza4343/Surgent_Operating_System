@@ -10,12 +10,16 @@ from src.models.user import User
 from src.models.patient import Patient
 from src.schemas.patient_portal import (
     PortalAccessResponse,
-    PortalPinIssuedResponse,
+    PortalEnabledResponse,
     PortalPatientResponse,
     PortalBookingRequest,
-    PatientPortalLoginRequest,
+    RequestOtpRequest,
+    RequestOtpResponse,
+    VerifyOtpRequest,
     PatientPortalLoginResponse,
     PatientIntakeRequest,
+    PortalMessage,
+    SendPortalMessageRequest,
 )
 from src.schemas.recovery import SubmitCheckInRequest, RecoveryCheckInResponse, RecoveryJournalResponse
 from src.controller.patient_portal.patient_portal_controllers import PatientPortalController
@@ -28,33 +32,36 @@ recovery_controller = RecoveryController()
 
 # Three distinct auth surfaces on one router:
 #
-#  - /patient-portal/patients/{id}/*  → practice-member only (staff manages
-#    a patient's portal access: enable/reset-PIN/disable).
-#  - /patient-portal/login            → PUBLIC. Takes portal_id+PIN, returns
-#    a short-lived JWT scoped to that one patient (see
-#    patient_portal_auth_service.py) — rate-limited against brute-forcing.
-#  - /patient-portal/me*              → requires that JWT
+#  - /patient-portal/patients/{id}/*     → practice-member only (staff turns
+#    portal access on/off and can resend the "portal is ready" invite —
+#    never handles a patient credential directly).
+#  - /patient-portal/request-otp,verify  → PUBLIC. Phone number in, a
+#    one-time code out over WhatsApp/email; the code back in for a
+#    short-lived JWT scoped to that one patient (see
+#    patient_portal_auth_service.py) — rate-limited against brute-forcing
+#    and phone enumeration.
+#  - /patient-portal/me*                 → requires that JWT
 #    (get_current_portal_patient), not Clerk and not a raw token-in-URL.
 
 
-@router.post("/patients/{patient_id}/enable", response_model=PortalPinIssuedResponse)
+@router.post("/patients/{patient_id}/enable", response_model=PortalEnabledResponse)
 async def enable_portal(
     patient_id: UUID,
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Turns portal access on and returns the portal_id + a freshly-generated
-    PIN — shown to staff exactly once, to hand to the patient in person."""
+    """Turns portal access on and sends a "your portal is ready" invite
+    over WhatsApp/email — no PIN generated, nothing for staff to hand over."""
     return await controller.enable_portal(db, user, patient_id)
 
 
-@router.post("/patients/{patient_id}/reset-pin", response_model=PortalPinIssuedResponse)
-async def reset_pin(
+@router.post("/patients/{patient_id}/resend-invite", response_model=PortalAccessResponse)
+async def resend_invite(
     patient_id: UUID,
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await controller.reset_pin(db, user, patient_id)
+    return await controller.resend_invite(db, user, patient_id)
 
 
 @router.post("/patients/{patient_id}/disable", response_model=PortalAccessResponse)
@@ -75,17 +82,29 @@ async def get_access_state(
     return await controller.get_access_state(db, user, patient_id)
 
 
-@router.post("/login", response_model=PatientPortalLoginResponse)
-async def login(
-    data: PatientPortalLoginRequest,
+@router.post("/request-otp", response_model=RequestOtpResponse)
+async def request_otp(
+    data: RequestOtpRequest,
     request: Request,
     db: AsyncSession = Depends(get_db),
 ):
-    # Rate-limit key mixes the client IP and the portal_id being attempted —
-    # slows both PIN brute-forcing against one ID and enumeration across IDs.
+    # Rate-limit key mixes the client IP and the phone being attempted —
+    # slows both OTP-spam against one number and phone enumeration across
+    # numbers.
     ip = request.client.host if request.client else None
-    client_key = f"{ip or 'unknown'}:{data.portal_id}"
-    return await controller.login(db, data, client_key, ip)
+    client_key = f"{ip or 'unknown'}:{data.phone}"
+    return await controller.request_otp(db, data, client_key, ip)
+
+
+@router.post("/verify-otp", response_model=PatientPortalLoginResponse)
+async def verify_otp(
+    data: VerifyOtpRequest,
+    request: Request,
+    db: AsyncSession = Depends(get_db),
+):
+    ip = request.client.host if request.client else None
+    client_key = f"{ip or 'unknown'}:{data.phone}"
+    return await controller.verify_otp(db, data, client_key, ip)
 
 
 @router.get("/me", response_model=PortalPatientResponse)
@@ -116,6 +135,23 @@ async def submit_intake(
     fields and generates a doctor-facing AI summary flagging anything
     clinically relevant. Re-submitting overwrites the previous summary."""
     return await controller.submit_intake(db, patient, data)
+
+
+@router.get("/me/messages", response_model=list[PortalMessage])
+async def get_my_messages(
+    patient: Patient = Depends(get_current_portal_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.get_messages(db, patient)
+
+
+@router.post("/me/messages", response_model=PortalMessage)
+async def send_my_message(
+    data: SendPortalMessageRequest,
+    patient: Patient = Depends(get_current_portal_patient),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.send_message(db, patient, data)
 
 
 @router.get("/me/recovery", response_model=RecoveryJournalResponse | None)

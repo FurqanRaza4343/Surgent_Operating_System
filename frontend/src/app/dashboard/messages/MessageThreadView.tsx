@@ -17,18 +17,16 @@ function formatDay(iso: string) {
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-// Shared chat UI for both sides of a thread — a message is "mine" when its
-// sender_role matches the viewer's own role. A thread only ever has two
-// parties (Owner + one specific staff member), so this always correctly
-// tells the two apart regardless of which side is viewing.
+// Shared chat UI for one 1:1 conversation. `mine` comes from the server
+// (the backend knows the viewer's user id), so this works identically for
+// owner, doctor and receptionist — no role matching needed.
 export function MessageThreadView({
   title,
   subtitle,
-  viewerRole,
   messages,
   loading,
   onSend
-}: { title: string; subtitle?: string; viewerRole: string; messages: StaffMessageResponse[]; loading: boolean; onSend: (body: string) => Promise<unknown> }) {
+}: { title: string; subtitle?: string; messages: StaffMessageResponse[]; loading: boolean; onSend: (body: string) => Promise<unknown> }) {
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -52,7 +50,7 @@ export function MessageThreadView({
   let lastDay: string | null = null;
 
   return (
-    <div className="flex h-[calc(100vh-220px)] flex-col rounded-3xl border border-sand-200 bg-white shadow-[0_4px_20px_rgba(15,23,42,0.05)]">
+    <div className="flex h-full flex-col bg-white">
       <div className="flex items-center gap-3 border-b border-sand-200 px-5 py-4">
         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-teal-600/10 text-sm font-bold text-teal-600">
           {title[0]?.toUpperCase()}
@@ -73,11 +71,11 @@ export function MessageThreadView({
 
         <>
             {messages.map((m, i) => {
-              const mine = m.sender_role === viewerRole;
+              const mine = m.mine;
               const day = formatDay(m.created_at);
               const showDaySeparator = day !== lastDay;
               lastDay = day;
-              const prevMine = i > 0 ? messages[i - 1].sender_role === viewerRole : null;
+              const prevMine = i > 0 ? messages[i - 1].mine : null;
               const grouped = !showDaySeparator && prevMine === mine;
 
               return (

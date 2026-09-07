@@ -96,8 +96,8 @@ const MANAGEMENT_ITEMS: NavItem[] = [
 { label: "Doctors", to: DASHBOARD_ROUTES.doctors, icon: StethoscopeIcon, allowedRoles: ["owner", "doctor"], requiresPermission: "view_doctors_crm" },
 { label: "Surgery", to: DASHBOARD_ROUTES.surgeries, icon: ScissorsIcon, allowedRoles: ["owner", "doctor"] },
 { label: "AI Receptionist", to: DASHBOARD_ROUTES.receptionistMonitor, icon: PhoneCallIcon, allowedRoles: ["owner", "receptionist"], requiresPermission: "view_ai_receptionist" },
-{ label: "Main Agent", to: DASHBOARD_ROUTES.commandCenter, icon: SparklesIcon, allowedRoles: ["doctor", "receptionist"] },
-{ label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["doctor", "receptionist"] },
+{ label: "Main Agent", to: DASHBOARD_ROUTES.commandCenter, icon: SparklesIcon, allowedRoles: ["owner"] },
+{ label: "Messages", to: DASHBOARD_ROUTES.messages, icon: MessageCircleIcon, allowedRoles: ["owner", "doctor", "receptionist"] },
 { label: "Staff", to: DASHBOARD_ROUTES.staff, icon: UsersIcon, allowedRoles: ["owner"] },
 { label: "Leads / Funnel", to: DASHBOARD_ROUTES.leadsFunnel, icon: TrendingUpIcon, allowedRoles: ["owner", "receptionist"] },
 { label: "Inventory", to: DASHBOARD_ROUTES.inventory, icon: PackageIcon, allowedRoles: ["owner", "receptionist"] }];
@@ -229,9 +229,14 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
     return () => clearInterval(t);
   }, [summary, refetchOverview]);
 
+  // Owner/Receptionist only — this is the general lead/marketing WhatsApp
+  // conversation inbox (every patient AND lead, not just a doctor's own).
+  // A Doctor's own patient communication lives inside their patient detail
+  // page's Communication tab instead (scoped to their assigned patients —
+  // see DoctorPatientDetail.tsx), not this practice-wide CRM browser.
   const sessionChildren: NavItem[] = [
-  { label: "All conversations", to: DASHBOARD_ROUTES.sessionsAll, icon: InboxIcon },
-  { label: "Needs attention", to: DASHBOARD_ROUTES.sessionsNeedsAttention, icon: AlertCircleIcon, badge: needsAttentionCount }];
+  { label: "All conversations", to: DASHBOARD_ROUTES.sessionsAll, icon: InboxIcon, allowedRoles: ["owner", "receptionist"] },
+  { label: "Needs attention", to: DASHBOARD_ROUTES.sessionsNeedsAttention, icon: AlertCircleIcon, badge: needsAttentionCount, allowedRoles: ["owner", "receptionist"] }];
 
 
   // Money — the owner's finance/sales hub lives in a single entry; every
@@ -261,6 +266,7 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
   { label: "Analytics", to: DASHBOARD_ROUTES.analytics, icon: BarChart3Icon, locked: !can("analytics"), allowedRoles: ["owner", "doctor"], requiresPermission: "view_analytics" }];
 
 
+  const visibleSessions = visibleFor(sessionChildren, role, permissions);
   const visibleMoney = visibleFor(moneyChildren, role, permissions);
   const visibleSettings = visibleFor(SETTINGS_ITEMS, role, permissions);
 
@@ -282,9 +288,11 @@ export function Sidebar({ collapsed }: { collapsed: boolean }) {
         <div className={collapsed ? "space-y-0.5" : "mt-2 space-y-0.5"}>
           {visibleFor(MAIN_ITEMS_TOP, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>
+        {visibleSessions.length > 0 &&
         <div className="mt-2">
-          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} collapsed={collapsed} children={visibleFor(sessionChildren, role, permissions)} />
+          <CollapsibleNavGroup label="Agent Sessions" icon={InboxIcon} badge={needsAttentionCount} collapsed={collapsed} children={visibleSessions} />
         </div>
+        }
         <div className="mt-2 space-y-0.5">
           {visibleFor(MAIN_ITEMS, role, permissions).map((item) => <NavRow key={item.to} item={item} collapsed={collapsed} />)}
         </div>

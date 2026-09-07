@@ -112,6 +112,27 @@ class DoctorAvailabilityResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+# --- Personal time blocks (private, no effect on booking/availability) -----
+
+class CreateDoctorTimeBlockRequest(BaseModel):
+    title: str
+    note: str | None = None
+    start_time: datetime
+    end_time: datetime
+
+
+class DoctorTimeBlockResponse(BaseModel):
+    id: UUID
+    doctor_id: UUID
+    title: str
+    note: str | None
+    start_time: datetime
+    end_time: datetime
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 # --- "Today at a glance" dashboard ------------------------------------------
 
 class WaitingRoomEntry(BaseModel):

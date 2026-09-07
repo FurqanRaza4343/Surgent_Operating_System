@@ -25,6 +25,20 @@ class PatientPhotosService:
         if result.scalar_one_or_none() is None:
             raise NotFoundException("Patient not found")
 
+    async def get_patient_id_for_photo(self, db: AsyncSession, practice_id: UUID, photo_id: UUID) -> UUID:
+        """Resolves a photo's patient_id — used by the controller to run
+        the Doctor hard-restriction check before update/delete."""
+        query = (
+            select(PatientPhoto.patient_id)
+            .join(Patient, PatientPhoto.patient_id == Patient.id)
+            .where(PatientPhoto.id == photo_id, Patient.practice_id == practice_id)
+        )
+        result = await db.execute(query)
+        patient_id = result.scalar_one_or_none()
+        if patient_id is None:
+            raise NotFoundException("Photo not found")
+        return patient_id
+
     async def upload_photo(
         self, db: AsyncSession, practice_id: UUID, patient_id: UUID,
         file_bytes: bytes, filename: str, photo_type: str | None, notes: str | None,

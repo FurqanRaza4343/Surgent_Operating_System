@@ -54,6 +54,7 @@ class Doctor(Base):
     attendance_records = relationship("AttendanceRecord", back_populates="doctor", cascade="all, delete-orphan")
     procedures = relationship("DoctorProcedure", back_populates="doctor", cascade="all, delete-orphan")
     availability_overrides = relationship("DoctorAvailability", back_populates="doctor", cascade="all, delete-orphan")
+    time_blocks = relationship("DoctorTimeBlock", back_populates="doctor", cascade="all, delete-orphan")
 
 
 class DoctorProcedure(Base):
@@ -94,3 +95,26 @@ class DoctorAvailability(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     doctor = relationship("Doctor", back_populates="availability_overrides")
+
+
+class DoctorTimeBlock(Base):
+    """A doctor's own personal calendar block — "out 2-4pm" or a private
+    note on a day, visible only to the doctor who created it. Deliberately
+    separate from DoctorAvailability above: that model feeds the booking
+    engine's "is this doctor bookable" logic and is Owner-managed; this one
+    has zero effect on booking/availability and is entirely self-service —
+    a private reminder, not a scheduling constraint. No multi-room/OR
+    conflict-resolution here either — just a personal note."""
+
+    __tablename__ = "doctor_time_blocks"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    practice_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("practices.id"), nullable=False)
+    doctor_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("doctors.id"), nullable=False, index=True)
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    note: Mapped[str] = mapped_column(Text, nullable=True)
+    start_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_time: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    doctor = relationship("Doctor", back_populates="time_blocks")

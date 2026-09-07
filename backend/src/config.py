@@ -61,6 +61,22 @@ class Settings(BaseSettings):
     sendgrid_api_key: str = ""
     email_from: str = "noreply@aesthetixai.com"
 
+    # Landing-page AI chat (Aria) sales lead destination — platform-sales
+    # team, NOT a practice. When a website visitor is a clinic buyer (not a
+    # patient) and Aria captures their email, a SalesLead is written and this
+    # address is emailed so the Aiaceone sales team can follow up. Point this
+    # at your real sales inbox in production (.env: SALES_EMAIL=...). When
+    # empty, effective_sales_email falls back to the first platform admin
+    # email so buyer leads still reach the Aiaceone team out of the box.
+    sales_email: str = ""
+
+    @property
+    def effective_sales_email(self) -> str | None:
+        if self.sales_email.strip():
+            return self.sales_email.strip()
+        first = self.platform_admin_emails.strip().split(",")[0].strip()
+        return first or None
+
     stripe_secret_key: str = ""
     stripe_webhook_secret: str = ""
     stripe_price_solo: str = ""

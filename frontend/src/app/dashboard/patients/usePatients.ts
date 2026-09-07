@@ -25,7 +25,13 @@ function normalize(patient: Patient): Patient {
     lostReason: patient.lostReason ?? null,
     source: patient.source ?? null,
     qualification: patient.qualification ?? null,
-    intakeSummary: patient.intakeSummary ?? null
+    intakeSummary: patient.intakeSummary ?? null,
+    assignedDoctorId: patient.assignedDoctorId ?? null,
+    assignedDoctorName: patient.assignedDoctorName ?? null,
+    isArchived: patient.isArchived ?? false,
+    archivedAt: patient.archivedAt ?? null,
+    portalId: patient.portalId ?? null,
+    portalEnabled: patient.portalEnabled ?? false
   };
 }
 
@@ -70,7 +76,13 @@ function fromApi(p: PatientResponse): Patient {
           summary: p.qualification.summary
         }
       : null,
-    intakeSummary: p.intake_summary
+    intakeSummary: p.intake_summary,
+    assignedDoctorId: p.assigned_doctor_id,
+    assignedDoctorName: p.assigned_doctor_name,
+    isArchived: p.is_archived,
+    archivedAt: p.archived_at,
+    portalId: p.portal_id,
+    portalEnabled: p.portal_enabled
   };
 }
 
@@ -98,46 +110,45 @@ function withTimeout<T>(promise: Promise<T>, ms = 5000): Promise<T> {
 // working unchanged even offline. `authedFetch` comes from usePlan()
 // (app/dashboard/plan/PlanContext.tsx already computes it via the Clerk-gated
 // split) — pass null to stay IndexedDB-only, e.g. when Clerk is disabled.
-export function usePatients(authedFetch: AuthedFetch = null) {
+export function usePatients(authedFetch: AuthedFetch = null, options: { includeArchived?: boolean } = {}) {
+  const { includeArchived = false } = options;
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const patientsRef = useRef<Patient[]>([]);
   patientsRef.current = patients;
 
+  const load = useCallback(async () => {
+    let data: Patient[] | undefined;
+
+    if (authedFetch) {
+      try {
+        const remote = await listPatients(authedFetch, includeArchived);
+        data = remote.map(fromApi);
+        await withTimeout(savePatientsDB(data)).catch(() => undefined);
+      } catch {
+        data = undefined;
+      }
+    }
+
+    if (!data) {
+      try {
+        data = await withTimeout(loadPatientsDB());
+        if (data) data = data.map(normalize);
+      } catch {
+        data = undefined;
+      }
+    }
+
+    patientsRef.current = data ?? [];
+    setPatients(data ?? []);
+    setLoading(false);
+  }, [authedFetch, includeArchived]);
+
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      let data: Patient[] | undefined;
-
-      if (authedFetch) {
-        try {
-          const remote = await listPatients(authedFetch);
-          data = remote.map(fromApi);
-          await withTimeout(savePatientsDB(data)).catch(() => undefined);
-        } catch {
-          data = undefined;
-        }
-      }
-
-if (!data) {
-try {
-          data = await withTimeout(loadPatientsDB());
-          if (data) data = data.map(normalize);
-        } catch {
-          data = undefined;
-        }
-      }
-
-      if (!cancelled) {
-        patientsRef.current = data ?? [];
-        setPatients(data ?? []);
-        setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [authedFetch]);
+    setLoading(true);
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authedFetch, includeArchived]);
 
   const getPatient = useCallback((id: string) => patients.find((p) => p.id === id), [patients]);
 
@@ -192,5 +203,5 @@ try {
     }
   }, []);
 
-  return { patients, loading, getPatient, addPatient, updatePatient };
+  return { patients, loading, getPatient, addPatient, updatePatient, refetch: load };
 }

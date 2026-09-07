@@ -28,6 +28,7 @@ class ConversationsService:
         channel: str | None = None,
         agent_types: list[str] | None = None,
         search: str | None = None,
+        patient_id: UUID | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> list[Conversation]:
@@ -47,6 +48,8 @@ class ConversationsService:
             .limit(limit)
             .offset(offset)
         )
+        if patient_id is not None:
+            query = query.where(Conversation.patient_id == patient_id)
         if status is not None:
             query = query.where(Conversation.status == status)
         if channel is not None:

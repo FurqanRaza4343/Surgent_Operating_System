@@ -17,6 +17,7 @@ from src.schemas.admin import (
     AdminMeResponse,
     AdminLoginRequest,
     AdminLoginResponse,
+    SalesLeadResponse,
 )
 from src.schemas.plan import PlanResponse, PlanCreateRequest, PlanUpdateRequest
 from src.controller.admin.admin_controllers import AdminController
@@ -123,3 +124,15 @@ async def update_user(
     db: AsyncSession = Depends(get_db),
 ):
     return await controller.update_user(db, user_id, body)
+
+
+@router.get("/sales-leads", response_model=list[SalesLeadResponse])
+async def list_sales_leads(
+    q: Optional[str] = None,
+    admin: AdminPrincipal = Depends(require_admin_token),
+    db: AsyncSession = Depends(get_db),
+):
+    """Clinic-buyer leads captured by Aria on the marketing site (platform
+    sales pipeline). Aiaceone-owner only, same access rule as every /admin
+    route."""
+    return await controller.list_sales_leads(db, q=q)

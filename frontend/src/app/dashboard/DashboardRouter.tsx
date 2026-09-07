@@ -44,7 +44,6 @@ import { FunnelPage } from "./leads/FunnelPage";
 import { InventoryPage } from "./inventory/InventoryPage";
 import { InventoryItemDetailPage } from "./inventory/InventoryItemDetailPage";
 import { MessagesPage } from "./messages/MessagesPage";
-import { MessageThreadPage } from "./messages/MessageThreadPage";
 import { SurgeryListPage } from "./surgery/SurgeryListPage";
 import { SurgeryFormPage } from "./surgery/SurgeryFormPage";
 import { SurgeryDetailPage } from "./surgery/SurgeryDetailPage";
@@ -140,10 +139,9 @@ export function DashboardRouter() {
         <Route path="surgeries/new" element={<RequireOwnerOrDoctor><SurgeryFormPage /></RequireOwnerOrDoctor>} />
         <Route path="surgeries/:id" element={<RequireOwnerOrDoctor><SurgeryDetailPage /></RequireOwnerOrDoctor>} />
         <Route path="messages" element={<MessagesPage />} />
-        <Route path="messages/:staffUserId" element={<RequireOwner><MessageThreadPage /></RequireOwner>} />
         <Route path="agents/:categoryId" element={<AgentCategoryPage />} />
         <Route path="agents/:categoryId/:agentSlug" element={<AgentDetailPage />} />
-        <Route path="command-center" element={<CommandCenterPage />} />
+        <Route path="command-center" element={<RequireOwner><CommandCenterPage /></RequireOwner>} />
         <Route path="ai-receptionist" element={<RequireReceptionist><ReceptionistMonitorPage /></RequireReceptionist>} />
         <Route
           path="analytics"

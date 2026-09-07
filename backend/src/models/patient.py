@@ -47,12 +47,15 @@ class Patient(Base):
     )
     lost_reason: Mapped[str] = mapped_column(String(255), nullable=True)
     source: Mapped[str] = mapped_column(String(100), nullable=True)  # e.g. "Instagram", "Referral", "Walk-in"
-    # Patient Portal login — a human-readable ID (e.g. "AP-2026-00042") the
-    # patient is meant to remember, verified against a bcrypt-hashed PIN.
-    # Replaces an earlier plaintext-link-token scheme entirely (see
-    # patient_portal_services.py) — portal_enabled still gates access on/off.
+    # Patient Portal — portal_id is a human-readable reference identifier
+    # (e.g. "PT-2026-00042") staff can quote back to a patient; it plays no
+    # role in login. Real auth is phone number + a one-time code sent over
+    # WhatsApp/email (see patient_portal_auth_service.py) — replaces an
+    # earlier static-PIN scheme (before that, a plaintext-link-token
+    # scheme) entirely, since a clinic-assigned shared secret was never as
+    # strong as a code delivered live to a channel only the patient
+    # controls. portal_enabled still gates access on/off.
     portal_id: Mapped[str | None] = mapped_column(String(32), nullable=True, unique=True)
-    portal_pin_hash: Mapped[str | None] = mapped_column(String(100), nullable=True)
     portal_enabled: Mapped[bool] = mapped_column(default=False)
 
     # --- Patient profile depth (Week 2) ---------------------------------
@@ -96,10 +99,27 @@ class Patient(Base):
     # words, not an AI-derived clinical summary.
     intake_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # --- Clinical ownership + lifecycle (Patient Management redesign) ---
+    # The one place a doctor-patient link is stored durably, as opposed to
+    # the per-encounter doctor_id on Appointment/ConsultationNote/
+    # TreatmentPlan — this is "whose patient is this," checked by
+    # server/patient_access.py to hard-restrict a Doctor's access to only
+    # their own assigned patients. Owner and Receptionist can both set/
+    # change it (see patients_services.py's assign_doctor).
+    assigned_doctor_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("doctors.id"), nullable=True)
+    # Administrative status — orthogonal to lifecycle_stage (which tracks
+    # CRM/funnel progress, not whether the record is still "live"). Archiving
+    # is Owner-only, disables portal login, and blocks new appointments (see
+    # patients_services.py.archive_patient / AppointmentsService.create_appointment).
+    is_archived: Mapped[bool] = mapped_column(default=False)
+    archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    archived_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
     practice = relationship("Practice", back_populates="patients")
+    assigned_doctor = relationship("Doctor", foreign_keys=[assigned_doctor_id])
     photos = relationship("PatientPhoto", back_populates="patient", cascade="all, delete-orphan")
     appointments = relationship("Appointment", back_populates="patient", cascade="all, delete-orphan")
     recovery_journals = relationship("RecoveryJournal", back_populates="patient", cascade="all, delete-orphan")

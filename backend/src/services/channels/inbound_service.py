@@ -20,6 +20,7 @@ from src.services.appointments.appointments_services import AppointmentsService
 from src.services.channels.whatsapp_green_api import WhatsAppGreenAPI
 from src.services.channels.booking_draft_store import BookingDraftStore
 from src.services.leads.lead_qualification_service import LeadQualificationService
+from src.services.patient_portal.patient_portal_auth_service import PatientPortalAuthService
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +194,7 @@ class InboundService:
         self.appointments = AppointmentsService()
         self.booking_drafts = BookingDraftStore()
         self.lead_qualification = LeadQualificationService()
+        self.portal_auth = PatientPortalAuthService()
 
     async def handle_whatsapp_message(
         self,
@@ -609,6 +611,16 @@ class InboundService:
             )
             if conversation_id is not None:
                 await self.booking_drafts.clear(conversation_id)
+
+            # First real booking is the natural moment to get this patient
+            # onto the portal — best-effort, must never affect the booking
+            # confirmation itself (see PatientPortalAuthService.enable_portal,
+            # which already swallows its own invite-send failure the same way).
+            if not patient.portal_enabled:
+                try:
+                    await self.portal_auth.enable_portal(db, practice.id, patient.id)
+                except Exception:
+                    logger.exception("Auto portal-enable after WhatsApp booking failed for patient %s", patient.id)
 
             # doctor.name is free text — some rows already include "Dr."
             # (e.g. "Dr. Amina Siddiqui"), others don't (e.g. "Test Doctor").

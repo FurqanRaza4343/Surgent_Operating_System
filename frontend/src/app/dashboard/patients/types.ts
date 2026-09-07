@@ -35,4 +35,14 @@ export interface Patient {
     summary: string;
   } | null;
   intakeSummary?: string | null;
+  // --- Clinical ownership + lifecycle (Patient Management redesign) ---
+  // The one durable doctor-patient link (see backend/src/models/patient.py's
+  // assigned_doctor_id) — distinct from ai_agent_assigned above, which is
+  // the AI marketing/workflow assignment, not a human clinician.
+  assignedDoctorId?: string | null;
+  assignedDoctorName?: string | null;
+  isArchived?: boolean;
+  archivedAt?: string | null;
+  portalId?: string | null;
+  portalEnabled?: boolean;
 }

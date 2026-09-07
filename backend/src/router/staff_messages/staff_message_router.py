@@ -5,60 +5,63 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database import get_db
-from src.server.dependencies import get_current_practice_user, require_role
-from src.models.user import User, UserRole
-from src.schemas.staff_message import CreateStaffMessageRequest, StaffMessageResponse, StaffMessageThreadSummary
+from src.server.dependencies import get_current_practice_user
+from src.models.user import User
+from src.schemas.staff_message import (
+    CreateStaffMessageRequest,
+    StartConversationRequest,
+    StaffContactResponse,
+    StaffConversationResponse,
+    StaffMessageResponse,
+)
 from src.controller.staff_messages.staff_message_controllers import StaffMessageController
 
 router = APIRouter(prefix="/staff-messages", tags=["Staff Messages"])
 controller = StaffMessageController()
 
 
-# Must be declared before GET /{staff_user_id} — otherwise FastAPI tries to
-# parse "threads" as a UUID and 422s before reaching this handler (same
-# ordering gotcha as GET /patients/funnel-summary).
-@router.get("/threads", response_model=list[StaffMessageThreadSummary])
-async def list_threads(
-    user: User = Depends(require_role(UserRole.OWNER)),
-    db: AsyncSession = Depends(get_db),
-):
-    return await controller.list_threads(db, user)
-
-
-# Self-service alias so a Doctor/Receptionist never needs to know their own
-# backend User.id — mirrors GET /doctor-applications/me's existing pattern.
-# Also must come before /{staff_user_id} for the same routing-order reason.
-@router.get("/me", response_model=list[StaffMessageResponse])
-async def list_my_messages(
+# Any practice user (owner, doctor, receptionist, staff) can use the team
+# chat — every handler below is scoped by the caller's own practice and only
+# ever reaches their own conversations.
+@router.get("/contacts", response_model=list[StaffContactResponse])
+async def list_contacts(
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await controller.list_messages(db, user, user.id)
+    return await controller.list_contacts(db, user)
 
 
-@router.post("/me", response_model=StaffMessageResponse)
-async def send_my_message(
-    data: CreateStaffMessageRequest,
+@router.get("/conversations", response_model=list[StaffConversationResponse])
+async def list_conversations(
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await controller.send_message(db, user, user.id, data)
+    return await controller.list_conversations(db, user)
 
 
-@router.get("/{staff_user_id}", response_model=list[StaffMessageResponse])
+@router.post("/conversations", response_model=StaffConversationResponse)
+async def start_conversation(
+    data: StartConversationRequest,
+    user: User = Depends(get_current_practice_user),
+    db: AsyncSession = Depends(get_db),
+):
+    return await controller.start_conversation(db, user, data)
+
+
+@router.get("/conversations/{conversation_id}", response_model=list[StaffMessageResponse])
 async def list_messages(
-    staff_user_id: UUID,
+    conversation_id: UUID,
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await controller.list_messages(db, user, staff_user_id)
+    return await controller.list_messages(db, user, conversation_id)
 
 
-@router.post("/{staff_user_id}", response_model=StaffMessageResponse)
+@router.post("/conversations/{conversation_id}", response_model=StaffMessageResponse)
 async def send_message(
-    staff_user_id: UUID,
+    conversation_id: UUID,
     data: CreateStaffMessageRequest,
     user: User = Depends(get_current_practice_user),
     db: AsyncSession = Depends(get_db),
 ):
-    return await controller.send_message(db, user, staff_user_id, data)
+    return await controller.send_message(db, user, conversation_id, data)

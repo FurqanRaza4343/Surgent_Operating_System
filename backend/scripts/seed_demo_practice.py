@@ -64,7 +64,7 @@ async def get_or_create_clerk_login(clerk: ClerkService, email: str, password: s
 
 async def ensure_doctor2(db, practice_id) -> Doctor:
     clerk = ClerkService()
-    clerk_user_id = await get_or_create_clerk_login(clerk, DOCTOR2_EMAIL, DOCTOR2_PASSWORD, "Dr. Amina", "Siddiqui")
+    clerk_user_id = await get_or_create_clerk_login(clerk, DOCTOR2_EMAIL, DOCTOR2_PASSWORD, "Dr. Amina", "Sadique")
 
     result = await db.execute(select(User).where(User.clerk_id == clerk_user_id))
     user = result.scalar_one_or_none()
@@ -73,7 +73,7 @@ async def ensure_doctor2(db, practice_id) -> Doctor:
             clerk_id=clerk_user_id,
             practice_id=practice_id,
             email=DOCTOR2_EMAIL,
-            name="Dr. Amina Siddiqui",
+            name="Dr. Amina Sadique",
             role=UserRole.DOCTOR,
             is_active=True,
         )
@@ -90,7 +90,7 @@ async def ensure_doctor2(db, practice_id) -> Doctor:
         doctor = Doctor(
             practice_id=practice_id,
             user_id=user.id,
-            name="Dr. Amina Siddiqui",
+            name="Dr. Amina Sadique",
             email=DOCTOR2_EMAIL,
             specialty="Body Contouring",
             specializations=["Body Contouring", "Liposuction", "Breast Surgery"],
@@ -110,7 +110,7 @@ async def ensure_doctor2(db, practice_id) -> Doctor:
         )
         db.add(doctor)
         await db.flush()
-        print("  Created Doctor row: Dr. Amina Siddiqui")
+        print("  Created Doctor row: Dr. Amina Sadique")
     return doctor
 
 
@@ -135,6 +135,28 @@ async def ensure_doctor_procedures(db, doctor: Doctor, practice_id, procedure_na
             surgery_fee=float(proc.base_price or 0),
         ))
     await db.flush()
+
+
+async def rename_staff_if_old(db, email: str, role: UserRole, old_name: str, new_name: str, label: str):
+    """Idempotent cosmetic rename — repoints a demo staff account whose local
+    name is still the old dev placeholder ('Test Doctor' / 'Test Staff') at its
+    real production-style name without touching the Clerk identity. Only fires
+    when the old name is present, so safe to re-run."""
+    updated = 0
+    users = (await db.execute(select(User).where(User.email == email, User.role == role))).scalars().all()
+    for u in users:
+        if u.name == old_name:
+            u.name = new_name
+            updated += 1
+    if role == UserRole.DOCTOR:
+        doctors = (await db.execute(select(Doctor).where(Doctor.email == email))).scalars().all()
+        for d in doctors:
+            if d.name == old_name:
+                d.name = new_name
+                updated += 1
+    if updated:
+        await db.flush()
+        print(f"  Renamed {label}: {old_name} -> {new_name}")
 
 
 DEMO_PATIENTS = [
@@ -327,6 +349,7 @@ async def main():
 
         print("Doctor 1 (existing dev account):")
         await reactivate_if_needed(db, "doctor+clerk_test@aiaceone.dev", "Doctor")
+        await rename_staff_if_old(db, "doctor+clerk_test@aiaceone.dev", UserRole.DOCTOR, "Test Doctor", "Dr. Ehtisham", "Doctor 1")
         doctor1_result = await db.execute(select(Doctor).where(Doctor.email == "doctor+clerk_test@aiaceone.dev"))
         doctor1 = doctor1_result.scalars().first()
         if doctor1:
@@ -335,6 +358,7 @@ async def main():
 
         print("\nReceptionist (existing dev account):")
         await reactivate_if_needed(db, "staff+clerk_test@aiaceone.dev", "Receptionist")
+        await rename_staff_if_old(db, "staff+clerk_test@aiaceone.dev", UserRole.RECEPTIONIST, "Test Staff", "Awon Abbas", "Receptionist")
 
         print("\nDoctor 2 (new):")
         doctor2 = await ensure_doctor2(db, practice_id)
@@ -354,9 +378,9 @@ async def main():
         print("\n--- Done ---")
         print("Logins:")
         print("  Owner:        (your own real Clerk account)")
-        print("  Doctor 1:     doctor+clerk_test@aiaceone.dev / Aceonedoctor")
-        print(f"  Doctor 2:     {DOCTOR2_EMAIL} / {DOCTOR2_PASSWORD}")
-        print("  Receptionist: staff+clerk_test@aiaceone.dev / Aceonestaff")
+        print("  Doctor 1:     doctor+clerk_test@aiaceone.dev / Aceonedoctor  (Dr. Ehtisham)")
+        print(f"  Doctor 2:     {DOCTOR2_EMAIL} / {DOCTOR2_PASSWORD}  (Dr. Amina Sadique)")
+        print("  Receptionist: staff+clerk_test@aiaceone.dev / Aceonestaff  (Awon Abbas)")
 
 
 if __name__ == "__main__":

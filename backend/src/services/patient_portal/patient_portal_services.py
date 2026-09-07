@@ -2,17 +2,20 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.patient import Patient
+from src.models.practice import Practice
 from src.models.appointment import Appointment, AppointmentStatus
 from src.models.consent_document import ConsentDocument
 from src.models.invoice import Invoice, InvoiceStatus
 from src.models.patient_photo import PatientPhoto
 from src.models.doctor import Doctor
 from src.models.treatment_plan import TreatmentPlan, TreatmentPlanItem
+from src.models.conversation import Conversation, ConversationChannel, ConversationStatus
+from src.models.message import Message, MessageRole
 from src.schemas.patient_portal import (
     PortalAppointment,
     PortalBookingRequest,
@@ -23,7 +26,9 @@ from src.schemas.patient_portal import (
     PortalDoctorInfo,
     PortalTreatmentPlan,
     PortalTreatmentPlanItem,
+    PortalMessage,
 )
+from src.services.channels.whatsapp_green_api import WhatsAppGreenAPI
 from src.server.exceptions import AppException
 
 
@@ -77,6 +82,87 @@ class PatientPortalService:
         await db.flush()
         await db.refresh(appointment)
         return appointment
+
+    async def _find_or_create_conversation(self, db: AsyncSession, patient: Patient) -> Conversation:
+        # Reuses the exact same conversation the AI receptionist/WhatsApp
+        # flow already writes to (agent_type="ai_receptionist") so a
+        # patient's portal messages and WhatsApp messages are one continuous
+        # thread, not two disconnected inboxes — matches how staff already
+        # see everything in one Agent Sessions conversation regardless of
+        # which channel a given message came in on.
+        result = await db.execute(
+            select(Conversation)
+            .where(
+                Conversation.practice_id == patient.practice_id,
+                Conversation.patient_id == patient.id,
+                Conversation.agent_type == "ai_receptionist",
+            )
+            .order_by(desc(Conversation.updated_at))
+            .limit(1)
+        )
+        existing = result.scalar_one_or_none()
+        if existing is not None and existing.status != ConversationStatus.RESOLVED:
+            return existing
+
+        conversation = Conversation(
+            practice_id=patient.practice_id,
+            patient_id=patient.id,
+            agent_type="ai_receptionist",
+            channel=ConversationChannel.WEB_CHAT,
+        )
+        db.add(conversation)
+        await db.flush()
+        return conversation
+
+    async def get_messages(self, db: AsyncSession, patient: Patient) -> list[PortalMessage]:
+        result = await db.execute(
+            select(Conversation)
+            .where(Conversation.practice_id == patient.practice_id, Conversation.patient_id == patient.id, Conversation.agent_type == "ai_receptionist")
+            .order_by(desc(Conversation.updated_at))
+            .limit(1)
+        )
+        conversation = result.scalar_one_or_none()
+        if conversation is None:
+            return []
+        msg_result = await db.execute(
+            select(Message).where(Message.conversation_id == conversation.id).order_by(Message.created_at)
+        )
+        return [
+            PortalMessage(id=m.id, role=m.role.value, content=m.content, created_at=m.created_at)
+            for m in msg_result.scalars().all()
+            if m.role != MessageRole.SYSTEM
+        ]
+
+    async def send_message(self, db: AsyncSession, patient: Patient, content: str) -> PortalMessage:
+        content = content.strip()
+        if not content:
+            raise AppException("Message can't be empty")
+
+        conversation = await self._find_or_create_conversation(db, patient)
+        message = Message(conversation_id=conversation.id, role=MessageRole.PATIENT, content=content, content_type="text")
+        db.add(message)
+        # A message sent from the portal always needs a human look — unlike
+        # WhatsApp, there's no AI-reply pipeline wired to this entry point,
+        # so silently leaving it ACTIVE would mean nobody ever gets nudged
+        # to answer it.
+        conversation.status = ConversationStatus.NEEDS_ATTENTION
+        await db.flush()
+        await db.refresh(message)
+
+        # Best-effort mirror to WhatsApp too, if that's how this patient
+        # normally reaches the clinic — keeps staff's single WhatsApp-based
+        # workflow from missing a portal-originated message entirely.
+        if conversation.channel == ConversationChannel.WHATSAPP and patient.phone:
+            practice_result = await db.execute(select(Practice).where(Practice.id == patient.practice_id))
+            practice = practice_result.scalar_one_or_none()
+            ga = WhatsAppGreenAPI.from_practice_settings((practice.settings if practice else None) or {})
+            if ga is not None:
+                try:
+                    await ga.send_text(patient.phone, f"[Portal message] {content}")
+                except Exception:
+                    pass
+
+        return PortalMessage(id=message.id, role=message.role.value, content=message.content, created_at=message.created_at)
 
     # --- Helpers ----------------------------------------------------------
 

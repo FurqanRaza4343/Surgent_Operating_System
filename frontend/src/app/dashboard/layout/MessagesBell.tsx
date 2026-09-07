@@ -9,20 +9,16 @@ function formatTime(iso: string) {
   return new Date(iso).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-// Owner-only. Messages is a small, two-person-thread feature next to the
-// practice's much bigger surfaces (Patients, Finance, ...) — a full sidebar
-// nav item was more real estate than it earns, so the Owner reaches it from
-// here instead: a compact preview of each staff thread (realistically 1-2
-// for a small team), with the full inbox (MessagesPage's OwnerInbox) still
-// one click away for anything longer.
+// Owned-only quick preview, next to the practice's much bigger surfaces — a
+// compact list of the Owner's team conversations, with the full inbox
+// (MessagesPage) one click away.
 export function MessagesBell() {
   // usePlanTier() seeds `role` with a placeholder value ("owner") until the
   // real /practice/me response resolves — gating strictly on
   // `role === "owner"` fired this component's fetch during that transient
-  // window for every non-owner login too, hitting the Owner-only
-  // /staff-messages/threads endpoint and logging a real (if harmless) 403
-  // on every Doctor/Receptionist sign-in. `loading` distinguishes "still
-  // resolving" from "confirmed owner".
+  // window for every non-owner login too, hitting a 403-ish path on every
+  // Doctor/Receptionist sign-in. `loading` distinguishes "still resolving"
+  // from "confirmed owner".
   const { role, authedFetch, loading: roleLoading } = usePlan();
   const isConfirmedOwner = !roleLoading && role === "owner";
   const { threads, loading } = useMessageThreads(isConfirmedOwner ? authedFetch : null);
@@ -73,20 +69,20 @@ export function MessagesBell() {
         <div className="max-h-80 divide-y divide-sand-100 overflow-y-auto">
               {threads.map((t) =>
           <button
-            key={t.staff_user_id}
+            key={t.conversation_id}
             type="button"
             onClick={() => {
               setOpen(false);
-              navigate(DASHBOARD_ROUTES.messageThread(t.staff_user_id));
+              navigate(DASHBOARD_ROUTES.messageThread(t.conversation_id));
             }}
             className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-sand-50">
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sand-200 text-xs font-bold text-ink-soft">
-                    {(t.staff_name || "?")[0]?.toUpperCase()}
+                    {(t.recipient_name || "?")[0]?.toUpperCase()}
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5">
-                      <span className="truncate text-sm font-semibold text-ink">{t.staff_name || "Unnamed"}</span>
-                      <span className="shrink-0 rounded-full bg-sand-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-ink-muted">{t.staff_role}</span>
+                      <span className="truncate text-sm font-semibold text-ink">{t.recipient_name || "Unnamed"}</span>
+                      <span className="shrink-0 rounded-full bg-sand-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-ink-muted">{t.recipient_role}</span>
                     </span>
                     <span className="block truncate text-xs text-ink-muted">{t.last_message_preview || "No messages yet"}</span>
                   </span>

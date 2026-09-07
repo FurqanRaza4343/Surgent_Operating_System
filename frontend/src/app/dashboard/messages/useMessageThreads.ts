@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import { listMessageThreads, type StaffMessageThreadSummary } from "../../../api/entities";
+import { listStaffConversations, type StaffConversationSummary } from "../../../api/entities";
 
 type AuthedFetch = (<T>(path: string, init?: RequestInit) => Promise<T>) | null;
 
-// Owner-only inbox — one row per active Doctor/Receptionist.
+// Team chat inbox — every conversation the current user is part of. Owner,
+// doctor and receptionist all hit the same endpoint now (no owner-only
+// threads list anymore).
 export function useMessageThreads(authedFetch: AuthedFetch) {
-  const [threads, setThreads] = useState<StaffMessageThreadSummary[]>([]);
+  const [threads, setThreads] = useState<StaffConversationSummary[]>([]);
   const [loading, setLoading] = useState(true);
 
   const refetch = useCallback(async () => {
@@ -16,7 +18,7 @@ export function useMessageThreads(authedFetch: AuthedFetch) {
     }
     try {
       setLoading(true);
-      const data = await listMessageThreads(authedFetch);
+      const data = await listStaffConversations(authedFetch);
       setThreads(data);
     } catch {
       setThreads([]);

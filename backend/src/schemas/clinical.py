@@ -31,6 +31,10 @@ class AIConsultationDraftRequest(BaseModel):
     raw_notes: str
 
 
+class TranscriptionResponse(BaseModel):
+    text: str
+
+
 class AIConsultationDraftResponse(BaseModel):
     subjective: str
     objective: str

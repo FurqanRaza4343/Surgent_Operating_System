@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeftIcon, UserCircleIcon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { usePlan } from "../plan/PlanContext";
@@ -20,6 +20,7 @@ export function MyBookAppointmentPage() {
   const navigate = useNavigate();
   const { authedFetch } = usePlan();
   const { patients, loading: patientsLoading } = usePatients(authedFetch);
+  const [searchParams] = useSearchParams();
 
   const [doctorId, setDoctorId] = useState<string | null>(null);
   const [doctorLoading, setDoctorLoading] = useState(true);
@@ -27,7 +28,7 @@ export function MyBookAppointmentPage() {
   const now = new Date(Date.now() + 60 * 60 * 1000);
   const later = new Date(now.getTime() + 30 * 60 * 1000);
 
-  const [patientId, setPatientId] = useState("");
+  const [patientId, setPatientId] = useState(searchParams.get("patientId") || "");
   const [appointmentType, setAppointmentType] = useState("Consultation");
   const [startTime, setStartTime] = useState(toLocalInputValue(now));
   const [endTime, setEndTime] = useState(toLocalInputValue(later));

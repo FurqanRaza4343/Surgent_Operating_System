@@ -95,6 +95,16 @@ export function LandingChat({ open, seed, onClose, onSeedConsumed }: LandingChat
             }
           ]);
         }
+        if (res.sales_lead_created) {
+          setMessages((prev) => [
+            ...prev,
+            {
+              id: Date.now() + 2,
+              role: "lead",
+              text: `Thanks, ${res.sales_lead_name || "there"}! Your request has been logged and a member of the Aiaceone team will reach out to you shortly.`
+            }
+          ]);
+        }
       } catch {
         setMessages((prev) => [
           ...prev,
@@ -117,7 +127,7 @@ export function LandingChat({ open, seed, onClose, onSeedConsumed }: LandingChat
               {
                 id: 0,
                 role: "bot",
-                text: "Hi, I'm Aria — the practice's AI assistant. Ask me anything about our procedures, recovery, or booking a consultation."
+                text: "Hi, I'm Aria — the Aiaceone assistant. Booking a consultation, or exploring Aiaceone for your own clinic? I can help with both."
               }
             ]
           : prev

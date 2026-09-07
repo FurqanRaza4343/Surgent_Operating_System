@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowLeftIcon, SparklesIcon, UserIcon, ScissorsIcon } from "lucide-react";
+import { ArrowLeftIcon, SparklesIcon, UserIcon, ScissorsIcon, SearchIcon, CheckCircle2Icon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { usePatients } from "./usePatients";
 import { classifyPatient } from "./classifyPatient";
@@ -9,10 +9,32 @@ import { AGENTS_BY_SLUG } from "../../../data/agents";
 import { DASHBOARD_ROUTES } from "../constants/routes";
 import { usePlan } from "../plan/PlanContext";
 
+function normalizePhone(value: string): string {
+  return value.replace(/\D/g, "");
+}
+
+// Front-desk duplicate-prevention: search by phone before creating a new
+// record, matching how a real clinic works — a patient calling or walking
+// in a second time should land back on their existing profile, not spawn a
+// second one. Digit-suffix match (last 10 digits) so "+92 312 1234567" and
+// "03121234567" resolve to the same person, same normalization the Patient
+// Portal's own phone+OTP lookup uses server-side.
+function findByPhone(patients: Patient[], phone: string): Patient | null {
+  const digits = normalizePhone(phone);
+  if (digits.length < 6) return null;
+  const suffix = digits.slice(-10);
+  return patients.find((p) => normalizePhone(p.phone).endsWith(suffix)) || null;
+}
+
 export function PatientFormPage() {
   const navigate = useNavigate();
   const { authedFetch } = usePlan();
-  const { addPatient } = usePatients(authedFetch);
+  const { patients, addPatient } = usePatients(authedFetch);
+
+  const [step, setStep] = useState<"search" | "create">("search");
+  const [searchPhone, setSearchPhone] = useState("");
+  const [searchedOnce, setSearchedOnce] = useState(false);
+  const foundPatient = searchedOnce ? findByPhone(patients, searchPhone) : null;
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,6 +43,16 @@ export function PatientFormPage() {
   const [needsSurgery, setNeedsSurgery] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  function handleSearch(e: React.FormEvent) {
+    e.preventDefault();
+    setSearchedOnce(true);
+  }
+
+  function proceedToCreate() {
+    setPhone(searchPhone);
+    setStep("create");
+  }
 
   // Live preview — the same classifyPatient() call that runs on submit, so
   // what's shown here is exactly what will be saved, not a separate guess.
@@ -80,7 +112,69 @@ export function PatientFormPage() {
         <ArrowLeftIcon className="h-4 w-4" /> Back to patients
       </Link>
 
-      <PageHeader
+      {step === "search" &&
+      <>
+          <PageHeader
+          title="Add a patient"
+          subtitle="Search by phone first — a patient calling or walking in again should land on their existing profile, not a duplicate." />
+
+          <form onSubmit={handleSearch} className="max-w-lg space-y-4">
+            <div className="rounded-3xl border border-sand-200 bg-white p-6 shadow-[0_4px_20px_rgba(11,29,38,0.05)]">
+              <label className="block">
+                <span className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-ink-muted">
+                  <SearchIcon className="h-3.5 w-3.5" /> Patient&apos;s phone number
+                </span>
+                <input
+                  autoFocus
+                  value={searchPhone}
+                  onChange={(e) => { setSearchPhone(e.target.value); setSearchedOnce(false); }}
+                  placeholder="+1 (555) 000-0000"
+                  className="w-full rounded-xl border border-sand-200 bg-canvas px-3.5 py-2.5 text-sm text-ink outline-none transition-colors focus:border-teal-600/40 focus:bg-white" />
+              </label>
+
+              <button
+                type="submit"
+                disabled={normalizePhone(searchPhone).length < 6}
+                className="mt-4 flex items-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700 disabled:cursor-not-allowed disabled:opacity-40">
+                <SearchIcon className="h-4 w-4" /> Search
+              </button>
+            </div>
+
+            {searchedOnce && foundPatient &&
+            <div className="rounded-3xl border border-success/25 bg-success/[0.04] p-6">
+                <div className="flex items-center gap-2 text-success">
+                  <CheckCircle2Icon className="h-4 w-4" />
+                  <p className="text-sm font-bold">Existing patient found</p>
+                </div>
+                <p className="mt-2 text-sm text-ink-soft">
+                  <span className="font-semibold text-ink">{foundPatient.name}</span> already has a record — no need to create a new one.
+                </p>
+                <Link
+                to={DASHBOARD_ROUTES.patientDetail(foundPatient.id)}
+                className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-teal-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                  Open their profile
+                </Link>
+              </div>
+            }
+
+            {searchedOnce && !foundPatient &&
+            <div className="rounded-3xl border border-sand-200 bg-white p-6">
+                <p className="text-sm text-ink-soft">No existing patient with this number.</p>
+                <button
+                type="button"
+                onClick={proceedToCreate}
+                className="mt-4 flex items-center gap-1.5 rounded-xl bg-teal-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-teal-700">
+                  Continue — add new patient
+                </button>
+              </div>
+            }
+          </form>
+        </>
+      }
+
+      {step === "create" &&
+      <>
+          <PageHeader
         title="Add a patient"
         subtitle="Describe what they need — the right agent gets assigned automatically." />
 
@@ -186,6 +280,8 @@ export function PatientFormPage() {
           </button>
         </div>
       </form>
+        </>
+      }
     </>);
 
 }

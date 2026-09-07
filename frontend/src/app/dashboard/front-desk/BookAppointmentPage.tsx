@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeftIcon } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { usePlan } from "../plan/PlanContext";
@@ -21,11 +21,15 @@ export function BookAppointmentPage() {
   const { authedFetch } = usePlan();
   const { patients, loading: patientsLoading } = usePatients(authedFetch);
   const { doctors, loading: doctorsLoading } = useDoctors(authedFetch);
+  const [searchParams] = useSearchParams();
 
   const now = new Date(Date.now() + 60 * 60 * 1000);
   const later = new Date(now.getTime() + 30 * 60 * 1000);
 
-  const [patientId, setPatientId] = useState("");
+  // Pre-filled when reached from a specific patient's profile (e.g. Owner/
+  // Doctor/Receptionist's "Book appointment" action) — staff shouldn't have
+  // to re-search for the patient they're already looking at.
+  const [patientId, setPatientId] = useState(searchParams.get("patientId") || "");
   const [doctorId, setDoctorId] = useState("");
   const [appointmentType, setAppointmentType] = useState("Consultation");
   const [startTime, setStartTime] = useState(toLocalInputValue(now));

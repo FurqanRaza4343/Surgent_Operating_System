@@ -13,12 +13,14 @@ from src.controller.billing.billing_controllers import BillingController
 router = APIRouter(prefix="/invoices", tags=["Billing"])
 controller = BillingController()
 
-# Viewing an invoice is broad practice visibility (Owner/Doctor/Receptionist,
-# matching the roadmap's decision #3 on Receptionist's default breadth).
-# Raising or editing one is a front-desk/back-office action — Doctor is
-# deliberately excluded from write access, same split as Consent's own
-# Owner/Receptionist-manage, everyone-views pattern.
-_VIEW_ROLES = (UserRole.OWNER, UserRole.DOCTOR, UserRole.RECEPTIONIST)
+# Billing is the clinic's financial workspace — Owner/Receptionist only,
+# both view and manage. Doctor is deliberately excluded even from viewing
+# (Patient Management redesign): a doctor's job is the clinical workspace,
+# not invoice amounts/payment status — matches billing_router's own access
+# matrix ("View Full Billing ❌" for Doctor). If a doctor ever needs a
+# narrower operational signal (e.g. "has this treatment plan been billed"),
+# that's a new, deliberately minimal endpoint — not broader access here.
+_VIEW_ROLES = (UserRole.OWNER, UserRole.RECEPTIONIST)
 _MANAGE_ROLES = (UserRole.OWNER, UserRole.RECEPTIONIST)
 
 

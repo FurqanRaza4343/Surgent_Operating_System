@@ -78,6 +78,19 @@ class AdminLoginRequest(BaseModel):
     password: str
 
 
+class SalesLeadResponse(BaseModel):
+    id: UUID
+    full_name: str
+    email: str
+    phone: Optional[str] = None
+    company: Optional[str] = None
+    message: Optional[str] = None
+    source: str
+    status: str
+    conversation_id: Optional[UUID] = None
+    created_at: datetime
+
+
 class AdminLoginResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
